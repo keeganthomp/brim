@@ -1,0 +1,250 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* Fumadocs owns the layout and interactions; Brim supplies a quiet reading surface. */
+body:has(.brim-docs),
+.brim-docs {
+  --color-fd-background: #fdfdfb;
+  --color-fd-foreground: #24302a;
+  --color-fd-card: #f8f9f5;
+  --color-fd-card-foreground: #24302a;
+  --color-fd-primary: #286447;
+  --color-fd-primary-foreground: #fff;
+  --color-fd-secondary: #f4f6f0;
+  --color-fd-secondary-foreground: #4a584f;
+  --color-fd-muted: #f0f3ec;
+  --color-fd-muted-foreground: #687465;
+  --color-fd-accent: #eef3e9;
+  --color-fd-accent-foreground: #224b35;
+  --color-fd-border: #e6e9e0;
+  --color-fd-ring: #8ba393;
+  --color-fd-popover: #fff;
+  --color-fd-popover-foreground: #24302a;
+  --color-fd-overlay: #20312726;
+  --fd-layout-width: 1440px;
+  background: var(--color-fd-background);
+  color: var(--color-fd-foreground);
+  font-size: 15px;
+}
+.brim-docs #nd-sidebar {
+  background: #fafbf7;
+  border-color: var(--color-fd-border);
+}
+.brim-docs #nd-sidebar a {
+  font-size: 0.91rem;
+  line-height: 1.55;
+}
+.brim-docs #nd-sidebar a[href^='/docs/quickstart'] {
+  color: #344d3c;
+  font-weight: 550;
+}
+.brim-docs #nd-sidebar a[data-active='true'] {
+  background: #eaf1e5;
+  color: #286447;
+  font-weight: 550;
+}
+.brim-docs #nd-sidebar [data-search-full] {
+  min-height: 40px;
+  border-radius: 9px;
+  background: #fff;
+}
+.brim-docs :is(#nd-header, #nd-subnav) {
+  border-color: var(--color-fd-border);
+  background: #fdfdfbf2;
+  backdrop-filter: none;
+}
+.brim-doc-page {
+  max-width: 850px;
+  padding-top: 40px;
+  padding-right: clamp(24px, 3vw, 56px);
+  padding-left: clamp(24px, 3vw, 56px);
+}
+.brim-doc-breadcrumb {
+  margin-bottom: 10px;
+  color: #667262;
+  font-size: 13px;
+}
+.brim-doc-title {
+  max-width: 18ch;
+  margin-top: 0;
+  color: #203127;
+  font-size: clamp(2.1rem, 3vw, 2.75rem);
+  font-weight: 550;
+  line-height: 1.15;
+  letter-spacing: -0.055em;
+}
+.brim-doc-description {
+  max-width: 39rem;
+  margin-top: 4px;
+  margin-bottom: 24px;
+  color: #687465;
+  font-size: 1.075rem;
+  line-height: 1.75;
+}
+.brim-doc-prose {
+  color: #526054;
+  font-size: 1rem;
+  line-height: 1.9;
+}
+.brim-doc-prose :where(h2, h3, h4) {
+  color: #263d2e;
+  font-weight: 550;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 100px;
+}
+.brim-doc-prose h2 {
+  margin-top: 2.8rem;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+.brim-doc-prose h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.15rem;
+}
+.brim-doc-prose :where(p, ul, ol) {
+  margin-block: 1rem;
+}
+.brim-doc-prose :where(li) {
+  margin-block: 0.45rem;
+}
+.brim-doc-prose :where(strong) {
+  color: #344c3b;
+  font-weight: 550;
+}
+.brim-doc-prose :where(a:not(.not-prose)) {
+  color: #286447;
+  text-decoration-color: #28644750;
+  text-underline-offset: 4px;
+}
+.brim-doc-prose a:hover {
+  text-decoration-color: #286447;
+}
+.brim-doc-prose :not(pre) > code {
+  padding: 0.15em 0.35em;
+  border: 1px solid #e6eadf;
+  border-radius: 5px;
+  background: #f1f4ec;
+  color: #38533f;
+  font-size: 0.86em;
+  font-weight: 450;
+}
+.brim-doc-prose figure.shiki {
+  margin-block: 1.6rem;
+  border-color: #e2e7dc;
+  border-radius: 12px;
+  background: #f7f9f2;
+  box-shadow: 0 1px 2px #20312703;
+}
+.brim-doc-prose figure.shiki pre {
+  font-size: 13px;
+  line-height: 1.85;
+}
+.brim-doc-prose figure.shiki figcaption {
+  color: #63715f;
+  font-size: 12px;
+}
+.brim-doc-prose figure.shiki button {
+  min-height: 32px;
+  min-width: 32px;
+}
+.brim-doc-prose figure.shiki [class*='backdrop-blur'] {
+  backdrop-filter: none;
+  background: #f7f9f2;
+}
+.brim-doc-prose table {
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+.brim-doc-prose :where(th, td) {
+  padding: 0.8rem 1rem;
+  border-color: #e6eadf;
+}
+.brim-doc-prose th {
+  color: #344c3b;
+  background: #f7f9f3;
+  font-weight: 550;
+}
+.brim-doc-prose blockquote {
+  border-color: #9fb39a;
+  color: #667560;
+  font-style: normal;
+}
+.brim-doc-pagination {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e9de;
+}
+.brim-doc-pagination a {
+  border-color: #e5e9de;
+  border-radius: 11px;
+  background: #fafbf6;
+  padding: 18px;
+  box-shadow: 0 1px 2px #20312703;
+}
+.brim-doc-pagination a:hover {
+  background: #f1f5eb;
+}
+.brim-doc-pagination a > div {
+  color: #34583e;
+  font-size: 14px;
+}
+.brim-doc-pagination a > p {
+  color: #67765e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.brim-doc-toc {
+  font-size: 13px;
+}
+.brim-doc-toc #toc-title {
+  color: #67765e;
+  font-size: 12px;
+  font-weight: 450;
+}
+.brim-doc-toc a {
+  line-height: 1.65;
+}
+.brim-docs :where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid #628569;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+@media (max-width: 767px) {
+  .brim-doc-page {
+    padding: 28px 23px 40px;
+  }
+  .brim-doc-title {
+    font-size: 2.15rem;
+  }
+  .brim-doc-prose {
+    font-size: 0.975rem;
+  }
+  .brim-doc-description {
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+  .brim-doc-prose figure.shiki pre {
+    font-size: 12px;
+  }
+  .brim-doc-prose figure.shiki button {
+    min-height: 38px;
+    min-width: 38px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brim-docs *,
+  .brim-docs *::before,
+  .brim-docs *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Portalled mobile/search panels inherit the same light palette without an expensive blur. */
+body:has(.brim-docs) [class*='backdrop-blur'] {
+  backdrop-filter: none;
+}

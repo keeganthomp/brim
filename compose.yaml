@@ -1,0 +1,59 @@
+name: brim
+
+x-surfpool: &surfpool
+  image: surfpool/surfpool:1.7.0
+  command:
+    - start
+    - --offline
+    - --no-tui
+    - --no-deploy
+    - --no-studio
+    - --yes
+    - --host
+    - 0.0.0.0
+    - --genesis-hash
+    - EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG
+  healthcheck:
+    test:
+      - CMD-SHELL
+      - >-
+        curl --fail --silent --header 'Content-Type: application/json'
+        --data '{"jsonrpc":"2.0","id":1,"method":"getHealth"}'
+        http://127.0.0.1:8899 | grep -q '"ok"'
+    interval: 2s
+    timeout: 3s
+    retries: 30
+    start_period: 10s
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: brim
+      POSTGRES_USER: brim
+      POSTGRES_PASSWORD: brim-local-only
+    ports:
+      - '127.0.0.1:${BRIM_DB_PORT:-54329}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U brim -d brim']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  surfpool:
+    <<: *surfpool
+    ports:
+      - '127.0.0.1:${BRIM_RPC_PORT:-8899}:8899'
+      - '127.0.0.1:${BRIM_WS_PORT:-8900}:8900'
+
+  surfpool-test:
+    <<: *surfpool
+    profiles: [test]
+    ports:
+      - '127.0.0.1:${BRIM_TEST_RPC_PORT:-18899}:8899'
+      - '127.0.0.1:${BRIM_TEST_WS_PORT:-18900}:8900'
+
+volumes:
+  postgres-data:

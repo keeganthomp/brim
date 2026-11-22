@@ -1,0 +1,67 @@
+---
+title: Vaults and spending policies
+description: Give an existing agent a budget while keeping treasury control with its owner.
+---
+
+A vault holds USDC. Each agent uses its own signing key and an on-chain policy to spend from that vault. The treasury owner controls funding, policies, freezes, and withdrawals.
+
+## Create a vault, then authorize an agent
+
+The owner signs `init_vault` against a shared Brim program. It creates a program-derived vault account and an associated USDC token account controlled by that vault. Fund the token account; the vault account itself stores configuration.
+
+Register an existing bot's public key with an owner-signed `upsert_agent_policy` instruction. The bot keeps its private key. It receives permission to make payments within that policy, without receiving the treasury key or a separate deployment of the program.
+
+Agents share the vault balance. A $50 policy limits one agent's spending; it does not reserve $50 for that agent. Payments also require enough USDC in the vault.
+
+## Set enforceable limits
+
+These are the current policy fields, expressed in USDC base units. One USDC is `1_000_000` units.
+
+```ts
+const limits = {
+  max_per_tx: 1_000_000n, // $1 per payment
+  window_limit: 50_000_000n, // $50 per spending window
+  window_duration: 86_400n, // 24 hours
+  min_tx_interval: 6n, // At least 6 seconds between payments
+  allowlist_enabled: true,
+  allowlist: [process.env.MERCHANT_WALLET_ADDRESS!],
+};
+```
+
+This object describes policy data. An owner must sign the corresponding program instruction to apply it; creating a JavaScript object changes no on-chain state.
+
+| Control             | What the program checks                                               |
+| ------------------- | --------------------------------------------------------------------- |
+| Per-payment cap     | The requested amount is no greater than `max_per_tx`.                 |
+| Window budget       | This payment plus spending in the current window fits `window_limit`. |
+| Minimum interval    | Enough chain time has elapsed since the last successful payment.      |
+| Recipient allowlist | The recipient wallet is allowed and its USDC token account matches.   |
+| Freeze or pause     | The agent is not frozen and its vault is not paused.                  |
+
+Allowlist entries are wallet addresses. Merchant domains are off-chain labels that the operator must map to verified recipients. An enabled, empty allowlist blocks every recipient.
+
+## Understand when limits reset
+
+A window starts when the policy is created. After it expires, the next accepted payment starts a new window at that payment's chain timestamp. A 24-hour window does not reset at midnight and does not continuously total the preceding 24 hours.
+
+Minimum spacing is also literal: six seconds means a six-second gap between successful payments. It does not allow a burst of ten requests followed by a quiet minute.
+
+Policy updates retain consumed budget, the window start, and the last payment timestamp. The current program does not allow changing a policy's window duration after creation.
+
+## Freeze an agent
+
+A freeze takes effect when its transaction executes. A pending payment that executes first can still settle; payments executing after the freeze must fail. Settled transfers cannot be reversed by freezing the agent. No fixed confirmation time is guaranteed.
+
+The owner can freeze one agent or pause the vault. Owner withdrawals remain available while paused.
+
+## Give the agent configuration, not ownership
+
+| Input                       | Contains                                                    | Handling                                           |
+| --------------------------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| `BRIM_CARD`                 | Vault, program, network, and trusted facilitator fee payers | Public routing configuration; grants no authority. |
+| `BRIM_AGENT_KEY`            | The scoped agent's 64-byte Ed25519 keypair                  | Private; keep with the agent runtime.              |
+| `SOLANA_RPC_URL` (optional) | An override for the network’s default RPC                   | Keep credential-bearing URLs private.              |
+
+Creating a card does not create a vault, authorize a key, or fund an account. Start with the [local quickstart](/docs/quickstart/), then use the [SDK](/docs/sdk/) or connect the same scoped key through [MCP](/docs/mcp/).
+
+The local workspace reads real Surfpool balances and verified payment rows. Its owner actions are disabled; the separate demo simulates those controls. See [production readiness](/docs/production/) before connecting real funds.

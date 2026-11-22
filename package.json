@@ -1,0 +1,47 @@
+{
+  "name": "brim",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "node scripts/local.ts",
+    "build": "npm run build:packages && npm run build --workspace=@brim/web && npm run build:site",
+    "dev:site": "npm run dev --workspace=@brim/site --",
+    "build:site": "npm run build --workspace=@brim/site",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tools.json",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && npm run build",
+    "build:packages": "npm run build --workspace=@brim/sdk && npm run build --workspace=@brim/indexer && npm run build --workspace=@brim/mcp",
+    "dev:demo": "npm run build:packages && node scripts/dev.mjs",
+    "local:up": "node scripts/local.ts --services-only",
+    "local:down": "node scripts/local.ts --down",
+    "doctor": "node scripts/local.ts --doctor",
+    "chain:build": "node scripts/chain/build.ts",
+    "test:chain": "node scripts/local.ts --test-chain",
+    "db:migrate": "node scripts/local.ts --migrate-only",
+    "test:db": "node scripts/local.ts --test-db",
+    "test:local": "node scripts/local.ts --test-local",
+    "demo:payment": "node infra/local/payments/client.ts",
+    "mcp": "node packages/mcp/dist/cli.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "5.1.1",
+    "effect": "4.1.5",
+    "@types/node": "24.19.2",
+    "@solana/kit": "8.6.0",
+    "@x402/core": "2.32.0",
+    "@x402/svm": "2.32.0",
+    "prettier": "3.10.1"
+  },
+  "type": "module",
+  "license": "Apache-2.0"
+}

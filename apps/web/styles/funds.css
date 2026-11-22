@@ -1,0 +1,236 @@
+/* A focused funding preview: amount first, outcome second. */
+.funds-modal {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  z-index: 21;
+  width: 420px;
+  max-width: calc(100vw - 28px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 32px;
+  border: 1px solid #ffffffb3;
+  border-radius: 26px;
+  background: #fff;
+  text-align: center;
+  box-shadow:
+    0 24px 90px #11111126,
+    0 2px 8px #1111110a;
+  animation: modalIn 0.36s var(--spring);
+  outline: none;
+}
+.modal-close {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+}
+.funds-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 18px;
+  border: 1px solid #eaeaec;
+  border-radius: 15px;
+  background: linear-gradient(#fafafa, #f3f3f5);
+  color: #444448;
+}
+.funds-modal h2 {
+  font-size: 25px;
+  font-weight: 550;
+  letter-spacing: -0.85px;
+}
+.funds-modal > p {
+  margin-top: 9px;
+  color: var(--secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.amount-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0 10px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 52px;
+  letter-spacing: -2.6px;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.amount-input:focus-within {
+  background: #fafafa;
+  border-color: #787f89;
+  box-shadow: 0 0 0 3px #11111108;
+}
+.amount-input[data-long='true'] {
+  font-size: 36px;
+  letter-spacing: -1.8px;
+}
+.amount-input > span {
+  margin-right: 7px;
+  color: #a7a7af;
+  font-size: 0.75em;
+}
+.amount-input input {
+  width: 100%;
+  max-width: 250px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: #161618;
+  font: inherit;
+  text-align: center;
+  caret-color: #111;
+}
+.funds-modal .amount-input input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.amount-input input[aria-invalid='true'] {
+  color: #d8382f;
+}
+.currency-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid #eeeeef;
+  border-radius: 20px;
+  color: var(--secondary);
+  font-size: 11px;
+}
+.currency-pill > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #55555d;
+}
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 24px 0;
+}
+.keypad button {
+  height: 47px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #f7f7f8;
+  font-size: 21px;
+  font-weight: 450;
+  transition:
+    background 0.18s,
+    transform 0.2s var(--spring);
+}
+.keypad button:hover {
+  background: #ededf0;
+}
+.keypad button:active {
+  transform: scale(0.95);
+  background: #e7e7eb;
+}
+.keypad-delete {
+  font-size: 23px;
+  color: var(--secondary);
+}
+.funds-wallet,
+.funds-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+.funds-wallet {
+  padding: 13px;
+  border: 1px solid #e9e9ec;
+  border-radius: 12px;
+  color: var(--secondary);
+}
+.funds-wallet strong {
+  margin-left: auto;
+  color: #38383e;
+  font-size: 12px;
+  font-weight: 500;
+}
+.funds-preview {
+  margin: 12px 2px 20px;
+  color: var(--secondary);
+}
+.funds-preview strong {
+  color: #55555d;
+  font-size: 12px;
+  font-weight: 500;
+}
+.funds-modal .button.full {
+  height: 47px;
+  border-radius: 12px;
+}
+.funds-modal .form-error {
+  margin: 0 0 16px;
+  text-align: left;
+}
+.funds-disclaimer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 15px;
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@media (max-width: 480px) {
+  .funds-modal {
+    max-width: calc(100vw - 24px);
+    padding: 27px 22px 24px;
+    border-radius: 23px;
+  }
+  .amount-input {
+    font-size: 47px;
+  }
+  .funds-preview {
+    font-size: 11px;
+  }
+}
+@media (max-height: 700px) {
+  .funds-modal {
+    padding-top: 24px;
+  }
+  .funds-icon {
+    display: none;
+  }
+  .keypad {
+    margin: 18px 0;
+  }
+  .keypad button {
+    height: 42px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .funds-modal {
+    animation: none;
+  }
+  .keypad button,
+  .amount-input {
+    transition: none;
+  }
+}

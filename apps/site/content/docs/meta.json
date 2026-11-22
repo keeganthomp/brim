@@ -1,0 +1,15 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "---Start here---",
+    "index",
+    "quickstart",
+    "vaults-and-policies",
+    "---Integrate---",
+    "sdk",
+    "mcp",
+    "x402",
+    "---Operate---",
+    "production"
+  ]
+}

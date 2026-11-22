@@ -1,0 +1,13 @@
+node_modules/
+**/.next/
+**/dist/
+target/
+.brim/
+**/fixtures/
+package-lock.json
+Cargo.lock
+LICENSE
+**/fonts/
+**/next-env.d.ts
+apps/site/.source/
+apps/site/out/

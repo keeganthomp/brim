@@ -1,0 +1,26 @@
+---
+title: Overview
+description: Give an existing agent permission to pay from a USDC vault.
+---
+
+- [Quickstart](/docs/quickstart/) — make your first local payment with fake funds.
+- [Vaults and policies](/docs/vaults-and-policies/) — attach limits to your agent.
+- [TypeScript SDK](/docs/sdk/) — use Brim as your application's `fetch`.
+- [MCP](/docs/mcp/) — connect Claude Desktop or Cursor without integration code.
+
+## The setup
+
+An operator funds a USDC vault and registers the agent's public key with a spending policy. The agent receives two things:
+
+1. **Public vault config**, called a Brim card, with connection details.
+2. **A private agent key** that can spend only within the registered policy.
+
+Creating the config does not attach a policy. [See how that attachment works](/docs/vaults-and-policies/).
+
+## What works now
+
+The local stack runs the compiled Solana program, real SDK and MCP payments, and a verified PostgreSQL ledger. The program enforces spending caps, budgets, recipient restrictions, and freeze state.
+
+The dashboard's local workspace reads those actual local balances and payments. Its separate demo workspace simulates funding and policy edits.
+
+Start with the [quickstart](/docs/quickstart/). Live operation still needs owner-wallet integration, authentication, external settlement testing, security review, and deployment.

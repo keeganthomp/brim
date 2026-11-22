@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/.next
+**/dist
+.git
+target
+.env*
+**/.env*
+!.env.example
+**/*.tsbuildinfo
+.tools
+.artifacts
+.brim
+apps/site/.source
+apps/site/out

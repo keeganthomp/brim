@@ -1,0 +1,31 @@
+---
+title: Quickstart
+description: Make a $0.04 x402 payment with test USDC.
+---
+
+From a Brim checkout, use **Node 24** and **Docker Compose v2**.
+
+## Start Brim
+
+```bash title="Terminal 1"
+npm ci
+npm run dev
+```
+
+The first run can take a few minutes. It starts the dashboard and creates a funded test vault and agent policy on Surfpool.
+
+## Pay for the report
+
+Run this in a second terminal.
+
+```bash title="Terminal 2"
+npm run demo:payment
+```
+
+Look for `status: "settled"` and a transaction signature. Open the [dashboard](http://localhost:3000) in **Local workspace** to see the verified $0.04 payment and updated test balance.
+
+## Connect your agent
+
+Use the [SDK](/docs/sdk/) in code or [MCP](/docs/mcp/) in an agent client. The quickstart uses a preconfigured test key. For your own agent, [register its public key with a policy](/docs/vaults-and-policies/).
+
+Press Ctrl-C to stop the apps. Run `npm run local:down` to stop Docker services and preserve database data.

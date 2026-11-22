@@ -1,0 +1,60 @@
+---
+title: x402 payments
+description: How an HTTP payment request becomes a policy-checked USDC transfer.
+---
+
+Brim pays compatible Solana x402 v2 resources from a vault. The facilitator must enable smart-wallet verification and explicitly allow the deployed Brim program.
+
+```ts
+import { createBrimFetch } from '@brim/sdk';
+
+const brimFetch = createBrimFetch({
+  card: process.env.BRIM_CARD!,
+  agentKey: process.env.BRIM_AGENT_KEY!,
+});
+
+const response = await brimFetch('https://merchant.example/v1/data');
+```
+
+The operator prepares the card and authorizes the agent key first. See the [SDK guide](/docs/sdk/) for setup and errors, or use [MCP](/docs/mcp/) to access the same payment engine from an existing client.
+
+## Follow a payment
+
+1. The resource returns HTTP `402` with a v2 `PAYMENT-REQUIRED` header.
+2. The SDK validates the offer, network, USDC mint, trusted fee payer, and current vault policy. These local checks provide fast feedback; the program remains authoritative.
+3. The SDK builds a version 0 transaction containing compute-budget instructions, Brim's `execute_payment`, and a memo. The agent signs its part.
+4. The SDK retries the request once with `PAYMENT-SIGNATURE`. It does not broadcast the transaction independently.
+5. The facilitator verifies the payment, adds its fee-payer signature, and settles it. Brim checks the policy again at execution and transfers exact USDC through `transfer_checked`.
+
+The two required signatures belong to the scoped agent and facilitator fee payer. The treasury owner does not sign each payment.
+
+## Configure a compatible facilitator
+
+The pinned integration uses `@x402/core`, `@x402/fetch`, and `@x402/svm` **2.32.0**, with Solana Kit **8.6.0** and the Solana `exact` scheme. Brim deliberately uses version 0 transactions with two signatures.
+
+In the facilitator's `ExactSvmScheme` configuration, require:
+
+| Setting                         | Value                                       |
+| ------------------------------- | ------------------------------------------- |
+| `enableSmartWalletVerification` | `true`                                      |
+| `smartWalletAllowedPrograms`    | The verified, deployed Brim program address |
+| `transactionVersions`           | `[0]`                                       |
+| `maxRequiredSignatures`         | `2`                                         |
+
+Default `exact` verification expects a top-level token transfer. Brim transfers through a program invocation, so a merchant advertising x402 or `exact` support alone does not establish compatibility. Confirm support with its facilitator operator and pin that operator's fee payer addresses in the card.
+
+The recipient's USDC token account must already exist. Facilitator account creation and rent spending are outside this payment path.
+
+## Keep retries bounded
+
+The SDK adds a default $1 local cap per payment; the on-chain policy may impose a lower cap. It accepts one compatible offer and makes one paid retry. It rejects redirects and preexisting payment authorization headers rather than forwarding authorization elsewhere.
+
+`PAYMENT_OUTCOME_UNKNOWN` means a signed payment may have reached settlement. Reconcile that payment before authorizing another. A repeated HTTP request is not proof that the first payment failed, and the SDK does not promise invoice-level idempotency or exactly-once resource delivery.
+
+`createBrimFetch` returns a normal Promise-based fetch function. Effect applications can use `createBrimFetchEffect` for a lazy, typed workflow; both enforce the same payment rules.
+
+## Verify the complete path locally
+
+The [quickstart](/docs/quickstart/) runs an offline Surfpool chain, a real x402 verifier and settler, the compiled Brim program, and Postgres. The payment test checks a $0.04 vault debit, matching merchant credit, settlement signature, finalized program event, and one deduplicated ledger row.
+
+This establishes the local integration. Public devnet settlement and support from a production facilitator remain [release requirements](/docs/production/).

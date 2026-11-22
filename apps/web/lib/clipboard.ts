@@ -1,0 +1,25 @@
+import { SDK_TEMPLATE } from './sdk-template';
+
+/** Start before any await/import so Safari retains transient clipboard activation. */
+export function copyText(
+  text: string,
+  operation: 'copy-template' | 'copy-signature',
+): Promise<boolean> {
+  let write: Promise<void>;
+  try {
+    write = navigator.clipboard.writeText(text);
+  } catch {
+    return Promise.resolve(false);
+  }
+  // Attach rejection handling immediately, even while the Effect chunk is downloading.
+  const outcome = write.then(
+    () => true,
+    () => false,
+  );
+  return import('./clipboard-effects').then(
+    ({ completeClipboardWrite }) => completeClipboardWrite(outcome, operation),
+    () => outcome,
+  );
+}
+
+export const copySdkTemplate = () => copyText(SDK_TEMPLATE, 'copy-template');

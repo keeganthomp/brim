@@ -1,0 +1,12 @@
+# Replace _REGION/_REPOSITORY before submitting to an existing GCP project.
+# Build only. Production deployment is a separate, explicit operation.
+substitutions:
+  _REGION: us-central1
+  _REPOSITORY: brim
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: [build, -t, '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/web:$BUILD_ID', .]
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/web:$BUILD_ID'
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,72 @@
+---
+title: MCP
+description: Connect an MCP client to a scoped Brim card without writing application code.
+---
+
+Brim's stdio MCP server gives Claude Desktop, Cursor, and other MCP clients three tools:
+
+| Tool           | What it does                                                         |
+| -------------- | -------------------------------------------------------------------- |
+| `brim_balance` | Reads the vault's USDC balance.                                      |
+| `brim_policy`  | Reads this agent's limits, recorded window spend, and freeze status. |
+| `brim_fetch`   | Calls a paid API through the scoped agent key and on-chain policy.   |
+
+The tools cannot edit a policy, raise limits, withdraw funds, or replace their configured key. The operator attaches the policy separately; [see vaults and policies](/docs/vaults-and-policies/).
+
+## Connect to the local stack
+
+Complete the [quickstart](/docs/quickstart/) and keep `npm run dev` running. It builds the private workspace packages and creates the local configuration file.
+
+Add this entry to Claude Desktop's MCP configuration or Cursor's `.cursor/mcp.json`. Replace both absolute paths with your checkout location:
+
+```json title="MCP client configuration"
+{
+  "mcpServers": {
+    "brim-local": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/brim/packages/mcp/dist/cli.js",
+        "--local",
+        "/absolute/path/to/brim/.brim/local.json"
+      ]
+    }
+  }
+}
+```
+
+Use Node 24. If your desktop client cannot find `node`, set `command` to its absolute executable path. Refresh the MCP connection, then ask:
+
+> Check my Brim balance and policy. Then use `brim_fetch` to fetch `http://127.0.0.1:4020/report`.
+
+The report costs **$0.04 fake USDC**. Explicit local mode permits only this local report endpoint and uses the generated fake-funds setup.
+
+## Configure an operator-provided card
+
+For a separately prepared environment, run `npm run build:packages` from this repository and configure the same built CLI with your card and scoped agent key:
+
+```json title="MCP client configuration"
+{
+  "mcpServers": {
+    "brim": {
+      "command": "node",
+      "args": ["/absolute/path/to/brim/packages/mcp/dist/cli.js"],
+      "env": {
+        "BRIM_CARD": "YOUR_PUBLIC_CARD_CONFIGURATION",
+        "BRIM_AGENT_KEY": "YOUR_SCOPED_KEYPAIR_JSON_ARRAY"
+      }
+    }
+  }
+}
+```
+
+Brim chooses the public Solana RPC for the card's network. To use your own provider, optionally add `SOLANA_RPC_URL`; balance reads and payments use the same connection. An invalid explicit URL fails setup.
+
+The operator must supply a funded vault, an authorized agent policy, and a [compatible facilitator](/docs/x402/). The package is not published to npm; use the built file from your checkout.
+
+`BRIM_CARD` is public configuration and grants no authority. `BRIM_AGENT_KEY` is private: a JSON array of 64 Ed25519 keypair bytes. Keep the MCP client configuration out of source control, and never give it the owner's treasury key. [See the SDK inputs](/docs/sdk/) for the exact handoff.
+
+## Request behavior
+
+`brim_fetch` supports `GET` and `POST`; a POST body is a string. Normal configuration requires HTTPS. Responses are bounded to 64 KiB, errors are redacted, and cancellation interrupts the workflow. The SDK's default local $1 per-payment cap also applies.
+
+A timeout can leave payment settlement uncertain. Reconcile the original payment before another paid call; the MCP server does not promise invoice idempotency.

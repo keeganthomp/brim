@@ -1,0 +1,27 @@
+[package]
+name = "brim"
+version = "0.1.0"
+license = "Apache-2.0"
+description = "Non-custodial USDC policies for agent payments"
+edition = "2021"
+rust-version = "1.89"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "brim"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+devnet = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "=1.2.2", features = ["init-if-needed"] }
+anchor-spl = { version = "=1.2.2", default-features = false, features = ["associated_token", "token", "token_2022", "solana-v3"] }

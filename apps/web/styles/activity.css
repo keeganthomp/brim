@@ -1,0 +1,266 @@
+/* A compact ledger: merchant first, amount second, status in the details. */
+.live-indicator {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  border: 1px solid #e8ecf0;
+  border-radius: 6px;
+  padding: 4px 7px;
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
+  font-weight: 450;
+  white-space: nowrap;
+}
+.verified-indicator {
+  color: var(--green);
+  border-color: #e0eee5;
+  background: #fbfdfb;
+}
+.feed-filter {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 44px;
+  padding: 0 24px;
+  border-bottom: 1px solid #eef1f4;
+}
+.feed-filter button {
+  align-self: stretch;
+  position: relative;
+  padding: 0 0 12px;
+  color: var(--secondary);
+  font-size: 12px;
+  font-weight: 450;
+  line-height: 1.6;
+  transition: color 150ms;
+}
+.feed-filter button:hover {
+  color: #4d5965;
+}
+.feed-filter button.selected {
+  color: #313c47;
+  font-weight: 550;
+}
+.feed-filter button.selected::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: #53606c;
+  border-radius: 2px 2px 0 0;
+}
+.activity-list {
+  flex: 1;
+}
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 78px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f3f5;
+  text-align: left;
+  transition: background 150ms;
+}
+.activity-row:hover {
+  background: #fafbfd;
+}
+.merchant-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e8ecf0;
+  border-radius: 10px;
+  background: #fbfcfd;
+  color: #697681;
+  font-size: 12px;
+  font-weight: 550;
+}
+.activity-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 5px;
+}
+.merchant-name {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #303a44;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.15px;
+  line-height: 1.5;
+}
+.activity-agent {
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.activity-amount {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 6px;
+  margin-left: auto;
+  text-align: right;
+}
+.activity-amount strong {
+  color: #3a4652;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.15px;
+}
+.activity-row-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.payment-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--secondary);
+}
+.settled-state {
+  color: var(--green);
+}
+.activity-time {
+  color: var(--secondary);
+  white-space: nowrap;
+}
+.blocked {
+  background: #fff9f8;
+  border-color: #f7eeec;
+}
+.blocked:hover {
+  background: #fff5f2;
+}
+.blocked-avatar {
+  border-color: #f5e2dc;
+  background: #fff3ef;
+  color: #c88377;
+}
+.blocked-reason {
+  color: var(--red);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.blocked .activity-amount strong {
+  color: var(--red);
+  text-decoration: line-through;
+  text-decoration-color: #c1a79e;
+}
+.blocked-status {
+  color: var(--red);
+}
+.activity-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 15px 22px;
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+.activity-section .empty-state {
+  min-height: 360px;
+  color: #9ca6b0;
+}
+.activity-section .empty-state h3 {
+  color: #57636f;
+  font-size: 14px;
+}
+.activity-section .empty-state p {
+  color: var(--secondary);
+  font-size: 12px;
+}
+
+@media (min-width: 801px) and (max-width: 1080px) {
+  .activity-row {
+    padding-left: 20px;
+    padding-right: 20px;
+    gap: 10px;
+  }
+  .feed-filter {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .merchant-name {
+    font-size: 12px;
+  }
+  .merchant-avatar {
+    width: 31px;
+    height: 33px;
+  }
+  .activity-row-meta {
+    gap: 6px;
+    font-size: 9px;
+  }
+}
+@media (max-width: 800px) {
+  .activity-row {
+    padding: 17px 22px;
+    min-height: 80px;
+  }
+  .feed-filter {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+  .activity-section .empty-state {
+    min-height: 300px;
+  }
+}
+@media (max-width: 380px) {
+  .activity-row {
+    padding: 16px 18px;
+    gap: 9px;
+  }
+  .feed-filter {
+    padding-left: 18px;
+    padding-right: 18px;
+    gap: 19px;
+  }
+  .live-indicator {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+  .merchant-name {
+    font-size: 12px;
+  }
+  .merchant-avatar {
+    height: 32px;
+    width: 30px;
+    border-radius: 9px;
+  }
+  .activity-amount strong {
+    font-size: 11px;
+  }
+  .activity-row-meta {
+    gap: 6px;
+    font-size: 9px;
+  }
+  .activity-agent,
+  .blocked-reason {
+    font-size: 10px;
+  }
+  .activity-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+    font-size: 9px;
+  }
+}

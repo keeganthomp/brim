@@ -1,0 +1,59 @@
+---
+title: TypeScript SDK
+description: Connect your agent with its public vault config and scoped private key.
+---
+
+Get the public vault config from your operator. Use the bot’s own private key, whose public key is registered in the [spending policy](/docs/vaults-and-policies/).
+
+## Use two inputs
+
+```ts title="agent.ts"
+import { createBrimFetch } from '@brim/sdk';
+
+const brimFetch = createBrimFetch({
+  card: process.env.BRIM_CARD!,
+  agentKey: process.env.BRIM_AGENT_KEY!,
+});
+
+const response = await brimFetch('https://merchant.example/paid-resource');
+```
+
+| Input            | What it is                                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| `BRIM_CARD`      | Public vault configuration supplied by your operator. It grants no authority and creates no policy.         |
+| `BRIM_AGENT_KEY` | The private scoped agent key: a JSON array of 64 Ed25519 keypair bytes. Never use the treasury owner's key. |
+
+The URL above is illustrative. The [quickstart](/docs/quickstart/) runs the real payment engine against the included paid API. `@brim/sdk` is a private workspace package, not a published npm package.
+
+## Optional connection and cap
+
+Brim uses Solana's public RPC for the network in your config: `https://api.devnet.solana.com` or `https://api.mainnet-beta.solana.com`.
+
+Add `rpcUrl: process.env.SOLANA_RPC_URL` for a dedicated provider or local Surfpool. Keep provider credentials outside the public vault config. An explicit invalid URL fails rather than silently falling back.
+
+The default SDK safety cap is **$1 USDC per payment**. Add `maxPaymentAmount: 5_000_000n` for a $5 local cap. The on-chain policy still applies.
+
+## Create the public config
+
+After preparing the vault, agent policy, and compatible facilitator, the operator creates the config once:
+
+```ts title="operator-setup.ts"
+import { createBrimCard } from '@brim/sdk';
+
+const card = createBrimCard({
+  vaultAddress: process.env.BRIM_VAULT_ADDRESS!,
+  programAddress: process.env.BRIM_PROGRAM_ADDRESS!,
+  network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1', // devnet
+  facilitatorFeePayers: [process.env.BRIM_FACILITATOR_FEE_PAYER!],
+});
+```
+
+Give `card` to the application as `BRIM_CARD`, separately from its private key. This function serializes metadata; it does not register a policy or move funds.
+
+## Errors and compatibility
+
+`createBrimFetch` returns ordinary Promises. Effect applications can use `createBrimFetchEffect` with the same inputs.
+
+Failures use `BrimPolicyViolationError` with a stable `code`. For `AGENT_FROZEN` or `WINDOW_LIMIT_EXCEEDED`, ask the operator to review the policy. For `PAYMENT_OUTCOME_UNKNOWN`, reconcile the original payment before trying another paid request.
+
+External APIs need a facilitator that supports and allowlists the Brim program. [Check x402 compatibility](/docs/x402/).
