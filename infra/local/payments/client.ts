@@ -12,6 +12,7 @@ import {
 import { Data, Effect } from 'effect';
 import { Pool } from 'pg';
 import { configuration } from '../../../scripts/local/config.ts';
+import { localDatabaseUrl } from '../database.ts';
 import { loadLocalContext, PAYMENT_AMOUNT, RESOURCE_URL, type LocalContext } from './context.ts';
 
 class LocalPaymentError extends Data.TaggedError('LocalPaymentError')<{ message: string }> {}
@@ -19,26 +20,6 @@ const io = <A>(work: (signal: AbortSignal) => PromiseLike<A>, message: string) =
   Effect.tryPromise({ try: work, catch: () => new LocalPaymentError({ message }) });
 const failure = (message: string) => Effect.fail(new LocalPaymentError({ message }));
 const PRICE = PAYMENT_AMOUNT;
-
-function databaseUrl(defaultUrl: string) {
-  const value = process.env.DATABASE_URL || defaultUrl;
-  return Effect.try({
-    try: () => {
-      const parsed = new URL(value);
-      if (
-        !['postgres:', 'postgresql:'].includes(parsed.protocol) ||
-        !['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)
-      )
-        throw new Error();
-      return value;
-    },
-    catch: () =>
-      new LocalPaymentError({
-        message:
-          'The payment demo requires local PostgreSQL. Use the database started by npm run local.',
-      }),
-  });
-}
 
 export function finalizedProof(rpcUrl: string, programId: string, signature: string) {
   const verifier = createSolanaVerifier({ rpcUrl, programId });
@@ -110,7 +91,11 @@ export function persistLocalProof(
   proof: Verification,
 ) {
   return Effect.gen(function* () {
-    const connectionString = yield* databaseUrl(defaultDatabaseUrl);
+    const connectionString = process.env.DATABASE_URL || defaultDatabaseUrl;
+    if (!localDatabaseUrl(connectionString))
+      return yield* failure(
+        'The payment demo requires the local PostgreSQL started by npm run dev.',
+      );
     return yield* Effect.acquireUseRelease(
       Effect.sync(() => {
         const pool = new Pool({ connectionString, max: 2, connectionTimeoutMillis: 5000 });

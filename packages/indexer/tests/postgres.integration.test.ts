@@ -123,6 +123,98 @@ describe.runIf(Boolean(connectionString))('isolated PostgreSQL integration', () 
     ).toBe(0);
   });
 
+  it('appends distinct same-slot events while rejecting edits to an existing finalized event', async () => {
+    const store = new PostgresEventStore(pool);
+    const signature = '8'.repeat(88);
+    const settled = payment as Extract<Verification, { status: 'settled' }>;
+    await store.record(signature, settled);
+    await store.record(signature, {
+      ...settled,
+      payments: [
+        {
+          ...settled.payments[0]!,
+          eventIndex: 1,
+          vault: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        },
+      ],
+    });
+    expect(
+      (
+        await pool.query('SELECT count(*)::INT AS count FROM brim_payments WHERE signature = $1', [
+          signature,
+        ])
+      ).rows[0].count,
+    ).toBe(2);
+    await expect(
+      store.record(signature, {
+        ...settled,
+        payments: [{ ...settled.payments[0]!, amount: '50000' }],
+      }),
+    ).rejects.toMatchObject({ code: 'FINALIZED_EVENT_CONFLICT' });
+    expect(
+      (
+        await pool.query(
+          'SELECT amount_base_units::TEXT AS amount FROM brim_payments WHERE signature = $1 AND event_index = 0',
+          [signature],
+        )
+      ).rows[0].amount,
+    ).toBe('40000');
+  });
+
+  it('rejects another finalized slot without changing stored events or status', async () => {
+    const store = new PostgresEventStore(pool);
+    const signature = '9'.repeat(88);
+    const settled = payment as Extract<Verification, { status: 'settled' }>;
+    await store.record(signature, settled);
+    await expect(
+      store.record(signature, {
+        ...settled,
+        slot: 124,
+        payments: [{ ...settled.payments[0]!, eventIndex: 1 }],
+      }),
+    ).rejects.toMatchObject({ code: 'FINALIZED_SLOT_CONFLICT' });
+    expect(
+      (
+        await pool.query(
+          'SELECT status, slot::TEXT AS slot FROM brim_chain_notifications WHERE signature = $1',
+          [signature],
+        )
+      ).rows[0],
+    ).toEqual({ status: 'settled', slot: '123' });
+    expect(
+      (
+        await pool.query('SELECT count(*)::INT AS count FROM brim_payments WHERE signature = $1', [
+          signature,
+        ])
+      ).rows[0].count,
+    ).toBe(1);
+  });
+
+  it('rolls back failed payment writes and releases the connection for a valid retry', async () => {
+    const store = new PostgresEventStore(pool);
+    const signature = 'A'.repeat(88);
+    const settled = payment as Extract<Verification, { status: 'settled' }>;
+    await store.record(signature, { status: 'pending' });
+    await expect(
+      store.record(signature, { ...settled, payments: [{ ...settled.payments[0]!, amount: '0' }] }),
+    ).rejects.toMatchObject({ code: 'DATABASE_UNAVAILABLE' });
+    expect(
+      (
+        await pool.query('SELECT status FROM brim_chain_notifications WHERE signature = $1', [
+          signature,
+        ])
+      ).rows[0].status,
+    ).toBe('pending');
+    await store.record(signature, settled);
+    expect(
+      (
+        await pool.query('SELECT count(*)::INT AS count FROM brim_payments WHERE signature = $1', [
+          signature,
+        ])
+      ).rows[0].count,
+    ).toBe(1);
+  });
+
   it('parallel pending selection rotates attempts and excludes finalized records', async () => {
     const store = new PostgresEventStore(pool);
     for (const char of ['3', '4', '5', '6', '7'])

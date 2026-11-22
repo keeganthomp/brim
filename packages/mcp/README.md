@@ -62,6 +62,8 @@ Your operator sets the policy, funds the vault, and configures a facilitator tha
 
 `brim_fetch` supports `GET` and `POST`; a POST body is a string. Card configuration uses HTTPS resources. Responses are bounded to 64 KiB, errors are redacted, and MCP cancellation interrupts the Effect workflow. Setup never makes a paid request.
 
-The server speaks MCP over standard input/output without printing keys, card configuration, RPC credentials, or startup messages to the protocol stream. A timeout after submission can leave settlement uncertain; reconcile the original payment before making another paid call.
+The server speaks MCP over standard input/output without printing keys, card configuration, RPC credentials, or startup messages to the protocol stream. A timeout, unreadable response, or invalid settlement receipt can leave the payment outcome uncertain; reconcile the original payment before making another paid call. Receipts are bounded and checked for the configured network and signature format. They are reported by the resource, not independent proof of finalized settlement.
 
 See [SDK setup](../sdk/README.md) and [facilitator compatibility](../../docs/x402.md) for the operator handoff.
+
+This is a local stdio process for an operator-approved agent client, with one scoped card per process. A spending policy does not sandbox network access: HTTPS resources may intentionally be private APIs, and an explicit RPC URL is trusted operator configuration. A hosted transport must provide its own authentication, per-agent key isolation, and network egress policy; the stdio server does not provide those boundaries. Cancellation stops local work but cannot reverse an authorization already sent.

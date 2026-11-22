@@ -37,6 +37,16 @@ describe('real kit transaction construction with RPC fixtures', () => {
       86, 4, 7, 7, 120, 139, 232, 139, 64, 156, 0, 0, 0, 0, 0, 0,
     ]);
     expect(instruction.accountIndices).toHaveLength(8);
+    expect(instruction.accountIndices!.map((index) => message.staticAccounts[index])).toEqual([
+      f.signer.address,
+      f.config.vaultAddress,
+      f.policyAddress,
+      req.asset,
+      await findTokenAccount(f.config.vaultAddress, req.asset),
+      MERCHANT,
+      await findTokenAccount(MERCHANT, req.asset),
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    ]);
     expect(instruction.accountIndices).not.toContain(0);
     expect(message.instructions).toHaveLength(4);
   });

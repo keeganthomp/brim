@@ -39,4 +39,4 @@ Cloud Run hosts the Next.js standalone app; Cloud SQL PostgreSQL stores activity
 
 ## Before handling real funds
 
-Native policy/account tests, SBF compilation, 17 real Surfpool transaction checks, and an actual local x402/USDC/Postgres settlement are verified. Remaining release gates include external devnet deployment and settlement, broader adversarial concurrency/replay tests, independent review/audit, fuzzing, and production wallet/API authorization. Local execution does not substitute for an audit or deployment verification.
+Native policy and account tests, SBF compilation, 20 Surfpool transaction checks, and local x402-to-Postgres settlement cover the current implementation. Release gates include public devnet settlement with the intended facilitator, Squads owner flows, wallet and API authorization, documented program upgrade authority, fuzzing, and an independent security audit.

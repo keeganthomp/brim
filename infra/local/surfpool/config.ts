@@ -31,6 +31,7 @@ export function localRpcEffect(rpcUrl: string, method: string, params: readonly 
       () =>
         fetch(rpcUrl, {
           method: 'POST',
+          redirect: 'error',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ jsonrpc: '2.0', id: ++id, method, params }),
           signal: AbortSignal.timeout(20_000),

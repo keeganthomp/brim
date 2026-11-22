@@ -34,6 +34,9 @@ export function validatePaymentRequirements(
       'UNSUPPORTED_PAYMENT',
       'Only exact USDC payments on the configured Solana network are supported.',
     );
+  const flow = req.extra?.paymentFlow;
+  if (flow !== undefined && flow !== 'authorization')
+    fail('UNSUPPORTED_PAYMENT', 'This SDK supports exact authorization payments only.');
   const amount = parseAtomicAmount(req.amount);
   if (amount > (config.maxPaymentAmount ?? 1_000_000n))
     fail(

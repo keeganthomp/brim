@@ -15,3 +15,5 @@ export type BrimNetwork = keyof typeof NETWORKS;
 export const TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 export const ASSOCIATED_TOKEN_PROGRAM = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
 export const EXECUTE_PAYMENT_DISCRIMINATOR = new Uint8Array([86, 4, 7, 7, 120, 139, 232, 139]);
+
+export const AGENT_POLICY_DISCRIMINATOR = new Uint8Array([148, 193, 218, 129, 21, 96, 195, 77]);

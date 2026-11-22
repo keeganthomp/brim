@@ -1,12 +1,17 @@
+import { isAddress, isSignature } from '@solana/kit';
 import { Effect, Schema } from 'effect';
 import { IndexerConfigurationError, IndexerValidationError } from './errors.js';
 import type { Verification } from './types.js';
 
 export const AddressSchema = Schema.String.pipe(
-  Schema.check(Schema.isPattern(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/)),
+  Schema.check(Schema.makeFilter((value: string) => isAddress(value))),
 );
 export const SignatureSchema = Schema.String.pipe(
-  Schema.check(Schema.isPattern(/^[1-9A-HJ-NP-Za-km-z]{64,88}$/)),
+  Schema.check(
+    Schema.makeFilter(
+      (value: string) => /^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(value) && isSignature(value),
+    ),
+  ),
 );
 const amount = Schema.String.pipe(
   Schema.check(

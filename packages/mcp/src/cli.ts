@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import { Effect } from 'effect';
+import { Effect, Exit } from 'effect';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadMcpConfig } from './config.js';
 import { createBrimMcpService } from './service.js';
 import { createBrimMcpServer } from './server.js';
-import { publicDiagnostic } from './errors.js';
+import { failureDiagnostic, publicDiagnostic } from './errors.js';
 
 // stdout belongs exclusively to MCP. Setup diagnostics never contain provider causes or input values.
 const program = Effect.gen(function* () {
@@ -24,16 +24,9 @@ const program = Effect.gen(function* () {
   process.once('SIGINT', close);
   process.once('SIGTERM', close);
 });
-await Effect.runPromise(
-  program.pipe(
-    Effect.catch((error) =>
-      Effect.sync(() => {
-        const diagnostic = publicDiagnostic(
-          error && typeof error === 'object' && 'code' in error ? error.code : undefined,
-        );
-        process.stderr.write(`Brim MCP: ${diagnostic.code}: ${diagnostic.message}\n`);
-        process.exitCode = 1;
-      }),
-    ),
-  ),
-);
+const exit = await Effect.runPromiseExit(program);
+if (Exit.isFailure(exit)) {
+  const diagnostic = failureDiagnostic(exit.cause);
+  process.stderr.write(`Brim MCP: ${diagnostic.code}: ${diagnostic.message}\n`);
+  process.exitCode = 1;
+}

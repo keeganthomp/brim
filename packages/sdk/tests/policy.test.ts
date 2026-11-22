@@ -30,3 +30,21 @@ describe('integer policy bounds', () => {
     expect(() => checkPolicy(policy, 1n, MERCHANT, 999n)).toThrow(error('INVALID_ACCOUNT'));
   });
 });
+
+describe('epoch-zero policy state', () => {
+  it('distinguishes an unused policy from a payment recorded at Unix zero', () => {
+    const initial = {
+      ...policy,
+      windowStart: 0n,
+      windowSpent: 0n,
+      lastTxTs: 0n,
+      minTxInterval: 5n,
+    };
+    expect(() => checkPolicy(initial, 1n, MERCHANT, 0n)).not.toThrow();
+    const spent = { ...initial, windowSpent: 1n };
+    expect(() => checkPolicy(spent, 1n, MERCHANT, 0n)).toThrow(error('RATE_LIMIT_EXCEEDED'));
+    expect(() => checkPolicy(spent, 1n, MERCHANT, 4n)).toThrow(error('RATE_LIMIT_EXCEEDED'));
+    expect(() => checkPolicy(spent, 1n, MERCHANT, 5n)).not.toThrow();
+    expect(() => checkPolicy(initial, 1n, MERCHANT, -1n)).toThrow(error('INVALID_ACCOUNT'));
+  });
+});

@@ -93,13 +93,13 @@ Local Surfpool uses a synthetic mint at the devnet USDC address. Build with the 
 
 ## Verification performed in this workspace
 
-`cargo test --locked -p brim` and `cargo test --locked -p brim --features devnet` passed 10 tests each: policy arithmetic/boundaries, serialization and Anchor generated account guards.
+`cargo test --locked -p brim` and `cargo test --locked -p brim --features devnet` passed 14 tests each: policy arithmetic/boundaries, serialization and Anchor generated account guards.
 
 The explicit devnet SBF build command above passed with Agave 4.1.2, platform-tools v1.57 (Rust SBPF 1.95.0), SBPF v3 and Anchor 1.2.2, including after the source-module refactor. The compiled artifact is `target/deploy/brim.so`. Build output is ignored; no program was deployed to devnet/mainnet. SBF compilation alone does not demonstrate runtime behavior or facilitator compatibility.
 
 ## Local Surfpool workflow
 
-Local running and transaction tests use [Surfpool 1.7.0](https://github.com/solana-foundation/surfpool/releases/tag/v1.7.0). The harness `programs/brim/tests/surfpool.mjs` starts Surfpool **offline**, loads the compiled SBF through `surfnet_writeProgram`, and seeds a synthetic USDC mint through `surfnet_setAccount`. It runs 17 real SBF transaction checks: successful exact transfers, per-payment/window caps, freeze/pause, owner authorization, preserved policy updates, substituted recipient/mint/program rejection, precreated ATA initialization and failed-CPI rollback. **All 17 passed in this workspace**, both attached to an existing Surfpool instance and in a standalone spawned instance.
+Local running and transaction tests use [Surfpool 1.7.0](https://github.com/solana-foundation/surfpool/releases/tag/v1.7.0). The harness `programs/brim/tests/surfpool.mjs` starts Surfpool **offline**, loads the compiled SBF through `surfnet_writeProgram`, and seeds a synthetic USDC mint through `surfnet_setAccount`. It runs 20 real SBF transaction checks: successful exact transfers, per-payment/window caps, freeze/pause, owner authorization, preserved policy updates, substituted recipient/mint/program rejection, precreated ATA initialization, failed-CPI rollback, nonzero payment spacing, expired-window reset and concurrent budget consumption. **All 20 passed in this workspace** on an isolated offline Surfpool instance.
 
 Use `npm run test:chain`. The underlying harness supports `SURFPOOL_BIN=/path/to/surfpool` and `--rpc-url http://127.0.0.1:8899` to attach to an existing local instance. A devnet-feature SBF artifact must exist first; `npm run build:chain` prepares it through the repository's build helper. Solana/Anchor CLIs are not needed to seed or execute local transactions.
 
@@ -108,3 +108,11 @@ The runtime is configured with `--offline --genesis-hash EtWTRABZaYq6iMfeYKouRu1
 Shared local code lives under `infra/local/surfpool/`: `config.ts` validates local RPC boundaries, `seed.ts` loads code/mint, `transactions.ts` provides Effect transaction workflows, and `credentials.ts`/`bootstrap.ts` manage idempotent local setup. `seedSurfpoolEffect` and `bootstrapLocalEffect` expose typed Effect workflows; Promise facades serve CLI/test boundaries.
 
 `node infra/local/surfpool/bootstrap.ts` uses `BRIM_RPC_URL` (default loopback port 8899), `BRIM_LOCAL_CONFIG` (default `.brim/local.json`), and optional `BRIM_PROGRAM_PATH`. It creates a vault with 100 fake USDC, a strict merchant allowlist, a $1 payment cap and $50 fixed-window budget. It stores fake owner, agent and facilitator keys only in the ignored local JSON file with permissions `0600`; the public card contains no key. Existing credentials, policies, budgets and vault balances are retained on repeat startup. A new empty Surfpool instance recreates missing accounts using the same persisted local keys.
+
+## Defensive review and remaining authority assurance
+
+A focused source review found a low-severity timestamp-zero ambiguity in the minimum-spacing sentinel. The program now recognizes prior spending at genesis time as well as a nonzero last-payment timestamp. A native boundary regression verifies spacing at zero and at the exact interval; no account layout, instruction discriminator, error code or instruction argument changed. Additional generated-Anchor guard tests cover stored bumps, account owners, pinned token-program ownership and owner-only withdrawals.
+
+No confirmed treasury-authority, PDA, ATA or CPI-target bypass was found in this review. This is limited source/invariant coverage, not an independent audit. The runtime suite now also verifies that an early spaced payment leaves policy bytes unchanged, an expired window resets on its next successful payment, and two concurrent otherwise-valid payments cannot consume the same remaining policy budget twice.
+
+There is still no externally deployed program whose upgrade authority can be attested. Before funding a deployment, verify its executable/program-data accounts, artifact provenance and immutable or documented multisig/timelock upgrade control. Actual owner/agent/facilitator key custody and Squads CPI authorization remain integration assurance tasks; source constraints do not establish who controls those keys. USDC issuer controls and network availability also remain outside Brim's authority.

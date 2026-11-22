@@ -41,6 +41,8 @@ const configuredHandler = Effect.gen(function* () {
         connectionString: config.connectionString,
         max: 5,
         connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        statement_timeout: 10000,
       });
       pool.on('error', () => {
         /* Never log credentials from connection failures. */

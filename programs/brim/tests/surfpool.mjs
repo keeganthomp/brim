@@ -43,6 +43,7 @@ import {
   createLocalClient,
   pause,
 } from '../../../infra/local/surfpool/transactions.ts';
+import { checkPolicyInvariants } from './policy-invariants.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../../..');
@@ -321,6 +322,16 @@ try {
   assert.equal(await tokenBalance(vaultAta), 100_000n);
   assert.equal(await tokenBalance(merchantAta), 1_500_000n);
   passed('failed checked-transfer CPI rolls back budget and timestamp writes');
+  await checkPolicyInvariants({
+    owner,
+    merchant,
+    merchantAta,
+    vault,
+    vaultAta,
+    mintAuthority,
+    client: { rpc, send, accountBytes, tokenBalance },
+    passed,
+  });
   console.log(`\n${checks} local SBF integration checks passed. No external chain was contacted.`);
 } catch (error) {
   console.error(`Surfpool logs: ${logFile}`);

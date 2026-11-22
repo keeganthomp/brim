@@ -35,10 +35,14 @@ export class PostgresEventStore implements PendingEventStore {
         }),
       record: (signature, proof) =>
         Effect.acquireUseRelease(
-          database(() => pool.connect()),
-          (client) =>
+          database(() => pool.connect()).pipe(Effect.map((client) => ({ client, discard: false }))),
+          (resource) =>
             Effect.gen(function* () {
+              const { client } = resource;
               yield* database(() => client.query('BEGIN'));
+              yield* database(() =>
+                client.query("SET LOCAL statement_timeout = '5s'; SET LOCAL lock_timeout = '5s'"),
+              );
               yield* database(() =>
                 client.query(
                   'INSERT INTO brim_chain_notifications (signature) VALUES ($1) ON CONFLICT DO NOTHING',
@@ -46,46 +50,86 @@ export class PostgresEventStore implements PendingEventStore {
                 ),
               );
               const locked = yield* database(() =>
-                client.query<{ status: string }>(
-                  'SELECT status FROM brim_chain_notifications WHERE signature = $1 FOR UPDATE',
+                client.query<{ status: string; slot: string | null }>(
+                  'SELECT status, slot FROM brim_chain_notifications WHERE signature = $1 FOR UPDATE',
                   [signature],
                 ),
               );
-              if (locked.rows[0]?.status === 'pending' && proof.status !== 'pending') {
+              const current = locked.rows[0];
+              if (!current)
+                return yield* Effect.fail(
+                  new IndexerPersistenceError({ code: 'PERSISTENCE_ROW_UNAVAILABLE' }),
+                );
+              if (current?.status === 'pending' && proof.status !== 'pending') {
                 yield* database(() =>
                   client.query(
                     'UPDATE brim_chain_notifications SET status = $2, slot = $3, verified_at = NOW() WHERE signature = $1',
                     [signature, proof.status, proof.slot],
                   ),
                 );
-                if (proof.status === 'settled')
-                  yield* Effect.forEach(
-                    proof.payments,
-                    (payment) =>
-                      database(() =>
+              }
+              // Different tracked vaults can discover distinct events in one finalized tx.
+              // A same-slot replay may append missing events, never replace stored facts.
+              if (
+                proof.status === 'settled' &&
+                (current?.status === 'pending' || current?.status === 'settled')
+              ) {
+                if (current.status === 'settled' && String(current.slot) !== String(proof.slot))
+                  return yield* Effect.fail(
+                    new IndexerPersistenceError({ code: 'FINALIZED_SLOT_CONFLICT' }),
+                  );
+                yield* Effect.forEach(
+                  proof.payments,
+                  (payment) =>
+                    Effect.gen(function* () {
+                      const values = [
+                        signature,
+                        payment.eventIndex,
+                        payment.vault,
+                        payment.agentKey,
+                        payment.recipient,
+                        payment.amount,
+                        payment.timestamp,
+                      ];
+                      const inserted = yield* database(() =>
                         client.query(
                           `INSERT INTO brim_payments
-              (signature, event_index, vault, agent_key, recipient, amount_base_units, chain_timestamp)
-              VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (signature, event_index) DO NOTHING`,
-                          [
-                            signature,
-                            payment.eventIndex,
-                            payment.vault,
-                            payment.agentKey,
-                            payment.recipient,
-                            payment.amount,
-                            payment.timestamp,
-                          ],
+                    (signature, event_index, vault, agent_key, recipient, amount_base_units, chain_timestamp)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (signature, event_index) DO NOTHING RETURNING signature`,
+                          values,
                         ),
-                      ),
-                    { discard: true },
-                  );
+                      );
+                      if (inserted.rowCount === 0) {
+                        const matches = yield* database(() =>
+                          client.query(
+                            `SELECT 1 FROM brim_payments
+                      WHERE signature = $1 AND event_index = $2 AND vault = $3 AND agent_key = $4 AND recipient = $5
+                        AND amount_base_units = $6 AND chain_timestamp = $7`,
+                            values,
+                          ),
+                        );
+                        if (matches.rowCount !== 1)
+                          return yield* Effect.fail(
+                            new IndexerPersistenceError({ code: 'FINALIZED_EVENT_CONFLICT' }),
+                          );
+                      }
+                    }),
+                  { discard: true },
+                );
               }
               yield* database(() => client.query('COMMIT'));
             }).pipe(
-              Effect.onError(() => database(() => client.query('ROLLBACK')).pipe(Effect.ignore)),
+              Effect.onError(() =>
+                database(() => resource.client.query('ROLLBACK')).pipe(
+                  Effect.catch(() =>
+                    Effect.sync(() => {
+                      resource.discard = true;
+                    }),
+                  ),
+                ),
+              ),
             ),
-          (client) => Effect.sync(() => client.release()),
+          (resource) => Effect.sync(() => resource.client.release(resource.discard)),
         ),
     };
   }

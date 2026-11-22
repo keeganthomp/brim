@@ -13,7 +13,7 @@ export const fromPromise = <A>(
   evaluate: (signal: AbortSignal) => PromiseLike<A>,
   code: BrimErrorCode,
   message: string,
-) => Effect.tryPromise({ try: evaluate, catch: (error) => safeError(error, code, message) });
+) => Effect.tryPromise({ try: evaluate, catch: () => new BrimPolicyViolationError(code, message) });
 
 /** Preserve the tagged domain error itself for ordinary async/await callers. */
 export async function run<A>(

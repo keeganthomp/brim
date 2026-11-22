@@ -1,10 +1,12 @@
 import { Effect, Result } from 'effect';
-import { x402Client } from '@x402/core/client';
+import { x402Client, x402HTTPClient } from '@x402/core/client';
 import type { SchemeNetworkClient } from '@x402/core/types';
-import { wrapFetchWithPayment } from '@x402/fetch';
+import { wrapFetchWithPayment, ResponseBodyTooLargeError } from '@x402/fetch';
 import { BrimPolicyViolationError, fail } from './errors.js';
 import { attempt, fromPromise, run } from './effects.js';
 import { resolveBrimConfig } from './card.js';
+import { validatePaymentRequired } from './payment-required.js';
+import { paymentTransport } from './transport.js';
 import { createSolanaPaymentAdapter } from './solana.js';
 import { validateConfig, validatePaymentRequirements } from './validation.js';
 import type {
@@ -93,8 +95,7 @@ function makeFetchEffect(config: ResolvedBrimConfig): BrimEffectFetch {
       const merchant = new URL(request.url).hostname;
       let failure: BrimPolicyViolationError | undefined;
       let amount: string | undefined;
-      let signed = false;
-      let activeSignal = request.signal;
+      const handoff = { signal: request.signal, dispatched: false };
       const emit = (event: Omit<BrimEvent, 'merchant'>) =>
         fromPromise(
           () => Promise.resolve(config.onEvent?.({ ...event, merchant })),
@@ -122,11 +123,10 @@ function makeFetchEffect(config: ResolvedBrimConfig): BrimEffectFetch {
                 );
                 amount = payment.amount.toString();
                 const transaction = yield* adapter.createTransactionEffect(payment);
-                signed = true;
                 yield* emit({ status: 'payment_signed', amount });
                 return { x402Version: 2, payload: { transaction } };
               }),
-              { signal: activeSignal },
+              { signal: handoff.signal },
             );
           } catch (error) {
             return capture(error);
@@ -149,21 +149,33 @@ function makeFetchEffect(config: ResolvedBrimConfig): BrimEffectFetch {
       })
         .register(config.network, scheme)
         .setSpendControls(false); // Local typed checks + on-chain policy enforce the bounds.
+      const httpClient = new x402HTTPClient(client);
+      httpClient.onPaymentRequired(async ({ paymentRequired }) =>
+        validatePaymentRequired(paymentRequired),
+      );
       const result = yield* Effect.result(
         Effect.tryPromise({
           try: (signal) => {
-            activeSignal = AbortSignal.any([signal, request.signal]);
-            const guardedTransport: typeof fetch = (resource, options) => {
-              // An interrupted Effect must never continue into a paid retry.
-              activeSignal.throwIfAborted();
-              return transport(new Request(resource, { ...options, signal: activeSignal }));
-            };
+            handoff.signal = AbortSignal.any([signal, request.signal]);
+            const guardedTransport = paymentTransport(transport, handoff);
             return wrapFetchWithPayment(
               guardedTransport,
-              client,
-            )(new Request(request, { signal: activeSignal }));
+              httpClient,
+            )(new Request(request, { signal: handoff.signal }));
           },
           catch: (error) => {
+            // Once authorization reaches the transport, exception text/types cannot
+            // establish whether settlement happened. Never downgrade that outcome.
+            if (handoff.dispatched)
+              return new BrimPolicyViolationError(
+                'PAYMENT_OUTCOME_UNKNOWN',
+                'Payment outcome is unknown. Check settlement before making another paid request.',
+              );
+            if (error instanceof ResponseBodyTooLargeError)
+              return new BrimPolicyViolationError(
+                'INVALID_PAYMENT_REQUIREMENTS',
+                'Merchant sent an oversized x402 payment declaration.',
+              );
             if (failure) return failure;
             if (error instanceof BrimPolicyViolationError) return error;
             if (
@@ -183,10 +195,8 @@ function makeFetchEffect(config: ResolvedBrimConfig): BrimEffectFetch {
                 'No compatible payment option could be created. Ask the merchant about Brim support.',
               );
             return new BrimPolicyViolationError(
-              signed ? 'PAYMENT_OUTCOME_UNKNOWN' : 'REQUEST_FAILED',
-              signed
-                ? 'Payment outcome is unknown. Check settlement before making another paid request.'
-                : 'Request failed before payment was signed. Check the connection and try again.',
+              'REQUEST_FAILED',
+              'Request failed before payment was sent. Check the connection and try again.',
             );
           },
         }),
@@ -200,7 +210,7 @@ function makeFetchEffect(config: ResolvedBrimConfig): BrimEffectFetch {
         yield* emit({ status: 'payment_rejected', amount, code: 'PAYMENT_REJECTED' });
         return yield* new BrimPolicyViolationError(
           'PAYMENT_REJECTED',
-          'Payment was rejected. Check settlement before trying another paid request.',
+          'Resource rejected the paid retry. Settlement may have happened; reconcile before another payment.',
         );
       }
       return result.success;

@@ -21,7 +21,7 @@ export function boundedBody(response: Response) {
           if (next.done) break;
           length += next.value.byteLength;
           if (length > MAX_RESPONSE_BYTES) {
-            await reader.cancel();
+            cancel();
             throw new McpFailure({
               code: 'RESPONSE_TOO_LARGE',
               message: 'API response exceeds 64 KiB.',

@@ -4,7 +4,11 @@ import {
   getAddressEncoder,
   getProgramDerivedAddress,
 } from '@solana/kit';
-import { ASSOCIATED_TOKEN_PROGRAM, TOKEN_PROGRAM } from './constants.js';
+import {
+  AGENT_POLICY_DISCRIMINATOR,
+  ASSOCIATED_TOKEN_PROGRAM,
+  TOKEN_PROGRAM,
+} from './constants.js';
 import { fail } from './errors.js';
 import type { AgentPolicySnapshot } from './policy.js';
 
@@ -56,6 +60,8 @@ export async function findTokenAccount(owner: string, mint: string): Promise<str
 export function decodeAgentPolicy(data: Uint8Array): AgentPolicySnapshot {
   // Anchor Borsh layout, corresponding to programs/brim/src/lib.rs.
   if (data.length < 135) fail('INVALID_ACCOUNT', 'Truncated agent policy.');
+  if (!sameBytes(data.subarray(0, 8), AGENT_POLICY_DISCRIMINATOR))
+    fail('INVALID_ACCOUNT', 'Account is not a Brim agent policy.');
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const count = view.getUint32(130, true);
   if (count > 16 || data.length < 135 + count * 32)

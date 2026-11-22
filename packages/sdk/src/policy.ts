@@ -42,14 +42,16 @@ export function checkPolicy(
   if (amount <= 0n || amount > policy.maxPerTx)
     fail('PER_TRANSACTION_LIMIT_EXCEEDED', 'Per-transaction cap exceeded.');
   if (
+    now < 0n ||
     policy.windowDuration <= 0n ||
     policy.minTxInterval < 0n ||
     now < policy.windowStart ||
-    (policy.lastTxTs > 0n && now < policy.lastTxTs)
+    now < policy.lastTxTs
   ) {
     fail('INVALID_ACCOUNT', 'Policy timestamps or limits are invalid.');
   }
-  if (policy.lastTxTs > 0n && now - policy.lastTxTs < policy.minTxInterval)
+  const hasPreviousPayment = policy.lastTxTs !== 0n || policy.windowSpent !== 0n;
+  if (hasPreviousPayment && now - policy.lastTxTs < policy.minTxInterval)
     fail('RATE_LIMIT_EXCEEDED', 'Minimum payment interval has not elapsed.');
   const spent = now - policy.windowStart >= policy.windowDuration ? 0n : policy.windowSpent;
   if (spent + amount > policy.windowLimit)

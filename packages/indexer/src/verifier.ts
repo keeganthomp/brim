@@ -1,15 +1,21 @@
 import { Effect, Schema } from 'effect';
 import { IndexerConfigurationError, IndexerRpcError } from './errors.js';
 import { INVOKE, parsePaymentLogs } from './logs.js';
+import { cancelStream, readBoundedUtf8 } from './streams.js';
+import { AddressSchema, SignatureSchema } from './validation.js';
 import type { TransactionVerifier, Verification } from './types.js';
 export { parsePaymentLogs } from './logs.js';
 
+const MAX_RPC_BYTES = 4 * 1024 * 1024;
 const transactionSchema = Schema.Struct({
-  slot: Schema.Number.pipe(
-    Schema.check(Schema.makeFilter((n: number) => Number.isSafeInteger(n) && n >= 0)),
-  ),
-  transaction: Schema.Struct({ signatures: Schema.Array(Schema.String) }),
-  meta: Schema.Struct({ err: Schema.Unknown, logMessages: Schema.Array(Schema.String) }),
+  slot: Schema.Number.check(Schema.makeFilter((n: number) => Number.isSafeInteger(n) && n >= 0)),
+  transaction: Schema.Struct({
+    signatures: Schema.Array(SignatureSchema).check(Schema.isBetweenLength(1, 64)),
+  }),
+  meta: Schema.Struct({
+    err: Schema.Union([Schema.Null, Schema.String, Schema.Record(Schema.String, Schema.Unknown)]),
+    logMessages: Schema.Array(Schema.String).check(Schema.isMaxLength(10_000)),
+  }),
 });
 export interface SolanaVerifierOptions {
   rpcUrl: string;
@@ -18,7 +24,7 @@ export interface SolanaVerifierOptions {
   timeoutMs?: number;
 }
 
-/** The native effect is cancellable; only finalized successful runtime events can settle. */
+/** Finalized-only verification; transport and body reads remain bounded and cancellable. */
 export function createSolanaVerifier(options: SolanaVerifierOptions): TransactionVerifier {
   const url = new URL(options.rpcUrl);
   if (
@@ -26,15 +32,21 @@ export function createSolanaVerifier(options: SolanaVerifierOptions): Transactio
     !(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname))
   )
     throw new IndexerConfigurationError({ code: 'RPC_REQUIRES_HTTPS' });
-  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(options.programId))
+  if (!Schema.is(AddressSchema)(options.programId))
     throw new IndexerConfigurationError({ code: 'INVALID_PROGRAM_ID' });
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60_000)
+    throw new IndexerConfigurationError({ code: 'INVALID_RPC_TIMEOUT' });
   const fetcher = options.fetch ?? globalThis.fetch;
   const verify = (signature: string) =>
     Effect.gen(function* () {
+      if (!Schema.is(SignatureSchema)(signature))
+        return yield* Effect.fail(new IndexerRpcError({ code: 'RPC_INVALID_SIGNATURE' }));
       const response = yield* Effect.tryPromise({
         try: (signal) =>
           fetcher(url, {
             method: 'POST',
+            redirect: 'error',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
               jsonrpc: '2.0',
@@ -49,16 +61,42 @@ export function createSolanaVerifier(options: SolanaVerifierOptions): Transactio
           }),
         catch: () => new IndexerRpcError({ code: 'RPC_UNAVAILABLE' }),
       });
-      if (!response.ok) return yield* Effect.fail(new IndexerRpcError({ code: 'RPC_UNAVAILABLE' }));
-      const body: unknown = yield* Effect.tryPromise({
-        try: () => response.json(),
+      // Keep the response stream in the same fiber; the bounded reader cancels it on every exit.
+      if (!response.ok) {
+        yield* cancelStream(response.body);
+        return yield* Effect.fail(new IndexerRpcError({ code: 'RPC_UNAVAILABLE' }));
+      }
+      const length = response.headers.get('content-length');
+      if (length !== null && (!/^\d+$/.test(length) || Number(length) > MAX_RPC_BYTES)) {
+        yield* cancelStream(response.body);
+        return yield* Effect.fail(new IndexerRpcError({ code: 'RPC_RESPONSE_LIMIT' }));
+      }
+      const raw = yield* readBoundedUtf8(response.body, {
+        maxBytes: MAX_RPC_BYTES,
+        timeoutMs,
+        error: (reason) =>
+          new IndexerRpcError({
+            code:
+              reason === 'LIMIT'
+                ? 'RPC_RESPONSE_LIMIT'
+                : reason === 'TIMEOUT'
+                  ? 'RPC_TIMEOUT'
+                  : 'RPC_INVALID_RESPONSE',
+          }),
+      });
+      const body: unknown = yield* Effect.try({
+        try: () => JSON.parse(raw),
         catch: () => new IndexerRpcError({ code: 'RPC_INVALID_RESPONSE' }),
       });
       if (
         !body ||
         typeof body !== 'object' ||
         !('result' in body) ||
-        ('error' in body && body.error)
+        !('jsonrpc' in body) ||
+        body.jsonrpc !== '2.0' ||
+        !('id' in body) ||
+        body.id !== 1 ||
+        Object.hasOwn(body, 'error')
       )
         return yield* Effect.fail(new IndexerRpcError({ code: 'RPC_INVALID_RESPONSE' }));
       if (body.result === null) return { status: 'pending' } as const;
@@ -81,7 +119,7 @@ export function createSolanaVerifier(options: SolanaVerifierOptions): Transactio
         ? ({ status: 'settled', slot: tx.slot, payments } as const)
         : ({ status: 'unrelated', slot: tx.slot } as const);
     }).pipe(
-      Effect.timeout(options.timeoutMs ?? 10_000),
+      Effect.timeout(timeoutMs),
       Effect.mapError((error) =>
         error._tag === 'TimeoutError' ? new IndexerRpcError({ code: 'RPC_TIMEOUT' }) : error,
       ),

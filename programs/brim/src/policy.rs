@@ -61,7 +61,9 @@ impl AgentPolicy {
             now >= 0 && now >= self.window_start && now >= self.last_tx_ts,
             BrimError::InvalidClock
         );
-        if self.last_tx_ts != 0 {
+        // Zero is also a valid genesis timestamp. A positive spent counter
+        // distinguishes a payment at that time from a policy that never paid.
+        if self.last_tx_ts != 0 || self.window_spent != 0 {
             let since_last = now
                 .checked_sub(self.last_tx_ts)
                 .ok_or(BrimError::ArithmeticOverflow)?;

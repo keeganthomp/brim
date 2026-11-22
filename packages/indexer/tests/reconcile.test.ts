@@ -5,7 +5,9 @@ import type { PendingEventStore, Verification } from '../src/index.js';
 
 const vault = getBase58Decoder().decode(new Uint8Array(32).fill(1));
 const foreign = getBase58Decoder().decode(new Uint8Array(32).fill(2));
-const signatures = ['1'.repeat(88), '2'.repeat(88), '3'.repeat(88), '4'.repeat(88), '5'.repeat(88)];
+const signatures = [0, 1, 2, 3, 4].map((value) =>
+  getBase58Decoder().decode(new Uint8Array(64).fill(value)),
+);
 const paid = (v = vault): Verification => ({
   status: 'settled',
   slot: 123,

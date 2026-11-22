@@ -84,6 +84,21 @@ fn rate_limit_is_minimum_spacing_and_does_not_block_first_payment() {
 }
 
 #[test]
+fn minimum_spacing_also_applies_after_a_payment_at_genesis_time() {
+    let mut p = policy();
+    p.window_start = 0;
+    p.min_tx_interval = 60;
+    let first = p.check_payment(1, 0, Pubkey::new_unique()).unwrap();
+    p.window_start = first.window_start;
+    p.window_spent = first.window_spent;
+    p.last_tx_ts = 0;
+
+    assert_eq!(code(p.check_payment(1, 0, Pubkey::new_unique())), 6005);
+    assert_eq!(code(p.check_payment(1, 59, Pubkey::new_unique())), 6005);
+    assert!(p.check_payment(1, 60, Pubkey::new_unique()).is_ok());
+}
+
+#[test]
 fn frozen_zero_amount_backward_clock_and_overflow_are_rejected() {
     let mut p = policy();
     p.is_frozen = true;
@@ -158,3 +173,5 @@ fn account_sizes_and_discriminators_match_sdk_contract() {
 }
 
 mod account_guards;
+mod fixtures;
+mod withdraw_guards;

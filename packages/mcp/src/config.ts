@@ -1,8 +1,8 @@
-import { readFile, stat } from 'node:fs/promises';
 import { Effect, Schema } from 'effect';
 import { readBrimCard, resolveBrimRpcUrl } from '@brim/sdk';
-import { attempt, fail, io, McpFailure } from './errors.js';
+import { attempt, fail, McpFailure } from './errors.js';
 import type { McpConfig } from './types.js';
+import { readLocalConfiguration } from './local-config.js';
 
 const fields = {
   card: Schema.String.check(Schema.isBetweenLength(1, 4096)),
@@ -52,21 +52,7 @@ export function loadMcpConfig(args: readonly string[], env: NodeJS.ProcessEnv) {
         'Set BRIM_CARD and BRIM_AGENT_KEY, or use --local /absolute/path/.brim/local.json.',
       );
     const filename = args[1];
-    const info = yield* io(
-      () => stat(filename),
-      'LOCAL_SETUP_REQUIRED',
-      'Start the local Brim stack before using --local.',
-    );
-    if (!info.isFile() || info.size > 32_768)
-      return yield* fail(
-        'INVALID_LOCAL_SETUP',
-        'The local configuration file is invalid. Recreate the local stack.',
-      );
-    const text = yield* io(
-      () => readFile(filename, 'utf8'),
-      'LOCAL_SETUP_REQUIRED',
-      'Could not read the local Brim configuration.',
-    );
+    const text = yield* readLocalConfiguration(filename);
     const config = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(LocalConfig))(text).pipe(
       Effect.mapError(
         () =>

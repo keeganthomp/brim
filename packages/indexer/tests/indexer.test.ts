@@ -9,7 +9,7 @@ import { getBase58Decoder } from '@solana/kit';
 
 const program = 'AekkJRGenJd9bgXoYo88xnAGpen9DMqSjkBRZZMMskpo';
 const other = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-const sig = '1'.repeat(88);
+const sig = '1'.repeat(64);
 const authorization = 'Bearer test-authentication-value-at-least-32-bytes';
 const vault = getBase58Decoder().decode(new Uint8Array(32).fill(1));
 function event() {
@@ -138,7 +138,7 @@ describe('Solana finalized transaction verifier', () => {
     const pending = createSolanaVerifier({
       rpcUrl: 'https://rpc.test',
       programId: program,
-      fetch: async () => Response.json({ result: null }),
+      fetch: async () => Response.json({ jsonrpc: '2.0', id: 1, result: null }),
     });
     expect(await pending(sig)).toEqual({ status: 'pending' });
   });

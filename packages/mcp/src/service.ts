@@ -1,11 +1,10 @@
 import { Effect } from 'effect';
 import { BrimPolicyViolationError, createBrimFetchEffect } from '@brim/sdk';
-import { decodePaymentResponseHeader } from '@x402/core/http';
 import { accountReader } from './accounts.js';
-import { boundedBody } from './body.js';
 import { loopback } from './config.js';
 import { attempt, fail, McpFailure } from './errors.js';
 import type { BrimMcpService, FetchArgs, McpConfig } from './types.js';
+import { readResourceResponse } from './response.js';
 
 const TIMEOUT_MS = 15_000;
 export function createBrimMcpService(config: McpConfig) {
@@ -51,23 +50,7 @@ export function createBrimMcpService(config: McpConfig) {
               }),
           ),
         );
-        const body = yield* boundedBody(response);
-        let receipt: { network: string; signature: string } | undefined;
-        const header = response.headers.get('PAYMENT-RESPONSE');
-        if (header) {
-          const settled = yield* attempt(
-            () => decodePaymentResponseHeader(header),
-            'PAYMENT_OUTCOME_UNKNOWN',
-            'Could not validate settlement receipt.',
-          );
-          if (!settled.success) return yield* fail('PAYMENT_REJECTED', 'Payment was not settled.');
-          receipt = { network: settled.network, signature: settled.transaction };
-        }
-        // Never return provider/RPC URLs, arbitrary headers, or configured secrets.
-        const safeBody = body
-          .replaceAll(config.agentKey, '[redacted]')
-          .replaceAll(config.rpcUrl, '[redacted]');
-        return { status: response.status, body: safeBody, ...(receipt ? { receipt } : {}) };
+        return yield* readResourceResponse(response, config, reader.network);
       }).pipe(
         Effect.timeout(TIMEOUT_MS),
         Effect.mapError((error) =>

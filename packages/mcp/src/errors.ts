@@ -1,4 +1,4 @@
-import { Data, Effect } from 'effect';
+import { Data, Effect, type Cause } from 'effect';
 
 export class McpFailure extends Data.TaggedError('McpFailure')<{
   code: string;
@@ -60,4 +60,14 @@ export function publicDiagnostic(code: unknown) {
       ? PUBLIC_MESSAGES[code]!
       : 'The tool could not complete. Check setup and connection before retrying.',
   };
+}
+
+/** Shared protocol/process boundary: never serialize a defect or provider cause. */
+export function failureDiagnostic(cause: Cause.Cause<unknown>) {
+  for (const reason of cause.reasons) {
+    if (reason._tag === 'Fail' && reason.error instanceof McpFailure) {
+      return publicDiagnostic(reason.error.code);
+    }
+  }
+  return publicDiagnostic(undefined);
 }

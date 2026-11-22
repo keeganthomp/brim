@@ -151,6 +151,13 @@ describe('Brim MCP protocol', () => {
     expect(text(result).length).toBeLessThan(1024);
   });
 
+  it('returns a typed tool error for a value that cannot be serialized as JSON', async () => {
+    const client = await connect(fixture({ balance: () => Effect.succeed(undefined) }));
+    const result = await client.callTool({ name: 'brim_balance', arguments: {} });
+    expect(result.isError).toBe(true);
+    expect(JSON.parse(text(result))).toMatchObject({ code: 'INVALID_RESULT' });
+  });
+
   it('interrupts the Effect service when an MCP client cancels a request', async () => {
     let markStarted!: () => void;
     let markInterrupted!: () => void;

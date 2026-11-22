@@ -152,7 +152,11 @@ const program = Effect.gen(function* () {
   yield* Effect.all(
     [
       run('node', ['infra/local/payments/server.ts'], serverEnv),
-      run('node', ['scripts/dev.mjs', '--port', String(config.webPort)], serverEnv),
+      run(
+        'node',
+        ['scripts/dev.mjs', '--hostname', '127.0.0.1', '--port', String(config.webPort)],
+        serverEnv,
+      ),
     ],
     { concurrency: 'unbounded' },
   );

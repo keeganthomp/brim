@@ -2,10 +2,10 @@ import { readFile, stat } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
 import { Effect, Schema } from 'effect';
 import { Pool } from 'pg';
+import { localDatabaseUrl } from '../../../infra/local/database';
 import { readLocalChain } from './local-chain';
 import { localRequest } from './local-request';
 import {
-  isLoopback,
   LocalWorkspaceError,
   localFailure,
   PaymentRows,
@@ -31,10 +31,7 @@ const readMetadata = Effect.gen(function* () {
 
 const databasePool = Effect.gen(function* () {
   const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) return yield* localFailure();
-  const url = yield* attempt(() => new URL(connectionString));
-  if (!['postgres:', 'postgresql:'].includes(url.protocol) || !isLoopback(url.hostname))
-    return yield* localFailure();
+  if (!connectionString || !localDatabaseUrl(connectionString)) return yield* localFailure();
   if (cachedPool?.url === connectionString) return cachedPool.pool;
   if (cachedPool) yield* io(() => cachedPool!.pool.end());
   const pool = yield* attempt(

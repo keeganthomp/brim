@@ -154,6 +154,6 @@ export function accountReader(config: McpConfig) {
         approvedRecipients: value.allowlist,
       };
     });
-    return { balance, policy };
+    return { balance, policy, network: card.network };
   });
 }

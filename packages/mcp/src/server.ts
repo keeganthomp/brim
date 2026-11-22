@@ -1,7 +1,7 @@
 import { Effect, Exit } from 'effect';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { McpFailure, fail, publicDiagnostic } from './errors.js';
+import { McpFailure, fail, failureDiagnostic } from './errors.js';
 import {
   EmptyInput,
   FetchInput,
@@ -73,7 +73,11 @@ export function createBrimMcpServer(service: BrimMcpService) {
           return yield* fail('UNKNOWN_TOOL', 'Choose brim_balance, brim_policy, or brim_fetch.');
       }
       const text = yield* Effect.try({
-        try: () => JSON.stringify(output),
+        try: () => {
+          const encoded = JSON.stringify(output);
+          if (typeof encoded !== 'string') throw new Error();
+          return encoded;
+        },
         catch: () =>
           new McpFailure({
             code: 'INVALID_RESULT',
@@ -90,19 +94,11 @@ export function createBrimMcpServer(service: BrimMcpService) {
     // Defects, cancellations and unexpected errors never disclose credential-bearing causes.
     const exit = await Effect.runPromiseExit(program, { signal: extra.signal });
     if (Exit.isSuccess(exit)) return exit.value;
-    const diagnostic = programFailure(exit);
+    const diagnostic = failureDiagnostic(exit.cause);
     return {
       isError: true,
       content: [{ type: 'text' as const, text: JSON.stringify(diagnostic) }],
     };
   });
   return server;
-}
-
-function programFailure(exit: Exit.Failure<unknown, McpFailure>) {
-  for (const reason of exit.cause.reasons) {
-    if (reason._tag === 'Fail' && reason.error instanceof McpFailure)
-      return publicDiagnostic(reason.error.code);
-  }
-  return publicDiagnostic(undefined);
 }

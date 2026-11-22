@@ -154,5 +154,6 @@ export async function fixture() {
     policyAddress,
     rpc,
     policyData,
+    vaultData,
   };
 }
