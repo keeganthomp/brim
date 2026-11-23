@@ -1,4 +1,4 @@
-import { CheckCheck, LockKeyhole } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import type { WorkspaceMode } from '../../lib/workspace';
 import type { Activity } from '../../lib/demo';
 import type { ActivityFilter } from '../../hooks/use-dashboard';
@@ -41,21 +41,27 @@ export function ActivityFeed({
           {label}
         </span>
       </div>
-      <div className="feed-filter" role="group" aria-label="Filter activity">
-        {filters.map(({ value, label }) => (
-          <button
-            key={value}
-            aria-pressed={filter === value}
-            className={filter === value ? 'selected' : ''}
-            onClick={() => onFilterChange(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {ready && (
+        <div className="feed-filter" role="group" aria-label="Filter activity">
+          {filters.map(({ value, label }) => (
+            <button
+              key={value}
+              aria-pressed={filter === value}
+              className={filter === value ? 'selected' : ''}
+              onClick={() => onFilterChange(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="activity-list">
         {activities.map((item) => (
-          <ActivityRow key={item.id} item={item} onClick={() => onSelect(item)} />
+          <ActivityRow
+            key={item.id}
+            item={item}
+            onClick={mode === 'local' && item.signature ? () => onSelect(item) : undefined}
+          />
         ))}
         {activities.length === 0 && (
           <div className="empty-state">
@@ -77,16 +83,9 @@ export function ActivityFeed({
           </div>
         )}
       </div>
-      <div className="activity-footer">
-        <LockKeyhole size={12} aria-hidden="true" />
-        <span>
-          {mode === 'demo'
-            ? 'Sample activity · No funds moved'
-            : mode === 'local'
-              ? 'Verified test payments · Select to copy signature'
-              : 'Waiting for verified payments'}
-        </span>
-      </div>
+      {mode === 'local' && activities.some((item) => item.signature) && (
+        <p className="activity-footer">Select a payment to copy its signature.</p>
+      )}
     </section>
   );
 }

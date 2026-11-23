@@ -3,7 +3,7 @@ import type { LocalWorkspaceStatus, WorkspaceMode } from '../lib/workspace';
 
 const localMessages: Record<LocalWorkspaceStatus, string> = {
   connecting: 'Connecting to your local workspace',
-  ready: 'Local workspace · Test funds only',
+  ready: 'Test funds · Read-only',
   unavailable: 'Local workspace is unavailable',
   paused: 'Local updates are paused',
 };
@@ -24,7 +24,7 @@ export function WorkspaceHeading({
   return (
     <>
       <div className="page-heading">
-        <h1>Overview</h1>
+        <h1>Treasury</h1>
         <span className="network-label">
           <svg
             className="network-symbol"
@@ -34,8 +34,7 @@ export function WorkspaceHeading({
           >
             <path d="m6 4-3 3h15l3-3H6Zm-3 6 3 3h15l-3-3H3Zm3 6-3 3h15l3-3H6Z" />
           </svg>
-          Solana <span className="network-divider">/</span>
-          {mode === 'local' ? 'Test USDC' : 'USDC'}
+          Solana
         </span>
       </div>
       {mode === 'local' && (
@@ -47,11 +46,11 @@ export function WorkspaceHeading({
           <FlaskConical size={18} aria-hidden="true" />
           <div>
             <strong>{localPaused ? 'Local treasury is paused' : localMessages[localStatus]}</strong>
-            <p>
-              {localStatus === 'ready'
-                ? 'Verified test payments and a read-only vault.'
-                : 'Start the local stack to view its balances and payments. Test funds have no cash value.'}
-            </p>
+            {localStatus === 'unavailable' && (
+              <p>
+                Run <code>npm run dev</code> to view local balances and test payments.
+              </p>
+            )}
           </div>
           <button onClick={onExploreDemo}>Open demo</button>
         </div>
@@ -60,11 +59,8 @@ export function WorkspaceHeading({
         <div className="live-banner">
           <LockKeyhole size={18} aria-hidden="true" />
           <div>
-            <strong>Connect your treasury</strong>
-            <p>
-              Live payments need a connected owner wallet and a deployed vault. Controls are
-              disabled.
-            </p>
+            <strong>Live workspace needs setup</strong>
+            <p>Live payments require a deployed vault and an owner wallet connection.</p>
           </div>
           <button onClick={onExploreDemo}>Open demo</button>
         </div>

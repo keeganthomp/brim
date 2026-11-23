@@ -8,6 +8,20 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
   const { draft, creating, error, setDraft, saveAgent, copyConfig, freezeAgent } = controller;
   const nameField = useRef<HTMLInputElement>(null);
   const focus = useDialogFocus(nameField);
+  const content = useRef<HTMLDivElement>(null);
+  function focusFirstControl(event: Event) {
+    // A touch user can read the limits before deliberately opening a soft keyboard.
+    event.preventDefault();
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      content.current?.focus({ preventScroll: true });
+      return;
+    }
+    const first = creating
+      ? nameField.current
+      : content.current?.querySelector<HTMLInputElement>('input[type="number"]');
+    first?.focus({ preventScroll: true });
+    if (!creating) first?.select();
+  }
   return (
     <Dialog.Root
       open={draft !== null}
@@ -17,15 +31,20 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
     >
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="policy-drawer" aria-describedby="policy-description" {...focus}>
+        <Dialog.Content
+          ref={content}
+          className="policy-drawer"
+          aria-describedby="policy-description"
+          {...focus}
+          onOpenAutoFocus={focusFirstControl}
+        >
           <div className="drawer-header">
             <div>
-              <span className="eyebrow">AGENT CONTROLS</span>
               <Dialog.Title>{creating ? 'Add spending policy' : draft?.name}</Dialog.Title>
               <Dialog.Description id="policy-description">
                 {creating
-                  ? 'Set limits on what a bot or app you already run can spend from this vault.'
-                  : 'Adjust this agent’s spending permissions.'}
+                  ? 'Set how much an existing agent can spend from this vault.'
+                  : 'Manage this agent’s limits and payment permissions.'}
               </Dialog.Description>
             </div>
             <Dialog.Close className="icon-button" aria-label="Close agent policy">
@@ -49,6 +68,7 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
                 {!creating && (
                   <button
                     type="button"
+                    aria-describedby="policy-freeze-help"
                     className={`button freeze-button ${draft.frozen ? 'resume-button' : ''}`}
                     onClick={() => {
                       freezeAgent(draft, !draft.frozen);
@@ -58,6 +78,13 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
                     <Snowflake size={16} />
                     {draft.frozen ? 'Resume agent' : 'Freeze agent'}
                   </button>
+                )}
+                {!creating && (
+                  <p id="policy-freeze-help" className="policy-freeze-help">
+                    {draft.frozen
+                      ? 'Resume uses the saved policy limits.'
+                      : 'Freezes payments. Your agent can keep running.'}
+                  </p>
                 )}
               </div>
             </form>

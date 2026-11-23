@@ -10,7 +10,7 @@ import {
   preloadPolicyDrawer,
 } from './deferred-controls';
 import { BalanceOverview } from './overview/balance-overview';
-import { SummaryStrip } from './overview/summary-strip';
+import { SpendOverview } from './overview/spend-overview';
 import { NotificationToast } from './ui/notification-toast';
 import { WorkspaceHeading } from './workspace-chrome';
 import { WorkspaceHeader } from './workspace-header';
@@ -22,11 +22,7 @@ export function Dashboard() {
 
   return (
     <>
-      <WorkspaceHeader
-        mode={mode}
-        onModeChange={dashboard.changeMode}
-        onConnectWallet={dashboard.liveUnavailable}
-      />
+      <WorkspaceHeader mode={mode} onModeChange={dashboard.changeMode} />
       <main className="main-shell">
         <WorkspaceHeading
           mode={mode}
@@ -34,21 +30,14 @@ export function Dashboard() {
           localPaused={dashboard.localPaused}
           onExploreDemo={() => dashboard.changeMode('demo')}
         />
-        <BalanceOverview
-          mode={mode}
-          balance={balance}
-          editable={editable}
-          indexedSpend={dashboard.indexedSpend}
-          onFunds={funds.open}
-          onFundsIntent={preloadFundsDialog}
-        />
-        <SummaryStrip
-          mode={mode}
-          ready={ready}
-          activeCount={dashboard.activeCount}
-          spent={dashboard.spent}
-        />
-        <div className="workspace-grid">
+        <div className="dashboard-grid">
+          <BalanceOverview
+            mode={mode}
+            balance={balance}
+            editable={editable}
+            onFunds={funds.open}
+            onFundsIntent={preloadFundsDialog}
+          />
           <AgentList
             mode={mode}
             ready={ready}
@@ -57,7 +46,6 @@ export function Dashboard() {
             budget={dashboard.budget}
             onEdit={policy.openAgent}
             onFreeze={policy.freezeAgent}
-            onIntegration={dashboard.viewIntegration}
             onPolicyIntent={preloadPolicyDrawer}
           />
           <ActivityFeed
@@ -67,6 +55,13 @@ export function Dashboard() {
             filter={dashboard.filter}
             onFilterChange={dashboard.setFilter}
             onSelect={dashboard.selectActivity}
+          />
+          <SpendOverview
+            mode={mode}
+            ready={ready}
+            indexedSpend={dashboard.indexedSpend}
+            activeCount={dashboard.activeCount}
+            spent={dashboard.spent}
           />
         </div>
       </main>

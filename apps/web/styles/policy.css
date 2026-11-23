@@ -25,7 +25,7 @@
   min-width: 0;
 }
 .drawer-header h2 {
-  margin-top: 11px;
+  margin-top: 0;
   overflow-wrap: anywhere;
   font-size: 27px;
   font-weight: 550;
@@ -68,8 +68,34 @@
   font-size: 11px;
   line-height: 1.6;
 }
+.policy-name-help {
+  margin-top: 8px;
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
 .policy-controls {
-  padding-top: 2px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #ededf0;
+}
+.policy-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.policy-section-heading h3 {
+  color: #44444c;
+  font-size: 13px;
+  font-weight: 550;
+}
+.policy-section-heading > span {
+  color: var(--secondary);
+  font-size: 11px;
+}
+.policy-section-heading + .policy-control {
+  margin-top: 19px;
 }
 .allowlist-heading {
   display: flex;
@@ -126,7 +152,7 @@
   gap: 8px;
   color: #66666e;
 }
-.sdk-card strong {
+.sdk-card h3 {
   color: #33333a;
   font-size: 13px;
   font-weight: 550;
@@ -142,10 +168,36 @@
   margin-top: 15px;
   font-size: 12px;
 }
-.sdk-card > span {
-  display: block;
+.policy-setup-inputs {
+  display: grid;
+  gap: 10px;
+  margin: 15px 0 2px;
+}
+.policy-setup-inputs > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.policy-setup-inputs dt {
+  color: var(--secondary);
+  font-size: 12px;
+}
+.policy-setup-inputs dd {
+  margin: 0;
+}
+.policy-setup-inputs code {
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid #e7e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #55555d;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+}
+.sdk-card .policy-setup-note {
   margin-top: 12px;
-  color: #9999a1;
   font-size: 11px;
   line-height: 1.6;
 }
@@ -166,7 +218,7 @@
   border: 1px solid #ffe6e3;
   border-radius: 10px;
   background: #fff7f6;
-  color: #dd3b32;
+  color: #c3322a;
   font-size: 13px;
 }
 .freeze-button:hover {
@@ -216,4 +268,12 @@
   .policy-drawer {
     animation: none;
   }
+}
+
+.policy-freeze-help {
+  margin-top: 11px;
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
 }

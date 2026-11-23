@@ -1,15 +1,14 @@
-/* A compact ledger: merchant first, amount second, status in the details. */
+/* One status marker and one amount column keep the ledger easy to scan. */
 .live-indicator {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
+  padding: 4px 7px;
   border: 1px solid #e8ecf0;
   border-radius: 6px;
-  padding: 4px 7px;
   color: var(--secondary);
   font-size: 11px;
   line-height: 1.5;
-  font-weight: 450;
   white-space: nowrap;
 }
 .verified-indicator {
@@ -19,19 +18,16 @@
 }
 .feed-filter {
   display: flex;
-  align-items: center;
   gap: 22px;
-  min-height: 44px;
   padding: 0 24px;
   border-bottom: 1px solid #eef1f4;
 }
 .feed-filter button {
-  align-self: stretch;
   position: relative;
-  padding: 0 0 12px;
+  min-height: 44px;
+  padding: 10px 0;
   color: var(--secondary);
   font-size: 12px;
-  font-weight: 450;
   line-height: 1.6;
   transition: color 150ms;
 }
@@ -48,137 +44,138 @@
   bottom: -1px;
   left: 0;
   height: 2px;
-  content: '';
-  background: #53606c;
   border-radius: 2px 2px 0 0;
+  background: #53606c;
+  content: '';
 }
 .activity-list {
   flex: 1;
 }
 .activity-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 6px 12px;
   width: 100%;
-  min-height: 78px;
-  padding: 16px 24px;
+  min-height: 64px;
+  padding: 11px 22px;
   border-bottom: 1px solid #f0f3f5;
   text-align: left;
   transition: background 150ms;
 }
-.activity-row:hover {
+button.activity-row:hover {
   background: #fafbfd;
 }
-.merchant-avatar {
+button.activity-row:focus-visible {
+  outline-offset: -3px;
+}
+.payment-icon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border: 1px solid #e8ecf0;
-  border-radius: 10px;
-  background: #fbfcfd;
-  color: #697681;
-  font-size: 12px;
-  font-weight: 550;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f3f5f7;
+  color: #6d7883;
+}
+.payment-icon.settled-state {
+  background: #f0f8f3;
+}
+.payment-icon.blocked-state {
+  background: #fceeea;
 }
 .activity-info {
   display: flex;
   flex-direction: column;
-  min-width: 0;
   gap: 5px;
+  min-width: 0;
 }
 .merchant-name {
-  display: block;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   color: #303a44;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.15px;
   line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.activity-agent {
+.activity-context {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
   color: var(--secondary);
   font-size: 11px;
   line-height: 1.5;
+}
+.activity-agent {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-time {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .activity-amount {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  gap: 6px;
-  margin-left: auto;
+  align-items: flex-end;
+  gap: 5px;
+  min-width: 58px;
+  padding-left: 4px;
   text-align: right;
+  white-space: nowrap;
 }
 .activity-amount strong {
-  color: #3a4652;
-  font-size: 12px;
+  color: #303b46;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: -0.15px;
-}
-.activity-row-meta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 9px;
-  font-size: 11px;
-  line-height: 1.5;
+  letter-spacing: -0.2px;
 }
 .payment-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
   color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
 }
 .settled-state {
   color: var(--green);
 }
-.activity-time {
-  color: var(--secondary);
-  white-space: nowrap;
+.blocked-state {
+  color: var(--red);
 }
-.blocked {
+.activity-row.blocked {
   background: #fff9f8;
   border-color: #f7eeec;
 }
-.blocked:hover {
+button.activity-row.blocked:hover {
   background: #fff5f2;
 }
-.blocked-avatar {
-  border-color: #f5e2dc;
-  background: #fff3ef;
-  color: #c88377;
-}
 .blocked-reason {
+  grid-column: 2 / -1;
   color: var(--red);
   font-size: 11px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .blocked .activity-amount strong {
   color: var(--red);
   text-decoration: line-through;
   text-decoration-color: #c1a79e;
 }
-.blocked-status {
-  color: var(--red);
-}
 .activity-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 48px;
-  padding: 15px 22px;
+  padding: 14px 22px;
   color: var(--secondary);
   font-size: 11px;
   line-height: 1.5;
   text-align: center;
 }
 .activity-section .empty-state {
-  min-height: 360px;
+  min-height: 166px;
+  border-top: 1px solid var(--line);
   color: #9ca6b0;
 }
 .activity-section .empty-state h3 {
@@ -194,41 +191,35 @@
   .activity-row {
     padding-left: 20px;
     padding-right: 20px;
-    gap: 10px;
+    column-gap: 10px;
   }
   .feed-filter {
     padding-left: 20px;
     padding-right: 20px;
   }
-  .merchant-name {
-    font-size: 12px;
-  }
-  .merchant-avatar {
-    width: 31px;
-    height: 33px;
-  }
-  .activity-row-meta {
-    gap: 6px;
-    font-size: 9px;
+  .activity-context {
+    gap: 7px;
   }
 }
 @media (max-width: 800px) {
   .activity-row {
-    padding: 17px 22px;
-    min-height: 80px;
+    padding-left: 22px;
+    padding-right: 22px;
   }
   .feed-filter {
     padding-left: 22px;
     padding-right: 22px;
   }
-  .activity-section .empty-state {
-    min-height: 300px;
-  }
 }
 @media (max-width: 380px) {
   .activity-row {
-    padding: 16px 18px;
-    gap: 9px;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    padding-inline: 18px;
+    column-gap: 9px;
+  }
+  .payment-icon {
+    width: 24px;
+    height: 24px;
   }
   .feed-filter {
     padding-left: 18px;
@@ -236,31 +227,17 @@
     gap: 19px;
   }
   .live-indicator {
-    font-size: 9px;
-    padding: 3px 6px;
+    font-size: 10px;
   }
-  .merchant-name {
+  .merchant-name,
+  .activity-amount strong {
     font-size: 12px;
   }
-  .merchant-avatar {
-    height: 32px;
-    width: 30px;
-    border-radius: 9px;
-  }
-  .activity-amount strong {
-    font-size: 11px;
-  }
-  .activity-row-meta {
+  .activity-context {
     gap: 6px;
-    font-size: 9px;
-  }
-  .activity-agent,
-  .blocked-reason {
-    font-size: 10px;
   }
   .activity-footer {
     padding-left: 18px;
     padding-right: 18px;
-    font-size: 9px;
   }
 }

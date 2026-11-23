@@ -54,14 +54,7 @@ export function useDashboard() {
     setFilter('all');
   }
 
-  function viewIntegration() {
-    if (demo && agents[0]) policy.openAgent(agents[0]);
-    else liveUnavailable();
-  }
-
   async function selectActivity(item: Activity) {
-    if (demo)
-      return notification.notify('This is a sample activity record. It has no Solana signature.');
     if (mode !== 'local' || !item.signature) return;
     const copied = await copyText(item.signature, 'copy-signature');
     const message = copied
@@ -87,8 +80,6 @@ export function useDashboard() {
     policy,
     funds,
     notification,
-    liveUnavailable,
-    viewIntegration,
     selectActivity,
     activeCount: agents.filter((agent) => !agent.frozen).length,
     spent: agents.reduce((total, agent) => total + agent.spent, 0),

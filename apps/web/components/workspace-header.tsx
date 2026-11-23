@@ -1,13 +1,12 @@
-import { ChevronDown, FlaskConical, Wallet } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import type { WorkspaceMode } from '../lib/workspace';
 
 interface WorkspaceHeaderProps {
   mode: WorkspaceMode;
   onModeChange: (mode: WorkspaceMode) => void;
-  onConnectWallet: () => void;
 }
 
-export function WorkspaceHeader({ mode, onModeChange, onConnectWallet }: WorkspaceHeaderProps) {
+export function WorkspaceHeader({ mode, onModeChange }: WorkspaceHeaderProps) {
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -20,30 +19,17 @@ export function WorkspaceHeader({ mode, onModeChange, onConnectWallet }: Workspa
           </span>
           <span className="brand-wordmark">brim</span>
         </a>
-        <span className="header-divider" aria-hidden="true" />
-        <span className="header-label">Treasury</span>
-        <div className="header-right">
-          <div className="workspace-select">
-            <FlaskConical size={14} aria-hidden="true" />
-            <select
-              aria-label="Workspace mode"
-              value={mode}
-              onChange={(event) => onModeChange(event.target.value as WorkspaceMode)}
-            >
-              <option value="demo">Demo workspace</option>
-              <option value="local">Local workspace</option>
-              <option value="live">Live workspace</option>
-            </select>
-            <ChevronDown size={12} aria-hidden="true" />
-          </div>
-          <button
-            className="button wallet-button"
-            onClick={onConnectWallet}
-            aria-label="Connect wallet"
+        <div className="workspace-select">
+          <select
+            aria-label="Workspace mode"
+            value={mode}
+            onChange={(event) => onModeChange(event.target.value as WorkspaceMode)}
           >
-            <Wallet size={15} aria-hidden="true" />
-            <span>Connect wallet</span>
-          </button>
+            <option value="demo">Demo workspace</option>
+            <option value="local">Local workspace</option>
+            <option value="live">Live workspace</option>
+          </select>
+          <ChevronDown size={14} aria-hidden="true" />
         </div>
       </div>
     </header>

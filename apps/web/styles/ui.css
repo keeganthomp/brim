@@ -52,15 +52,6 @@
 .full {
   width: 100%;
 }
-.wallet-button {
-  height: 37px;
-  padding: 0 13px;
-  border: 1px solid #e2e2e5;
-  font-size: 13px;
-}
-.wallet-button:hover {
-  background: #f7f7f8;
-}
 .eyebrow {
   display: block;
   color: var(--secondary);
@@ -402,15 +393,6 @@
   }
 }
 @media (max-width: 760px) {
-  .wallet-button {
-    width: 35px;
-    height: 35px;
-    padding: 0;
-    border-radius: 9px;
-  }
-  .wallet-button span {
-    display: none;
-  }
   .eyebrow {
     font-size: 10px;
     letter-spacing: 1.5px;

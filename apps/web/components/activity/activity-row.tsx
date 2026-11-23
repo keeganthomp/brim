@@ -2,40 +2,46 @@ import { ArrowDownLeft, ArrowUpRight, Check, X } from 'lucide-react';
 import type { Activity } from '../../lib/demo';
 import { paymentDollars } from '../../lib/currency';
 
-export function ActivityRow({ item, onClick }: { item: Activity; onClick: () => void }) {
+const statusLabels = {
+  settled: 'Settled',
+  blocked: 'Blocked',
+  deposit: 'Deposit',
+  withdrawal: 'Withdrawal',
+} as const;
+
+export function ActivityRow({
+  item,
+  onClick,
+}: {
+  item: Activity;
+  onClick: (() => void) | undefined;
+}) {
   const blocked = item.status === 'blocked';
-  const funding = item.status === 'deposit' || item.status === 'withdrawal';
   const settled = item.status === 'settled';
-  const status = blocked
-    ? 'Blocked'
+  const stateClass = settled ? 'settled-state' : blocked ? 'blocked-state' : '';
+  const StatusIcon = blocked
+    ? X
     : settled
-      ? 'Settled'
+      ? Check
       : item.status === 'deposit'
-        ? 'Deposit'
-        : 'Withdrawal';
+        ? ArrowDownLeft
+        : ArrowUpRight;
+  const Row = onClick ? 'button' : 'div';
+
   return (
-    <button
+    <Row
       className={`activity-row ${blocked ? 'blocked' : ''}`}
       onClick={onClick}
-      title={item.signature ? 'Copy verified transaction signature' : undefined}
+      title={onClick ? 'Copy verified transaction signature' : undefined}
     >
-      <span className={`merchant-avatar ${blocked ? 'blocked-avatar' : ''}`} aria-hidden="true">
-        {blocked ? (
-          <X size={15} />
-        ) : funding ? (
-          item.status === 'deposit' ? (
-            <ArrowDownLeft size={17} />
-          ) : (
-            <ArrowUpRight size={17} />
-          )
-        ) : (
-          <span>{item.merchant.charAt(0).toUpperCase()}</span>
-        )}
+      <span className={`payment-icon ${stateClass}`} aria-hidden="true">
+        <StatusIcon size={14} strokeWidth={1.8} />
       </span>
       <span className="activity-info">
         <span className="merchant-name">{item.merchant}</span>
-        <span className={blocked ? 'blocked-reason' : 'activity-agent'}>
-          {blocked ? item.reason : item.agent}
+        <span className="activity-context">
+          <span className="activity-agent">{item.agent}</span>
+          <span className="activity-time mono">{item.time}</span>
         </span>
       </span>
       <span className="activity-amount">
@@ -43,16 +49,9 @@ export function ActivityRow({ item, onClick }: { item: Activity; onClick: () => 
           {item.status === 'deposit' ? '+' : ''}
           {paymentDollars(item.amount)}
         </strong>
-        <span className="activity-row-meta">
-          <span
-            className={`payment-state ${settled ? 'settled-state' : blocked ? 'blocked-status' : ''}`}
-          >
-            {settled && <Check size={10} aria-hidden="true" />}
-            {status}
-          </span>
-          <span className="activity-time mono">{item.time}</span>
-        </span>
+        <span className={`payment-state ${stateClass}`}>{statusLabels[item.status]}</span>
       </span>
-    </button>
+      {blocked && item.reason && <span className="blocked-reason">{item.reason}</span>}
+    </Row>
   );
 }

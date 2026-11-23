@@ -1,13 +1,7 @@
-.balance-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 20px;
-}
 .balance-summary,
 .chart-area {
   min-width: 0;
-  min-height: 246px;
-  padding: clamp(20px, 3vw, 30px);
+  padding: clamp(20px, 2.5vw, 26px);
   border-radius: var(--card-radius);
 }
 .balance-summary {
@@ -16,7 +10,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(122deg, #181a1e, #242831 100%);
+  background: linear-gradient(122deg, #181a1e, #242831);
   color: #fff;
   box-shadow: 0 2px 3px #10121712;
 }
@@ -35,48 +29,42 @@
   mask-image: linear-gradient(270deg, #000, transparent 60%);
   pointer-events: none;
 }
-.balance-header,
-.spend-total {
+.balance-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 .balance-header h2,
-.spend-total h2 {
+.chart-area h2 {
   font-size: 14px;
-  font-weight: 540;
+  font-weight: 550;
 }
 .balance-header h2 {
   color: #d3d6dd;
 }
-.balance-unit,
-.chart-period {
+.balance-unit {
   flex: none;
   padding: 4px 8px;
+  border: 1px solid #ffffff15;
   border-radius: 6px;
+  background: #ffffff12;
+  color: #e2e5eb;
   font-size: 11px;
   font-weight: 550;
   line-height: 1.2;
 }
-.balance-unit {
-  background: #ffffff12;
-  color: #e2e5eb;
-  border: 1px solid #ffffff15;
-}
 .balance {
   font-size: clamp(2.125rem, 5.05vw, 4.125rem);
   font-weight: 530;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.087em;
-  line-height: 1.2;
-  margin: 17px 0 22px;
+  letter-spacing: -0.08em;
+  line-height: 1.15;
+  margin: 15px 0 20px;
   overflow-wrap: anywhere;
 }
 .balance-decimals {
   color: #c1c8d4;
   font-size: 0.69em;
-  letter-spacing: -0.08em;
 }
 .balance-actions,
 .balance-note {
@@ -115,36 +103,29 @@
   }
 }
 .chart-area {
-  display: flex;
-  flex-direction: column;
   background: var(--canvas);
   border: 1px solid var(--line);
   box-shadow: var(--card-shadow);
 }
-.spend-total h2 {
-  color: var(--secondary);
-}
-.chart-period {
-  background: var(--surface);
+.chart-area h2 {
   color: var(--secondary);
 }
 .chart-amount {
-  margin-top: 9px;
-  font-size: 26px;
+  margin-top: 6px;
+  font-size: 28px;
   font-weight: 580;
   letter-spacing: -0.07em;
-  line-height: 1.3;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 .spend-chart {
-  margin: auto 0 0;
-  padding-top: 14px;
+  margin: 8px 0 0;
   color: var(--ink);
 }
 .spend-chart svg {
   display: block;
   width: 100%;
-  height: 84px;
+  height: 64px;
 }
 .chart-grid {
   fill: none;
@@ -171,77 +152,45 @@
   display: flex;
   justify-content: space-between;
   list-style: none;
-  padding: 8px 0 0;
+  padding: 6px 0 0;
   margin: 0;
   color: var(--secondary);
   font-size: 11px;
 }
-.chart-empty {
-  margin-top: 12px;
-  max-width: 36ch;
-  color: var(--secondary);
-  font-size: 13px;
-  line-height: 1.5;
-}
-.summary-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 20px;
-  margin: 12px 0 0;
-}
-.summary-strip > div {
+.spend-summary {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 2px;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 13px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
 }
-.summary-strip dt {
-  display: flex;
+.spend-summary > div {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+}
+.spend-summary dt {
   color: var(--secondary);
 }
-.summary-strip dd {
+.spend-summary dd {
   margin: 0;
-  font-size: 13px;
   font-weight: 550;
   overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
 }
-@media (max-width: 760px) {
-  .balance-panel {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-  }
-  .balance-summary,
-  .chart-area {
-    min-height: 0;
-  }
+@media (max-width: 800px) {
   .balance {
     font-size: clamp(2.25rem, 9vw, 3.5rem);
-    margin-block: 15px 18px;
-  }
-  .spend-chart svg {
-    height: 70px;
+    margin-block: 14px 18px;
   }
   .chart-amount {
-    font-size: 22px;
-  }
-  .summary-strip {
-    gap: 14px;
-    margin-top: 8px;
-  }
-  .summary-strip dt,
-  .summary-strip dd {
-    font-size: 12px;
+    font-size: 24px;
   }
 }
 @media (max-width: 380px) {
   .balance-actions .button {
     padding-inline: 10px;
-  }
-  .summary-strip dt svg {
-    display: none;
   }
 }
