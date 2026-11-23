@@ -15,7 +15,9 @@ This builds internal packages and the devnet program, starts **Surfpool 1.7.0 + 
 
 The dashboard runs at `http://localhost:3000`. The paid API runs at `http://127.0.0.1:4020`. Surfpool runs offline with fake keys and funds. The local setup saves its values in the ignored `.brim/local.json` file with mode `0600`. The local dashboard reads real test balances and verified payment rows. Its **Add policy** flow registers an existing agent public key and confirms its spending limits using the generated Surfpool test owner. Policy edits preserve on-chain usage and freeze state. Funding and freeze controls remain read-only; the Demo workspace simulates them in the browser.
 
-Ctrl-C stops the web and API processes while the test chain and database keep running. `npm run local:down` removes the test chain container and keeps the Postgres data. The next startup recreates the chain using the saved local keypairs.
+Ctrl-C stops the dashboard, paid API, and docs while the test chain and database
+keep running. `npm run local:down` removes the test chain container and keeps the
+Postgres data. The next startup recreates the chain using the saved local keypairs.
 
 In another terminal:
 
@@ -44,7 +46,12 @@ To attach your own agent, generate a scoped keypair, open **Local workspace → 
 
 ## Marketing and docs
 
-Run `npm run dev:site` and open `http://localhost:3200`. The landing page is at `/` and the Fumadocs guides are at `/docs/`. `npm run build:site` exports both to `apps/site/out/` for static hosting.
+`npm run dev` includes the marketing site at `http://localhost:3200` and serves
+the guides through the dashboard at `http://localhost:3000/docs/`.
+
+To run the marketing site and docs on their own, use `npm run dev:site` and open
+`http://localhost:3200`. The landing page is at `/` and the guides are at `/docs/`.
+`npm run build:site` exports both to `apps/site/out/` for static hosting.
 
 For agents, start with `/llms.txt` at the site root. Use `/llms-full.txt` to load every guide together, or choose a Markdown page from the index. The [agent quickstart](apps/site/content/docs/agents.mdx) covers the local payment, SDK, and MCP paths.
 
@@ -65,7 +72,10 @@ For agents, start with `/llms.txt` at the site root. Use `/llms-full.txt` to loa
 | `npm run chain:build`                                  | Build devnet SBF using cached native tools or the Docker fallback            |
 | `npm run db:migrate`                                   | Apply local database migrations safely; repeatable                           |
 
-Override local ports with `BRIM_WEB_PORT`, `BRIM_RPC_PORT`, `BRIM_WS_PORT`, and `BRIM_DB_PORT` when needed. In a corporate TLS proxy, supply `BRIM_BUILD_CA_CERT` for the Docker chain build; certificates stay in secret mounts and TLS verification remains enabled.
+Override local ports with `BRIM_WEB_PORT`, `BRIM_SITE_PORT`, `BRIM_RPC_PORT`,
+`BRIM_WS_PORT`, and `BRIM_DB_PORT` when needed. In a corporate TLS proxy, supply
+`BRIM_BUILD_CA_CERT` for the Docker chain build; certificates stay in secret mounts
+and TLS verification remains enabled.
 
 ## Organization
 
