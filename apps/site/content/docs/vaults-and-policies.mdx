@@ -54,14 +54,12 @@ A freeze takes effect when its transaction executes. A pending payment that exec
 
 The owner can freeze one agent or pause the vault. Owner withdrawals remain available while paused.
 
-## Give the agent configuration, not ownership
+## Hand over the connection values
 
-| Input                       | Contains                                                    | Handling                                           |
-| --------------------------- | ----------------------------------------------------------- | -------------------------------------------------- |
-| `BRIM_CARD`                 | Vault, program, network, and trusted facilitator fee payers | Public routing configuration; grants no authority. |
-| `BRIM_AGENT_KEY`            | The scoped agent's 64-byte Ed25519 keypair                  | Private; keep with the agent runtime.              |
-| `SOLANA_RPC_URL` (optional) | An override for the network’s default RPC                   | Keep credential-bearing URLs private.              |
+The integrator generates a scoped keypair and gives the operator its public key. The operator registers that public key with a policy, then shares a public `BRIM_CARD` string. The integrator keeps the matching private keypair in its agent runtime as `BRIM_AGENT_KEY`.
 
-Creating a card does not create a vault, authorize a key, or fund an account. Start with the [local quickstart](/docs/quickstart/), then use the [SDK](/docs/sdk/) or connect the same scoped key through [MCP](/docs/mcp/).
+Several agents can share the same public card when they use the same vault, program, network, and trusted fee payers. Their distinct keys select their individual policies.
+
+Follow the [SDK handoff guide](/docs/sdk/#who-hands-over-what) for exact value formats, the operator's `createBrimCard` step, and the current dashboard template behavior. The same values also connect through [MCP](/docs/mcp/).
 
 The local workspace reads real Surfpool balances and verified payment rows. Its owner actions are disabled; the separate demo simulates those controls. See [production readiness](/docs/production/) before connecting real funds.

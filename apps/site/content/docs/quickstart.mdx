@@ -24,8 +24,18 @@ npm run demo:payment
 
 Look for `status: "settled"` and a transaction signature. Open the [dashboard](http://localhost:3000) in **Local workspace** to see the verified $0.04 payment and updated test balance.
 
+## See the public config
+
+The local setup saves its connection values in the ignored `.brim/local.json` file. If you have `jq`, this optional command shows the public vault config:
+
+```bash
+jq -r '.card' .brim/local.json
+```
+
+It prints one complete string beginning with `brim:v1:`. The payment runner already reads the local config and scoped test key directly; this command is only for inspecting the public value.
+
 ## Connect your agent
 
-Use the [SDK](/docs/sdk/) in code or [MCP](/docs/mcp/) in an agent client. The quickstart uses a preconfigured test key. For your own agent, [register its public key with a policy](/docs/vaults-and-policies/).
+Use the [SDK](/docs/sdk/) in code or [MCP](/docs/mcp/) in an agent client. For your own integration, follow the [SDK handoff](/docs/sdk/#who-hands-over-what): the operator provides the public config, and the integrator keeps the scoped keypair in its runtime. Each new agent's public key needs an [on-chain policy](/docs/vaults-and-policies/).
 
 Press Ctrl-C to stop the apps. Run `npm run local:down` to stop Docker services and preserve database data.

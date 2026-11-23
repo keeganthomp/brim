@@ -63,7 +63,9 @@ Brim chooses the public Solana RPC for the card's network. To use your own provi
 
 The operator must supply a funded vault, an authorized agent policy, and a [compatible facilitator](/docs/x402/). The package is not published to npm; use the built file from your checkout.
 
-`BRIM_CARD` is public configuration and grants no authority. `BRIM_AGENT_KEY` is private: a JSON array of 64 Ed25519 keypair bytes. Keep the MCP client configuration out of source control, and never give it the owner's treasury key. [See the SDK inputs](/docs/sdk/) for the exact handoff.
+Use the complete `brim:v1:...` string supplied by your operator for `BRIM_CARD`. `BRIM_AGENT_KEY` comes from the integrator's private runtime configuration as a 64-number JSON keypair string. In this setup, that private runtime is the MCP server process launched by your client. Keep the key out of prompts and tool arguments.
+
+The [SDK handoff guide](/docs/sdk/#who-hands-over-what) explains who generates each value, what it looks like, and why multiple agents can share the public config while retaining separate keys and policies.
 
 ## Request behavior
 

@@ -1,9 +1,9 @@
 ---
 title: TypeScript SDK
-description: Connect your agent with its public vault config and scoped private key.
+description: Get the public vault config from your operator. Keep the scoped key in your agent runtime.
 ---
 
-Get the public vault config from your operator. Use the bot’s own private key, whose public key is registered in the [spending policy](/docs/vaults-and-policies/).
+Brim needs two values: the public vault config (`BRIM_CARD`) and your agent's scoped keypair (`BRIM_AGENT_KEY`). The config tells Brim where to connect. The key selects the on-chain spending policy that your operator registered for this agent.
 
 ## Use two inputs
 
@@ -18,24 +18,27 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://merchant.example/paid-resource');
 ```
 
-| Input            | What it is                                                                                                  |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `BRIM_CARD`      | Public vault configuration supplied by your operator. It grants no authority and creates no policy.         |
-| `BRIM_AGENT_KEY` | The private scoped agent key: a JSON array of 64 Ed25519 keypair bytes. Never use the treasury owner's key. |
+The URL is illustrative. The [quickstart](/docs/quickstart/) makes a real local payment with fake funds. `@brim/sdk` is a private workspace package, not a published npm package.
 
-The URL above is illustrative. The [quickstart](/docs/quickstart/) runs the real payment engine against the included paid API. `@brim/sdk` is a private workspace package, not a published npm package.
+## What the values look like
 
-## Optional connection and cap
+- **`BRIM_CARD` is one string beginning with `brim:v1:`**, such as `brim:v1:eyJ2ZXJzaW9uIjoxLC...`. It contains the vault address, program address, network, and trusted facilitator fee payers. Your operator supplies the complete string.
+- **`BRIM_AGENT_KEY` is a JSON array of exactly 64 numbers**, each from 0 to 255, such as `[12,34,56,...]`. Use the full standard Solana Ed25519 keypair export as a string in your private runtime configuration; the SDK decodes it.
 
-Brim uses Solana's public RPC for the network in your config: `https://api.devnet.solana.com` or `https://api.mainnet-beta.solana.com`.
+The examples are abbreviated; copy the complete values into your runtime. The private keypair stays in the integrator's runtime or secret store. The operator needs only its corresponding **public key** to authorize spending. Use a separate scoped keypair for the agent.
 
-Add `rpcUrl: process.env.SOLANA_RPC_URL` for a dedicated provider or local Surfpool. Keep provider credentials outside the public vault config. An explicit invalid URL fails rather than silently falling back.
+## Who hands over what
 
-The default SDK safety cap is **$1 USDC per payment**. Add `maxPaymentAmount: 5_000_000n` for a $5 local cap. The on-chain policy still applies.
+1. **The agent integrator generates a scoped keypair.** Keep its private 64-byte keypair export with the application and send its public key to the treasury operator.
+2. **The operator registers that public key and its limits on the vault.** The operator also prepares the vault, funding, and a compatible facilitator.
+3. **The operator creates and shares the public vault config.** The returned `brim:v1:...` string becomes `BRIM_CARD`.
+4. **The integrator supplies both values to the application.** Load the public config as `BRIM_CARD` and the matching private keypair as `BRIM_AGENT_KEY` through the runtime's configuration.
 
-## Create the public config
+Agents using the same vault, program, network, and trusted fee-payer list can reuse the same card string. Each agent keeps its own keypair and has its own policy. Sharing the public config grants no spending authority.
 
-After preparing the vault, agent policy, and compatible facilitator, the operator creates the config once:
+## Create and share the public config
+
+The operator runs this after preparing the [vault and policy](/docs/vaults-and-policies/), using the trusted fee payer addresses supplied by the [facilitator operator](/docs/x402/):
 
 ```ts title="operator-setup.ts"
 import { createBrimCard } from '@brim/sdk';
@@ -46,9 +49,33 @@ const card = createBrimCard({
   network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1', // devnet
   facilitatorFeePayers: [process.env.BRIM_FACILITATOR_FEE_PAYER!],
 });
+
+console.log(card); // Public configuration to share with the integrator.
 ```
 
-Give `card` to the application as `BRIM_CARD`, separately from its private key. This function serializes metadata; it does not register a policy or move funds.
+Once the vault and policy exist, `createBrimCard` packages their connection settings into the public string.
+
+The current dashboard's **Copy SDK template** button copies code only. The actual config and key values still come from the operator–integrator handoff above.
+
+## Get the local test values
+
+`npm run dev` creates a funded Surfpool vault, an authorized test key, and the ignored `.brim/local.json` file. If you have `jq`, this optional command displays only the public config:
+
+```bash
+jq -r '.card' .brim/local.json
+```
+
+The file also contains the generated local test keypair. The included payment runner and MCP local mode load it directly without displaying it. Use [the quickstart](/docs/quickstart/) or [MCP local setup](/docs/mcp/#connect-to-the-local-stack) to try that path.
+
+For your own application against Surfpool, supply its local test key privately and set `rpcUrl` to `http://127.0.0.1:8899`. The public card uses the devnet network identifier; the local RPC override keeps requests on your offline chain.
+
+## Optional connection and cap
+
+Brim normally uses Solana's public RPC for the network in your config: `https://api.devnet.solana.com` or `https://api.mainnet-beta.solana.com`.
+
+Add `rpcUrl: process.env.SOLANA_RPC_URL` for a dedicated provider or local Surfpool. Keep provider credentials outside the public vault config. An explicit invalid URL fails rather than silently falling back.
+
+The default SDK safety cap is **$1 USDC per payment**. Add `maxPaymentAmount: 5_000_000n` for a $5 local cap. The on-chain policy still applies.
 
 ## Errors and compatibility
 

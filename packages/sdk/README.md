@@ -13,10 +13,30 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://merchant.example/paid-resource');
 ```
 
-- `BRIM_CARD` is public connection metadata supplied by your operator. The operator creates the vault and attaches an on-chain policy to your agent first; the config itself grants no authority.
-- `BRIM_AGENT_KEY` is private: a JSON array of the scoped agent's 64 Ed25519 keypair bytes. Never use the treasury owner's key.
+## Get your card and key
 
-The example URL is illustrative. For a real local payment with fake funds, follow the repository's [local quickstart](../../README.md#start-everything-locally).
+| Variable         | Value                                                                          | Who provides it?                                              |
+| ---------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `BRIM_CARD`      | A public string like `brim:v1:eyJ2ZXJzaW9uIjox...` (abbreviated).              | Your treasury operator generates it with `createBrimCard`.    |
+| `BRIM_AGENT_KEY` | The contents of the agent's Solana keypair JSON file, an array of 64 integers. | You generate the keypair and keep it in your runtime secrets. |
+
+Send the operator your agent's **public key** so they can register it on the spending policy. The SDK reads the keypair JSON in your agent process to sign payments. The treasury owner's key stays in their wallet.
+
+The card contains the vault, program, network, and trusted fee payers. Agents using the same settings can share a card. Each agent's registered public key selects its spending policy. See the [operator handoff](../../docs/x402.md#operator-handoff) to generate a card.
+
+## Try the SDK locally
+
+Start the [local stack](../../README.md#start-everything-locally), then run this from the repository root in another terminal with `jq` installed:
+
+```sh
+export BRIM_CARD="$(jq -r '.card' .brim/local.json)"
+export BRIM_AGENT_KEY="$(jq -r '.agentKey' .brim/local.json)"
+export SOLANA_RPC_URL="$(jq -r '.rpcUrl' .brim/local.json)"
+
+node packages/sdk/examples/agent.ts http://127.0.0.1:4020/report
+```
+
+The command loads test values without printing the key. It uses the local Surfpool RPC and pays $0.04 in test USDC. To copy just the public card, run `jq -r '.card' .brim/local.json`.
 
 ## Optional RPC override
 
@@ -31,18 +51,8 @@ Add `rpcUrl: process.env.SOLANA_RPC_URL` when using a dedicated provider or loca
 
 The SDK defaults to a $1 USDC safety cap per payment. Set `maxPaymentAmount: 5_000_000n` for a $5 local cap. The on-chain policy still applies.
 
-## Run the included example
+## Errors and Effect
 
-This package is a private workspace, not an npm publication. From the repository root:
-
-```sh
-npm ci
-npm run build:packages
-node packages/sdk/examples/agent.ts --help
-```
-
-Set `BRIM_CARD` and `BRIM_AGENT_KEY`, then run `node packages/sdk/examples/agent.ts YOUR_PAID_API_URL`. `SOLANA_RPC_URL` is optional.
+The SDK is available as a private workspace package. Run `npm ci && npm run build:packages` to build it outside the local stack.
 
 `createBrimFetch` returns Promises. Effect applications can use `createBrimFetchEffect` with the same inputs. Catch `BrimPolicyViolationError` and inspect `error.code`; reconcile `PAYMENT_OUTCOME_UNKNOWN` before retrying a paid operation.
-
-See [operator setup and compatibility](../../docs/x402.md) for `createBrimCard`, facilitator requirements, and settlement behavior.

@@ -13,9 +13,9 @@ npm run dev
 
 This builds internal packages and the devnet program, starts **Surfpool 1.7.0 + PostgreSQL 18**, applies checksum-verified migrations, loads the program, creates a funded test vault and scoped agent, then starts the dashboard and a real x402 paid API. The first Docker-only chain build downloads the pinned toolchain; subsequent builds use caches. A compatible cached native toolchain is used automatically when available.
 
-The dashboard runs at `http://localhost:3000`; the paid API at `http://127.0.0.1:4020`. Surfpool runs offline with a devnet genesis identity. All local keys and funds are fake. Generated credentials stay in ignored `.brim/local.json` with mode `0600`; startup never prints them, and repeating setup preserves policies and balances. Local dashboard mode reads actual chain balances and verified payment rows; owner wallet actions remain disabled there. The separate demo workspace offers simulated policy/funding controls.
+The dashboard runs at `http://localhost:3000`. The paid API runs at `http://127.0.0.1:4020`. Surfpool runs offline with fake keys and funds. The local setup saves its values in the ignored `.brim/local.json` file with mode `0600`. The local dashboard reads real test balances and verified payment rows. The demo workspace simulates policy and funding controls in the browser.
 
-Ctrl-C stops the web/API processes. `npm run local:down` stops the Docker services and preserves Postgres data.
+Ctrl-C stops the web and API processes while the test chain and database keep running. `npm run local:down` removes the test chain container and keeps the Postgres data. The next startup recreates the chain using the saved local keypairs.
 
 In another terminal:
 
@@ -38,7 +38,9 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://api.example.com/paid-resource');
 ```
 
-The treasury operator provides public vault config (`BRIM_CARD`). The agent keeps its scoped signing key private. The SDK defaults to the public RPC for the configured network. Pass `rpcUrl` to use your own provider or a local endpoint. Use the [SDK quickstart](packages/sdk/README.md) for an app or [MCP setup](packages/mcp/README.md) for an existing agent client. These packages are available from this workspace.
+The treasury operator sends you a public `BRIM_CARD` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`.
+
+See the [SDK quickstart](packages/sdk/README.md) for examples and the local RPC override, or [MCP setup](packages/mcp/README.md) for an existing agent client.
 
 ## Marketing and docs
 

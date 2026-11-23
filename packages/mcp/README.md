@@ -1,12 +1,12 @@
 # Brim MCP
 
-Give Claude Desktop, Cursor, or another MCP agent a scoped Brim card. It gets three tools:
+Connect Claude Desktop, Cursor, or another MCP client using a Brim card and the agent's scoped signing key. It gets three tools:
 
-| Tool           | What it does                                                    |
-| -------------- | --------------------------------------------------------------- |
-| `brim_balance` | Reads the vault's USDC balance.                                 |
-| `brim_policy`  | Reads this agent's limits, recorded spend, and freeze state.    |
-| `brim_fetch`   | Calls a paid API through the card's on-chain spending controls. |
+| Tool           | What it does                                                   |
+| -------------- | -------------------------------------------------------------- |
+| `brim_balance` | Reads the vault's USDC balance.                                |
+| `brim_policy`  | Reads this agent's limits, recorded spend, and freeze state.   |
+| `brim_fetch`   | Calls a paid API through the agent's on-chain spending policy. |
 
 ## Try it locally
 
@@ -35,7 +35,7 @@ The report costs $0.04 fake USDC. Local mode uses Surfpool and permits only this
 
 ## Connect your card
 
-Build the packages with `npm run build:packages`. Configure the CLI with the card and scoped key supplied by your operator:
+Build the packages with `npm run build:packages`. Get the public card from your treasury operator and configure the scoped keypair you generated:
 
 ```json
 {
@@ -44,7 +44,7 @@ Build the packages with `npm run build:packages`. Configure the CLI with the car
       "command": "node",
       "args": ["/absolute/path/to/brim/packages/mcp/dist/cli.js"],
       "env": {
-        "BRIM_CARD": "YOUR_PUBLIC_BRIM_CARD_CONFIG",
+        "BRIM_CARD": "brim:v1:REPLACE_WITH_THE_FULL_CARD",
         "BRIM_AGENT_KEY": "YOUR_SCOPED_AGENT_KEYPAIR_AS_A_JSON_ARRAY"
       }
     }
@@ -54,7 +54,7 @@ Build the packages with `npm run build:packages`. Configure the CLI with the car
 
 Brim chooses the public Solana RPC for the card's network. Optionally set `SOLANA_RPC_URL` to use your own provider; both balance reads and payments use that connection. An invalid explicit URL fails setup. The package is a private workspace; use the built CLI from your checkout.
 
-`BRIM_CARD` is public routing configuration. `BRIM_AGENT_KEY` is the scoped agent's private Ed25519 keypair as a JSON array of 64 bytes. Keep the client configuration out of source control and use the agent key issued for this card.
+`BRIM_AGENT_KEY` is a string containing the full agent keypair JSON array (64 integers). Share the matching public key with the operator for policy registration. Keep the keypair in the MCP process's secret environment or in a private client configuration outside source control.
 
 Your operator sets the policy, funds the vault, and configures a facilitator that supports the deployed Brim program. The SDK adds a $1 USDC per-payment safety cap; the on-chain policy remains authoritative. The tools cannot change keys or policies, raise limits, or withdraw funds.
 
@@ -64,6 +64,6 @@ Your operator sets the policy, funds the vault, and configures a facilitator tha
 
 The server speaks MCP over standard input/output without printing keys, card configuration, RPC credentials, or startup messages to the protocol stream. A timeout, unreadable response, or invalid settlement receipt can leave the payment outcome uncertain; reconcile the original payment before making another paid call. Receipts are bounded and checked for the configured network and signature format. They are reported by the resource, not independent proof of finalized settlement.
 
-See [SDK setup](../sdk/README.md) and [facilitator compatibility](../../docs/x402.md) for the operator handoff.
+See [how to get your card and key](../sdk/README.md#get-your-card-and-key) and [facilitator compatibility](../../docs/x402.md#facilitator-operator-configuration).
 
-This is a local stdio process for an operator-approved agent client, with one scoped card per process. A spending policy does not sandbox network access: HTTPS resources may intentionally be private APIs, and an explicit RPC URL is trusted operator configuration. A hosted transport must provide its own authentication, per-agent key isolation, and network egress policy; the stdio server does not provide those boundaries. Cancellation stops local work but cannot reverse an authorization already sent.
+This is a local stdio process for an operator-approved agent client, with one agent key per process. A spending policy does not sandbox network access: HTTPS resources may intentionally be private APIs, and an explicit RPC URL is trusted operator configuration. A hosted transport must provide its own authentication, per-agent key isolation, and network egress policy; the stdio server does not provide those boundaries. Cancellation stops local work but cannot reverse an authorization already sent.

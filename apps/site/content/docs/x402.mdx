@@ -16,7 +16,7 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://merchant.example/v1/data');
 ```
 
-The operator prepares the card and authorizes the agent key first. See the [SDK guide](/docs/sdk/) for setup and errors, or use [MCP](/docs/mcp/) to access the same payment engine from an existing client.
+Use the two values from the [SDK handoff guide](/docs/sdk/#who-hands-over-what): an operator-provided public config and the integrator's scoped private keypair. The operator registers the corresponding public key with a policy before it can spend. [MCP](/docs/mcp/) uses the same handoff and payment engine.
 
 ## Follow a payment
 
