@@ -1,21 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { loadLocalClient } from '../lib/deferred-actions';
-import type { LocalWorkspaceSnapshot } from '../lib/local/adapter';
+import { useEffect, useRef, useState } from 'react';
+import { loadLocalClient, loadLiveClient } from '../lib/deferred-actions';
+import type { ChainWorkspaceSnapshot } from '../lib/local/adapter';
 import type { LocalWorkspaceStatus } from '../lib/workspace';
 
 interface LocalState {
   status: LocalWorkspaceStatus;
-  snapshot: LocalWorkspaceSnapshot | null;
+  snapshot: ChainWorkspaceSnapshot | null;
 }
 const initial: LocalState = { status: 'connecting', snapshot: null };
 
-export function useLocalWorkspace(enabled: boolean) {
+export function useChainWorkspace(mode: 'local' | 'live' | null) {
   const [state, setState] = useState<LocalState>(initial);
+  const refreshNow = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!mode) return;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let request: AbortController | undefined;
@@ -25,9 +26,12 @@ export function useLocalWorkspace(enabled: boolean) {
       const current = new AbortController();
       request = current;
       try {
-        const { fetchLocalWorkspace } = await loadLocalClient();
+        const fetchWorkspace =
+          mode === 'local'
+            ? (await loadLocalClient()).fetchLocalWorkspace
+            : (await loadLiveClient()).fetchLiveWorkspace;
         if (stopped || current.signal.aborted || document.hidden) return;
-        const snapshot = await fetchLocalWorkspace(current.signal);
+        const snapshot = await fetchWorkspace(current.signal);
         if (stopped || current.signal.aborted || document.hidden) return;
         setState({ status: 'ready', snapshot });
       } catch {
@@ -35,29 +39,37 @@ export function useLocalWorkspace(enabled: boolean) {
           setState({ status: 'unavailable', snapshot: null });
       } finally {
         if (!stopped && !current.signal.aborted && !document.hidden)
-          timer = setTimeout(refresh, 2000);
+          timer = setTimeout(refresh, mode === 'local' ? 2_000 : 8_000);
       }
     }
 
-    function visibilityChanged() {
+    function restartRefresh() {
       clearTimeout(timer);
       request?.abort();
-      setState({
-        status: document.hidden ? 'paused' : 'connecting',
-        snapshot: null,
-      });
-      if (!document.hidden) void refresh();
+      if (document.hidden) return;
+      void refresh();
     }
 
+    function visibilityChanged() {
+      setState((previous) =>
+        previous.snapshot
+          ? previous
+          : { status: document.hidden ? 'paused' : 'connecting', snapshot: null },
+      );
+      restartRefresh();
+    }
+
+    refreshNow.current = restartRefresh;
     visibilityChanged();
     document.addEventListener('visibilitychange', visibilityChanged);
     return () => {
       stopped = true;
+      refreshNow.current = null;
       clearTimeout(timer);
       request?.abort();
       document.removeEventListener('visibilitychange', visibilityChanged);
     };
-  }, [enabled]);
+  }, [mode]);
 
-  return { ...state, reset: () => setState(initial) };
+  return { ...state, reset: () => setState(initial), refresh: () => refreshNow.current?.() };
 }

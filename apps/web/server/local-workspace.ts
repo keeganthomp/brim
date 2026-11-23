@@ -5,6 +5,7 @@ import { Effect, Schema } from 'effect';
 import { Pool } from 'pg';
 import { localDatabaseUrl } from '../../../infra/local/database';
 import { readLocalChain } from './local-chain';
+import { toWorkspaceAgents, workspaceAgentName } from '../lib/chain/workspace-agents';
 import { localRequest } from './local-request';
 import {
   LocalWorkspaceError,
@@ -84,17 +85,18 @@ export const localWorkspace = (request: Request) =>
     const rows = yield* Schema.decodeUnknownEffect(PaymentRows)(result.rows).pipe(
       Effect.mapError(localFailure),
     );
+    const agents = toWorkspaceAgents(chain.policies, metadata.agentAddress);
     const payments = yield* attempt(() =>
       rows.map((row) => ({
         id: `${row.signature}:${row.event_index}`,
         merchant: 'Local paid API',
-        agentName: row.agent_key === metadata.agentAddress ? 'Local Agent' : 'Agent payment',
+        agentName: workspaceAgentName(row.agent_key, metadata.agentAddress),
+        agentKey: row.agent_key,
         amountBaseUnits: row.amount_base_units,
         signature: row.signature,
         settledAt: new Date(Number(BigInt(row.chain_timestamp)) * 1000).toISOString(),
       })),
     );
-    const policy = chain.policy;
     return Response.json(
       {
         status: 'ready',
@@ -103,22 +105,11 @@ export const localWorkspace = (request: Request) =>
         isPaused: chain.isPaused,
         ownerActionsEnabled: false,
         ...(vaultConfig ? { vaultConfig } : {}),
-        agents: [
-          {
-            id: metadata.agentAddress,
-            name: 'Local Agent',
-            agentKey: metadata.agentAddress,
-            isFrozen: policy.isFrozen,
-            maxPerTxBaseUnits: policy.maxPerTx.toString(),
-            windowLimitBaseUnits: policy.windowLimit.toString(),
-            windowSpentBaseUnits: policy.windowSpent.toString(),
-            windowStart: policy.windowStart.toString(),
-            windowDuration: policy.windowDuration.toString(),
-            minTxInterval: Number(policy.minTxInterval),
-            allowlistEnabled: policy.allowlistEnabled,
-            allowlist: policy.allowlist,
-          },
-        ],
+        ownerAddress: chain.owner,
+        vaultAddress: metadata.vaultAddress,
+        programAddress: metadata.programAddress,
+        policyWritesEnabled: true,
+        agents,
         payments,
       },
       { headers },

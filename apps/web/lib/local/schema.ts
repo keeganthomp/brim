@@ -22,6 +22,8 @@ export const PublicVaultConfigSchema = Schema.String.check(
 
 export const LocalWorkspaceSchema = Schema.Struct({
   status: Schema.Literal('ready'),
+  policyWritesEnabled: Schema.optionalKey(Schema.Boolean),
+  ownerAddress: Schema.optionalKey(Schema.String),
   vaultConfig: Schema.optionalKey(Schema.Unknown),
   balanceBaseUnits: DisplayAmount,
   isPaused: Schema.optionalKey(Schema.Boolean),

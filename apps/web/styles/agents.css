@@ -1,82 +1,58 @@
-/* Spending policies and their independent freeze controls. */
-.agents-section .new-agent-button {
-  height: 38px;
-  padding-inline: 12px;
-  font-size: 13px;
+/* Names, budget usage, and a single independent payment control. */
+.agent-count {
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.5;
 }
 .agent-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 14px;
-  padding: 13px 22px;
+  column-gap: 24px;
+  padding: 22px 24px;
   border-top: 1px solid var(--line);
 }
 .agent-main {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px 10px;
+  display: block;
   min-width: 0;
-  min-height: 68px;
+  min-height: 58px;
   padding: 4px;
   margin: -4px;
-  border-radius: 8px;
+  border-radius: 7px;
   text-align: left;
 }
-.agent-main:hover:not(:disabled) {
+button.agent-main:hover {
   background: var(--page);
 }
 .agent-main:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 1px;
 }
-.agent-main:disabled {
-  opacity: 1;
-  cursor: default;
-}
-.agent-avatar {
-  display: grid;
-  grid-row: 1 / 3;
-  place-items: center;
-  align-self: start;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--secondary);
-}
 .agent-title {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
   color: var(--ink);
   font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .agent-title svg {
-  color: var(--secondary);
+  flex-shrink: 0;
+  color: #9aa3ad;
 }
-.agent-name,
-.agent-role {
+.agent-name {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.agent-role {
-  display: block;
-  margin-top: 2px;
-  color: var(--secondary);
-  font-size: 11px;
-  line-height: 1.4;
-}
 .agent-toggle {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 1px;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 73px;
   color: var(--secondary);
   font-size: 12px;
 }
@@ -84,81 +60,85 @@
   color: var(--red);
 }
 .agent-budget {
-  grid-column: 2;
+  display: block;
   min-width: 0;
+  margin-top: 9px;
 }
 .budget-line {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 2px 8px;
+  gap: 3px 8px;
   color: var(--secondary);
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.5;
+}
+.budget-line .mono {
+  font-size: 12px;
 }
 .budget-line strong {
-  color: var(--ink);
-  font-weight: 550;
+  color: #414d5b;
+  font-weight: 450;
 }
 .progress-track {
   display: block;
-  height: 4px;
-  margin-top: 6px;
+  height: 3px;
+  margin-top: 8px;
   overflow: hidden;
   border-radius: 3px;
-  background: var(--surface);
+  background: #eff2f5;
 }
 .progress-track > span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #59636e;
+  background: #778392;
   transition: width 180ms var(--spring);
 }
-.frozen .agent-avatar {
-  color: #747c86;
-}
 .frozen .progress-track > span {
-  background: #a1aab4;
-}
-.budget-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 22px;
-  border-top: 1px solid var(--line);
-  color: var(--secondary);
-  font-size: 12px;
-  line-height: 1.5;
-}
-.budget-summary strong {
-  color: var(--ink);
-  font-weight: 550;
+  background: #b6bec8;
 }
 .agents-section .empty-state {
-  min-height: 166px;
+  min-height: 190px;
   border-top: 1px solid var(--line);
+  gap: 9px;
+  padding: 30px 24px;
+}
+.agents-section .empty-state h3 {
+  font-size: 14px;
+  font-weight: 500;
+}
+.agents-section .empty-state p {
+  font-size: 12px;
+  line-height: 1.7;
 }
 @media (max-width: 1040px) {
-  .agent-row,
-  .budget-summary {
-    padding-inline: 18px;
+  .agent-row {
+    padding-inline: 22px;
+    column-gap: 18px;
+  }
+}
+@media (max-width: 800px) {
+  .agent-row {
+    padding: 21px 20px;
   }
 }
 @media (max-width: 480px) {
-  .agents-section .new-agent-button {
-    height: 44px;
-  }
   .agent-row {
-    column-gap: 10px;
+    column-gap: 16px;
   }
   .agent-toggle {
     flex-direction: column-reverse;
-    gap: 2px;
-    min-width: 44px;
-    padding: 4px 0;
-    font-size: 11px;
+    gap: 5px;
+    min-width: 40px;
+  }
+  .agent-main {
+    min-height: 62px;
+  }
+}
+@media (max-width: 380px) {
+  .agent-row {
+    padding-inline: 18px;
   }
 }

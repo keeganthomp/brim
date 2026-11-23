@@ -1,6 +1,7 @@
 import * as Data from 'effect/Data';
 import * as Effect from 'effect/Effect';
 import * as Schema from 'effect/Schema';
+import { isAddress } from '@solana/kit';
 import { AgentSchema, type Agent } from './demo-model';
 
 export class DemoPolicyError extends Data.TaggedError('DemoPolicyError')<{
@@ -9,8 +10,10 @@ export class DemoPolicyError extends Data.TaggedError('DemoPolicyError')<{
 
 const EditablePolicySchema = AgentSchema.check(
   Schema.makeFilter((draft) => {
-    const recipients = draft.recipients.split(/[\s,]+/).filter(Boolean);
+    const recipients = policyRecipients(draft.recipients);
     if (!draft.name.trim()) return 'Give this agent a name.';
+    if (draft.agentKey?.trim() && !isAddress(draft.agentKey.trim()))
+      return 'Enter a valid Solana public key.';
     if (
       ![draft.cap, draft.budget, draft.requests].every(
         (value) => Number.isFinite(value) && value > 0,
@@ -33,6 +36,10 @@ const EditablePolicySchema = AgentSchema.check(
   }),
 );
 
+export const policyRecipients = (value: string) => [
+  ...new Set(value.split(/[\s,]+/).filter(Boolean)),
+];
+
 /** Decode and normalize a policy before it reaches the demo state store. */
 export const prepareDemoPolicy = (draft: Agent) =>
   Schema.decodeUnknownEffect(EditablePolicySchema)(draft).pipe(
@@ -40,7 +47,8 @@ export const prepareDemoPolicy = (draft: Agent) =>
     Effect.map((valid) => ({
       ...valid,
       name: valid.name.trim(),
-      recipients: [...new Set(valid.recipients.split(/[\s,]+/).filter(Boolean))].join('\n'),
+      ...(valid.agentKey !== undefined ? { agentKey: valid.agentKey.trim() } : {}),
+      recipients: policyRecipients(valid.recipients).join('\n'),
     })),
   );
 

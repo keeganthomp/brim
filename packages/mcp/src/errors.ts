@@ -22,7 +22,7 @@ const PUBLIC_MESSAGES: Readonly<Record<string, string>> = {
   SETUP_REQUIRED:
     'Set BRIM_VAULT_CONFIG and BRIM_AGENT_KEY before starting Brim MCP. SOLANA_RPC_URL is optional.',
   INVALID_OPTIONS:
-    'Set BRIM_VAULT_CONFIG and BRIM_AGENT_KEY, or use --local /absolute/path/.brim/local.json.',
+    'Use --local CONFIG [--agent-key-file PRIVATE_KEY_FILE], or configure BRIM_VAULT_CONFIG and BRIM_AGENT_KEY.',
   LOCAL_SETUP_REQUIRED: 'Start the local Brim stack before using --local.',
   INVALID_LOCAL_SETUP: 'Recreate the local Brim configuration and check its loopback RPC.',
   INVALID_CARD: 'Ask your operator for valid Brim vault configuration.',

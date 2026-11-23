@@ -1,27 +1,39 @@
 import { useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Check, Snowflake, X } from 'lucide-react';
+import { LoaderCircle, Snowflake, X } from 'lucide-react';
 import type { AgentPolicyController } from '../../hooks/use-agent-policy';
 import { AgentPolicyFields } from './agent-policy-fields';
 import { useDialogFocus } from '../ui/use-dialog-focus';
+
 export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyController }) {
-  const { draft, creating, error, setDraft, saveAgent, copyConfig, freezeAgent } = controller;
-  const nameField = useRef<HTMLInputElement>(null);
-  const focus = useDialogFocus(nameField);
+  const { draft, creating, mode, canEdit, canFreeze, busy, setDraft, saveAgent, freezeAgent } =
+    controller;
+  const firstField = useRef<HTMLInputElement>(null);
+  const focus = useDialogFocus(firstField);
   const content = useRef<HTMLDivElement>(null);
   function focusFirstControl(event: Event) {
-    // A touch user can read the limits before deliberately opening a soft keyboard.
     event.preventDefault();
-    if (window.matchMedia('(pointer: coarse)').matches) {
+    // Let touch users read the sheet before opening their keyboard.
+    if (!canEdit || window.matchMedia('(pointer: coarse)').matches) {
       content.current?.focus({ preventScroll: true });
       return;
     }
     const first = creating
-      ? nameField.current
+      ? firstField.current
       : content.current?.querySelector<HTMLInputElement>('input[type="number"]');
     first?.focus({ preventScroll: true });
     if (!creating) first?.select();
   }
+  const action = creating ? 'Add policy' : 'Save changes';
+  const actionLabel =
+    mode === 'live'
+      ? 'Review in wallet'
+      : mode === 'demo'
+        ? creating
+          ? 'Add demo policy'
+          : 'Save demo policy'
+        : action;
+  const pendingLabel = mode === 'live' ? 'Check your wallet…' : 'Applying policy…';
   return (
     <Dialog.Root
       open={draft !== null}
@@ -40,11 +52,15 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
         >
           <div className="drawer-header">
             <div>
-              <Dialog.Title>{creating ? 'Add spending policy' : draft?.name}</Dialog.Title>
+              <Dialog.Title>
+                {creating ? 'Add spending policy' : draft?.name || 'Spending policy'}
+              </Dialog.Title>
               <Dialog.Description id="policy-description">
-                {creating
-                  ? 'Set how much an existing agent can spend from this vault.'
-                  : 'Manage this agent’s limits and payment permissions.'}
+                {mode === 'demo'
+                  ? 'Sample limits, saved in this browser.'
+                  : creating
+                    ? 'Register a public key and set its spending limits.'
+                    : 'Spending limits for this agent’s public key.'}
               </Dialog.Description>
             </div>
             <Dialog.Close className="icon-button" aria-label="Close agent policy">
@@ -52,38 +68,37 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
             </Dialog.Close>
           </div>
           {draft && (
-            <form onSubmit={saveAgent} className="policy-form">
-              <AgentPolicyFields
-                draft={draft}
-                setDraft={setDraft}
-                copyConfig={copyConfig}
-                error={error}
-                nameField={nameField}
-              />
+            <form onSubmit={saveAgent} className="policy-form" aria-busy={busy}>
+              <AgentPolicyFields controller={controller} firstField={firstField} />
               <div className="drawer-bottom">
-                <button className="button primary full" type="submit">
-                  <Check size={16} />
-                  {creating ? 'Add demo policy' : 'Save demo policy'}
-                </button>
-                {!creating && (
+                {canEdit ? (
+                  <button className="button primary full" type="submit" disabled={busy}>
+                    {busy && <LoaderCircle size={16} className="policy-busy" aria-hidden="true" />}
+                    {busy ? pendingLabel : actionLabel}
+                  </button>
+                ) : (
+                  <Dialog.Close className="button secondary full">Done</Dialog.Close>
+                )}
+                {!creating && canFreeze && (
                   <button
                     type="button"
-                    aria-describedby="policy-freeze-help"
                     className={`button freeze-button ${draft.frozen ? 'resume-button' : ''}`}
-                    onClick={() => {
-                      freezeAgent(draft, !draft.frozen);
-                      setDraft(null);
-                    }}
+                    disabled={busy}
+                    onClick={() => freezeAgent(draft, !draft.frozen)}
                   >
-                    <Snowflake size={16} />
+                    <Snowflake size={15} aria-hidden="true" />
                     {draft.frozen ? 'Resume agent' : 'Freeze agent'}
                   </button>
                 )}
-                {!creating && (
-                  <p id="policy-freeze-help" className="policy-freeze-help">
-                    {draft.frozen
-                      ? 'Resume uses the saved policy limits.'
-                      : 'Freezes payments. Your agent can keep running.'}
+                {mode === 'local' && canEdit && (
+                  <p className="policy-footer-note">Applies to your local test chain.</p>
+                )}
+                {mode === 'live' && canEdit && (
+                  <p className="policy-footer-note">Review and sign in your wallet.</p>
+                )}
+                {!canEdit && (
+                  <p className="policy-footer-note">
+                    Owner authorization is required to make changes.
                   </p>
                 )}
               </div>

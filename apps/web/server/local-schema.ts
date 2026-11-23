@@ -1,3 +1,4 @@
+import { isAddress } from '@solana/kit';
 import { Data, Schema } from 'effect';
 
 export class LocalWorkspaceError extends Data.TaggedError('LocalWorkspaceError')<{
@@ -9,8 +10,9 @@ export class LocalWorkspaceError extends Data.TaggedError('LocalWorkspaceError')
 }
 export const DEVNET_GENESIS = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG';
 export const LOCAL_USDC_MINT = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
+export { POLICY_ACCOUNT_BYTES, MAX_LOCAL_AGENTS } from '../lib/chain/read-vault';
 export const TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-export const Address = Schema.String.check(Schema.isPattern(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/));
+export const Address = Schema.String.check(Schema.makeFilter(isAddress));
 export const BaseUnits = Schema.String.check(
   Schema.makeFilter(
     (value: string) =>

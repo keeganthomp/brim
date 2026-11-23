@@ -2,13 +2,15 @@ import * as Schema from 'effect/Schema';
 import type { Agent, Activity } from '../demo-model';
 import { PublicVaultConfigSchema, type LocalWorkspaceResponse } from './schema';
 
-export interface LocalWorkspaceSnapshot {
+export interface ChainWorkspaceSnapshot {
   balance: number;
   agents: Agent[];
   activity: Activity[];
   indexedSpend: number;
   isPaused: boolean;
+  policyWritesEnabled: boolean;
   vaultConfig?: string;
+  ownerAddress?: string;
 }
 
 const usdc = (baseUnits: string) => Number(baseUnits) / 1_000_000;
@@ -21,7 +23,7 @@ function relativeTime(timestamp: string) {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-export function adaptLocalWorkspace(data: LocalWorkspaceResponse): LocalWorkspaceSnapshot {
+export function adaptLocalWorkspace(data: LocalWorkspaceResponse): ChainWorkspaceSnapshot {
   const agents = data.agents.map((agent): Agent => {
     const expired =
       data.chainTimestamp !== undefined &&
@@ -31,11 +33,14 @@ export function adaptLocalWorkspace(data: LocalWorkspaceResponse): LocalWorkspac
     return {
       id: agent.id,
       name: agent.name || 'Local Agent',
-      role: 'Local test agent · Read-only controls',
+      ...(agent.agentKey ? { agentKey: agent.agentKey } : {}),
+      role: 'Registered agent',
       spent: expired ? 0 : usdc(agent.windowSpentBaseUnits),
       cap: usdc(agent.maxPerTxBaseUnits),
       budget: usdc(agent.windowLimitBaseUnits),
       requests: agent.minTxInterval === 0 ? 60 : Math.min(60, Math.floor(60 / agent.minTxInterval)),
+      minTxInterval: agent.minTxInterval,
+      ...(agent.windowDuration ? { windowDuration: agent.windowDuration } : {}),
       frozen: Boolean(data.isPaused) || agent.isFrozen,
       allowlistEnabled: agent.allowlistEnabled,
       recipients: (agent.allowlist ?? []).join('\n'),
@@ -54,10 +59,12 @@ export function adaptLocalWorkspace(data: LocalWorkspaceResponse): LocalWorkspac
   const vaultConfig = Schema.decodeUnknownResult(PublicVaultConfigSchema)(data.vaultConfig);
   return {
     ...(vaultConfig._tag === 'Success' ? { vaultConfig: vaultConfig.success } : {}),
+    ...(data.ownerAddress ? { ownerAddress: data.ownerAddress } : {}),
     balance: usdc(data.balanceBaseUnits),
     agents,
     activity,
     indexedSpend: activity.reduce((total, payment) => total + payment.amount, 0),
     isPaused: Boolean(data.isPaused),
+    policyWritesEnabled: Boolean(data.policyWritesEnabled),
   };
 }

@@ -40,6 +40,31 @@ Use Node 24. If your desktop client cannot find `node`, set `command` to its abs
 
 The report costs **$0.04 fake USDC**. Explicit local mode permits only this local report endpoint and uses the generated fake-funds setup.
 
+## Connect your own local agent
+
+[Generate or reuse a scoped keypair and add its public key in the dashboard](/docs/sdk/#register-your-agent-locally). Wait for the policy's on-chain confirmation. Then use that private key file with the same local vault config:
+
+```json title="MCP client configuration"
+{
+  "mcpServers": {
+    "brim-research": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/brim/packages/mcp/dist/cli.js",
+        "--local",
+        "/absolute/path/to/brim/.brim/local.json",
+        "--agent-key-file",
+        "/absolute/path/to/brim/.brim/research-agent.json"
+      ]
+    }
+  }
+}
+```
+
+The override is accepted **only with `--local`**. It requires an absolute path to a mode-`0600` file containing a valid 64-byte JSON keypair. It changes only the agent key: the vault config, loopback RPC, and local report restriction stay in place. The key is loaded by the MCP process, never supplied to a tool.
+
+Refresh the MCP connection, call `brim_policy` to inspect your new limits, then call `brim_fetch` with `http://127.0.0.1:4020/report`. It costs $0.04 fake USDC. A tool response or receipt alone is not finalized proof, and this call does not insert a ledger row. [The built-in local payment test](/docs/quickstart/#pay-for-the-report) verifies and indexes its own payment separately.
+
 ## Tool reference
 
 Call `tools/list` after the MCP initialization handshake to discover these tools. Unknown arguments are rejected; vault config, keys, RPC endpoints, and spending limits cannot be supplied through a tool call.

@@ -22,17 +22,41 @@ The URL is illustrative. The [quickstart](/docs/quickstart/) makes a real local 
 
 ## Get your local config
 
-Run `npm run dev`, open the dashboard's **Local workspace**, and choose **Copy vault config**. The stack creates this config for you, along with a funded test vault and an authorized agent key.
+Start the [local stack](/docs/quickstart/) with `npm run dev`. It creates a funded test vault and a starter policy. In the dashboard's **Local workspace**, choose **Copy vault config**. Every agent on this local vault can reuse that public string.
 
-The ignored `.brim/local.json` file stores the public string as `vaultConfig` and the test keypair separately. The payment runner and [MCP local mode](/docs/mcp/#connect-to-the-local-stack) load them directly. For your own application, supply the key privately and set `rpcUrl` to `http://127.0.0.1:8899`.
+The private test values stay in ignored `.brim/` files. The built-in payment runner loads its starter key automatically. To attach your own agent, register its public key below and keep its private key in that agent's runtime.
 
-To print the public config in a terminal, use `jq`:
+## Register your agent locally
+
+1. **Prepare a scoped key.** Reuse your agent's existing Ed25519 keypair, or generate one from the repository root:
 
 ```bash
-jq -r '.vaultConfig' .brim/local.json
+npm run agent:key -- --out .brim/research-agent.json
 ```
 
-Follow the [quickstart](/docs/quickstart/) for the complete local flow.
+The helper creates a new mode-`0600` keypair file and prints only `publicKey` and `keyFile`. It refuses to overwrite an existing file. Copy the public key; do not paste the private JSON into the dashboard.
+
+2. **Attach a policy.** Open **Local workspace → Add policy**, paste that public key, and set a **$1 per-payment cap** and **$50 24-hour budget**. Advanced settings hold payment spacing and recipient restrictions. Choose **Add policy** and wait for on-chain confirmation.
+
+3. **Inspect the registration.** Your agent appears in the list. Its detail sheet shows a copyable registered public key. Editing limits preserves consumed budget, frozen state, window timing, and any spacing you leave unchanged.
+
+4. **Run the agent.** With `jq` installed, run this in another terminal at the repository root:
+
+```bash
+export BRIM_VAULT_CONFIG="$(jq -r '.vaultConfig' .brim/local.json)"
+export BRIM_AGENT_KEY="$(jq -c . .brim/research-agent.json)"
+export SOLANA_RPC_URL="$(jq -r '.rpcUrl' .brim/local.json)"
+
+node packages/sdk/examples/agent.ts http://127.0.0.1:4020/report
+```
+
+These assignments load values without displaying the keypair. The report costs **$0.04 fake USDC**; a successful example prints `HTTP 200`. Use your existing private key file instead if you skipped key generation. Do not enable shell tracing or print the environment.
+
+The local RPC override is necessary: the public default devnet RPC cannot see your Surfpool vault. If you enable a recipient allowlist, include the report merchant's public key, available with `jq -r '.merchantAddress' .brim/local.json`.
+
+This standalone fetch does not insert a ledger row. The dashboard reads its balance and policy from the chain; finalized activity requires indexing. The [built-in payment test](/docs/quickstart/#pay-for-the-report) separately verifies settlement and writes a deduplicated ledger record.
+
+For the same agent in a tool-based client, use [MCP with your local key file](/docs/mcp/#connect-your-own-local-agent). Funding, withdrawals, and freezes remain read-only in Local workspace. Policy writes use the generated test owner, not a production wallet.
 
 ## What the values look like
 
@@ -44,7 +68,7 @@ The examples are abbreviated; copy the complete values into your runtime. The pr
 ## Who hands over what
 
 1. **The agent integrator generates a scoped keypair.** Keep its private 64-byte keypair export with the application and send its public key to the treasury operator.
-2. **The operator registers that public key and its limits on the vault.** The operator also prepares the vault, funding, and a compatible facilitator.
+2. **The operator registers that public key and its limits on the vault.** Use Local workspace for test funds, or the [configured owner-wallet path](/docs/production/#configure-owner-wallet-policy-writes) for an existing deployed vault. The operator also prepares funding and a compatible facilitator.
 3. **The operator creates and shares the public vault config.** The returned `brim:v1:...` string becomes `BRIM_VAULT_CONFIG`.
 4. **The integrator supplies both values to the application.** Load the public config as `BRIM_VAULT_CONFIG` and the matching private keypair as `BRIM_AGENT_KEY` through the runtime's configuration.
 

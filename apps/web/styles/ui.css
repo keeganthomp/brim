@@ -182,121 +182,6 @@
 .text-input[aria-invalid='true'] {
   border-color: #e9a5a0;
 }
-.policy-control {
-  margin-top: 27px;
-}
-.control-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  color: #33333a;
-  font-size: 14px;
-  font-weight: 500;
-}
-.control-label label {
-  min-width: 0;
-  line-height: 1.45;
-}
-.control-value {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid #e7e7ec;
-  border-radius: 9px;
-  background: #f8f8fa;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-variant-numeric: tabular-nums;
-  transition:
-    border-color 0.18s,
-    box-shadow 0.18s;
-}
-.control-value:focus-within {
-  border-color: #9999a3;
-  box-shadow: 0 0 0 3px #11111108;
-}
-.control-value span {
-  color: #a0a0a8;
-  font-size: 13px;
-}
-.control-value input {
-  width: 72px;
-  padding: 0;
-  border: 0;
-  outline: none;
-  background: none;
-  color: #33333b;
-  font: inherit;
-  font-size: 13px;
-  text-align: right;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-.control-value input:focus-visible {
-  outline: none;
-}
-.control-value input::-webkit-inner-spin-button {
-  appearance: none;
-}
-.control-value input[aria-invalid='true'] {
-  color: #d33e36;
-}
-.slider {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 32px;
-  margin-top: 10px;
-  user-select: none;
-  touch-action: none;
-}
-.slider-track {
-  position: relative;
-  flex-grow: 1;
-  height: 4px;
-  border-radius: 10px;
-  background: #eeeef3;
-}
-.slider-range {
-  position: absolute;
-  height: 100%;
-  border-radius: 10px;
-  background: #393941;
-}
-.slider-thumb {
-  display: block;
-  width: 19px;
-  height: 19px;
-  border: 1px solid #d4d4dc;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 4px #1112;
-  cursor: grab;
-  transition:
-    box-shadow 0.18s,
-    transform 0.18s var(--spring);
-}
-.slider-thumb:hover {
-  box-shadow: 0 1px 7px #1113;
-  transform: scale(1.08);
-}
-.slider-thumb:active {
-  cursor: grabbing;
-  transform: scale(1.12);
-}
-.slider-thumb[role='slider']:focus-visible {
-  outline: 2px solid #55555d;
-  outline-offset: 4px;
-}
-.policy-control > p {
-  margin-top: 3px;
-  color: var(--secondary);
-  font-size: 12px;
-  line-height: 1.65;
-}
 .form-error {
   display: flex;
   align-items: flex-start;
@@ -420,7 +305,6 @@
   .button,
   .switch,
   .switch-thumb,
-  .slider-thumb,
   .toast,
   .icon-button {
     transition: none;

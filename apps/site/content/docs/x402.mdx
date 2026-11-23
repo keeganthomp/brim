@@ -16,7 +16,7 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://merchant.example/v1/data');
 ```
 
-Use the two values from the [SDK handoff guide](/docs/sdk/#who-hands-over-what): an operator-provided public config and the integrator's scoped private keypair. The operator registers the corresponding public key with a policy before it can spend. [MCP](/docs/mcp/) uses the same handoff and payment engine.
+Use the two values from the [SDK handoff guide](/docs/sdk/#who-hands-over-what): an operator-provided public config and the integrator's scoped private keypair. The operator registers the corresponding public key with a policy before it can spend. Locally, use **Add policy** in the dashboard; [follow the SDK setup](/docs/sdk/#register-your-agent-locally). [MCP](/docs/mcp/) uses the same handoff and payment engine.
 
 ## Follow a payment
 

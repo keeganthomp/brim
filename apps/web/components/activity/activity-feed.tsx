@@ -1,4 +1,3 @@
-import { CheckCheck } from 'lucide-react';
 import type { WorkspaceMode } from '../../lib/workspace';
 import type { Activity } from '../../lib/demo';
 import type { ActivityFilter } from '../../hooks/use-dashboard';
@@ -37,25 +36,33 @@ export function ActivityFeed({
     <section className="activity-section" aria-labelledby="activity-heading">
       <div className="section-heading">
         <h2 id="activity-heading">Activity</h2>
-        <span className={`live-indicator ${mode === 'local' && ready ? 'verified-indicator' : ''}`}>
-          {label}
-        </span>
+        {ready && (
+          <span className={`live-indicator ${mode === 'local' ? 'verified-indicator' : ''}`}>
+            {label}
+          </span>
+        )}
       </div>
-      {ready && (
+      {ready && mode === 'demo' && (
         <div className="feed-filter" role="group" aria-label="Filter activity">
           {filters.map(({ value, label }) => (
             <button
               key={value}
+              aria-label={label}
               aria-pressed={filter === value}
               className={filter === value ? 'selected' : ''}
               onClick={() => onFilterChange(value)}
             >
-              {label}
+              {value === 'all' ? 'All' : label}
             </button>
           ))}
         </div>
       )}
-      <div className="activity-list">
+      <div
+        className="activity-list"
+        role={activities.length > 0 ? 'region' : undefined}
+        tabIndex={activities.length > 0 ? 0 : undefined}
+        aria-label={activities.length > 0 ? 'Activity feed' : undefined}
+      >
         {activities.map((item) => (
           <ActivityRow
             key={item.id}
@@ -65,7 +72,6 @@ export function ActivityFeed({
         ))}
         {activities.length === 0 && (
           <div className="empty-state">
-            <CheckCheck size={25} strokeWidth={1.5} aria-hidden="true" />
             <h3>
               {mode === 'demo'
                 ? 'No activity in this view'
@@ -76,16 +82,11 @@ export function ActivityFeed({
             <p>
               {mode === 'demo'
                 ? 'Choose another filter to see your agents’ payments.'
-                : mode === 'local'
-                  ? 'Verified local payments appear here. Blocked attempts are not indexed.'
-                  : 'Payments appear here when your vault is connected.'}
+                : 'Settled payments appear here.'}
             </p>
           </div>
         )}
       </div>
-      {mode === 'local' && activities.some((item) => item.signature) && (
-        <p className="activity-footer">Select a payment to copy its signature.</p>
-      )}
     </section>
   );
 }

@@ -1,29 +1,52 @@
 'use client';
 
 import { useRef, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
-import { loadPolicyActions } from '../lib/deferred-actions';
+import { loadLocalPolicies, loadPolicyActions } from '../lib/deferred-actions';
 import { newDemoAgent } from '../lib/new-demo-agent';
-import { copySdkTemplate } from '../lib/clipboard';
+import { copySdkTemplate, copyText } from '../lib/clipboard';
 import type { Agent } from '../lib/demo';
+import type { WorkspaceMode } from '../lib/workspace';
+import type { OwnerWalletController } from './use-owner-wallet';
 import type { DemoActions } from './types';
 
-export function useAgentPolicy({ demo, setState, notify, liveUnavailable }: DemoActions) {
+interface PolicyActions extends DemoActions {
+  mode: WorkspaceMode;
+  localWrites: boolean;
+  saveLivePolicy?: OwnerWalletController['save'] | undefined;
+  onChainChange: () => void;
+}
+
+export function useAgentPolicy({
+  mode,
+  demo,
+  setState,
+  notify,
+  liveUnavailable,
+  localWrites,
+  saveLivePolicy,
+  onChainChange,
+}: PolicyActions) {
   const [draft, setDraftState] = useState<Agent | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const revision = useRef(0);
   const pendingRevision = useRef<number | null>(null);
+  const canEdit = demo || localWrites || Boolean(saveLivePolicy);
 
   const setDraft: Dispatch<SetStateAction<Agent | null>> = (next) => {
     revision.current += 1;
     pendingRevision.current = null;
+    setBusy(false);
     setDraftState(next);
   };
 
   function openAgent(agent?: Agent) {
-    if (!demo) return liveUnavailable();
+    if (!canEdit && !(mode !== 'demo' && agent)) return liveUnavailable();
+    if (localWrites) void loadLocalPolicies().catch(() => undefined);
     setCreating(!agent);
-    setDraft(agent ? { ...agent } : newDemoAgent());
+    const next = agent ? { ...agent } : newDemoAgent();
+    setDraft(!agent && mode !== 'demo' ? { ...next, minTxInterval: 3 } : next);
     setError('');
   }
 
@@ -33,17 +56,30 @@ export function useAgentPolicy({ demo, setState, notify, liveUnavailable }: Demo
       ...previous,
       agents: previous.agents.map((item) => (item.id === agent.id ? { ...item, frozen } : item)),
     }));
-    notify(
-      `${agent.name} ${frozen ? 'frozen' : 'resumed'} in this demo. No on-chain policy was changed.`,
-    );
+    if (draft?.id === agent.id) setDraft(null);
+    notify(`${agent.name} ${frozen ? 'frozen' : 'resumed'} in Demo.`);
   }
 
   async function saveAgent(event: FormEvent) {
     event.preventDefault();
-    if (!draft || !demo || pendingRevision.current !== null) return;
+    if (!draft || !canEdit || pendingRevision.current !== null) return;
     const currentRevision = revision.current;
     pendingRevision.current = currentRevision;
+    setBusy(true);
+    setError('');
     try {
+      if (mode !== 'demo') {
+        const save = localWrites ? (await loadLocalPolicies()).saveLocalPolicy : saveLivePolicy;
+        if (revision.current !== currentRevision) return;
+        if (!save) return setError('Owner authorization is required.');
+        const result = await save(draft, creating ? 'create' : 'update');
+        onChainChange();
+        if (revision.current !== currentRevision) return;
+        if (!result.success) return setError(result.message);
+        setDraft(null);
+        notify(creating ? 'Agent registered.' : 'Policy updated.');
+        return;
+      }
       const { validateDemoPolicy } = await loadPolicyActions();
       const result = await validateDemoPolicy(draft);
       // Editing or closing while validation loads invalidates that submission.
@@ -57,32 +93,45 @@ export function useAgentPolicy({ demo, setState, notify, liveUnavailable }: Demo
           : previous.agents.map((agent) => (agent.id === saved.id ? saved : agent)),
       }));
       setDraft(null);
-      notify(`Demo spending policy ${creating ? 'added' : 'updated'} for ${saved.name}.`);
+      notify(`Demo policy ${creating ? 'added' : 'updated'}.`);
     } catch {
       if (revision.current === currentRevision)
         setError('Policy controls could not load. Please try again.');
     } finally {
-      if (pendingRevision.current === currentRevision) pendingRevision.current = null;
+      if (pendingRevision.current === currentRevision) {
+        pendingRevision.current = null;
+        setBusy(false);
+      }
     }
   }
 
   async function copyConfig() {
     const copied = await copySdkTemplate();
-    const message = copied
-      ? 'SDK template copied. See the SDK README for the supported x402 smart-wallet flow and required configuration.'
-      : 'Clipboard access is unavailable in this browser.';
-    notify(message);
+    notify(copied ? 'SDK template copied.' : 'Clipboard access is unavailable in this browser.');
+  }
+
+  async function copyAgentKey() {
+    if (!draft?.agentKey) return;
+    const copied = await copyText(draft.agentKey, 'copy-agent-key');
+    notify(
+      copied ? 'Agent public key copied.' : 'Clipboard access is unavailable in this browser.',
+    );
   }
 
   return {
     draft,
     creating,
     error,
+    busy,
+    mode,
+    canEdit,
+    canFreeze: demo,
     setDraft,
     openAgent,
     freezeAgent,
     saveAgent,
     copyConfig,
+    copyAgentKey,
     close: () => setDraft(null),
   };
 }

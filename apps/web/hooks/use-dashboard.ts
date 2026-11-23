@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { copyText } from '../lib/clipboard';
 import type { Activity } from '../lib/demo';
+import { liveVault } from '../lib/live/config';
 import { initialWorkspaceMode, type WorkspaceMode } from '../lib/workspace';
 import { useAgentPolicy } from './use-agent-policy';
 import { useDemoStore } from './use-demo-store';
 import { useFunds } from './use-funds';
-import { useLocalWorkspace } from './use-local-workspace';
+import { useChainWorkspace } from './use-chain-workspace';
 import { useNotification } from './use-notification';
+import { useOwnerWallet } from './use-owner-wallet';
 
 export type ActivityFilter = 'all' | 'settled' | 'blocked';
 
@@ -17,8 +19,15 @@ export function useDashboard() {
   const { state, setState, ready: demoReady } = useDemoStore(mode === 'demo');
   const notification = useNotification();
   const [filter, setFilter] = useState<ActivityFilter>('all');
-  const local = useLocalWorkspace(mode === 'local');
+  const chain = useChainWorkspace(mode === 'local' || (mode === 'live' && liveVault) ? mode : null);
+  const ownerWallet = useOwnerWallet();
   const demo = mode === 'demo';
+  const localWrites = mode === 'local' && Boolean(chain.snapshot?.policyWritesEnabled);
+  const connectedOwner = Boolean(
+    mode === 'live' &&
+    chain.snapshot?.ownerAddress &&
+    ownerWallet.wallet?.connection.ownerAddress === chain.snapshot.ownerAddress,
+  );
 
   function liveUnavailable() {
     if (demo && !demoReady) {
@@ -27,8 +36,8 @@ export function useDashboard() {
     }
     notification.notify(
       mode === 'local'
-        ? 'Local workspace is read-only. Owner signing controls are not connected; no transaction was sent.'
-        : 'Live transactions need a deployed program, owner wallet integration, and a verified RPC connection. Nothing has been signed or sent.',
+        ? 'Start Brim locally with npm run dev to register a test agent.'
+        : 'Connect the vault owner wallet to edit policies.',
     );
   }
 
@@ -38,16 +47,23 @@ export function useDashboard() {
     notify: notification.notify,
     liveUnavailable,
   };
-  const policy = useAgentPolicy(actions);
+  const policy = useAgentPolicy({
+    ...actions,
+    mode,
+    localWrites,
+    saveLivePolicy: connectedOwner ? ownerWallet.save : undefined,
+    onChainChange: chain.refresh,
+  });
   const funds = useFunds({ ...actions, balance: state.balance });
-  const workspace = demo ? state : mode === 'local' ? local.snapshot : null;
+  const workspace = demo ? state : chain.snapshot;
   const agents = workspace?.agents ?? [];
   const activities = (workspace?.activity ?? []).filter(
     (item) => filter === 'all' || item.status === filter,
   );
 
   function changeMode(nextMode: WorkspaceMode) {
-    local.reset();
+    if (nextMode === mode) return;
+    chain.reset();
     policy.close();
     funds.close();
     setMode(nextMode);
@@ -64,12 +80,10 @@ export function useDashboard() {
   }
 
   async function copyVaultConfig() {
-    if (mode !== 'local' || !local.snapshot?.vaultConfig) return;
-    const copied = await copyText(local.snapshot.vaultConfig, 'copy-vault-config');
+    if (demo || !chain.snapshot?.vaultConfig) return;
+    const copied = await copyText(chain.snapshot.vaultConfig, 'copy-vault-config');
     notification.notify(
-      copied
-        ? 'Public vault config copied. Use it as BRIM_VAULT_CONFIG in your agent runtime.'
-        : 'Clipboard access is unavailable in this browser.',
+      copied ? 'Vault config copied.' : 'Clipboard access is unavailable in this browser.',
     );
   }
 
@@ -79,9 +93,13 @@ export function useDashboard() {
     demoReady,
     ready: workspace !== null,
     balance: workspace?.balance ?? null,
-    localStatus: local.status,
-    localPaused: local.snapshot?.isPaused ?? false,
-    indexedSpend: local.snapshot?.indexedSpend ?? 0,
+    chainStatus: chain.status,
+    chainPaused: chain.snapshot?.isPaused ?? false,
+    liveConfigured: Boolean(liveVault),
+    ownerWallet,
+    connectedOwner,
+    canWritePolicy: policy.canEdit,
+    indexedSpend: chain.snapshot?.indexedSpend ?? 0,
     agents,
     activities,
     filter,
@@ -92,9 +110,6 @@ export function useDashboard() {
     notification,
     selectActivity,
     copyVaultConfig,
-    canCopyVaultConfig: mode === 'local' && Boolean(local.snapshot?.vaultConfig),
-    activeCount: agents.filter((agent) => !agent.frozen).length,
-    spent: agents.reduce((total, agent) => total + agent.spent, 0),
-    budget: agents.reduce((total, agent) => total + agent.budget, 0),
+    canCopyVaultConfig: !demo && Boolean(chain.snapshot?.vaultConfig),
   };
 }

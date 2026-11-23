@@ -18,12 +18,9 @@ export function SpendChart() {
             <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <path className="chart-grid" d="M0 28H480 M0 68H480 M0 111H480" />
+        <path className="chart-grid" d="M0 111H480" />
         <path d={area} fill="url(#chart-fill)" />
         <path className="chart-line" d={line} />
-        {points.map(([x, y], day) => (
-          <circle key={sampleDays[day]} className="chart-point" cx={x} cy={y} r="3" />
-        ))}
       </svg>
       <ol className="chart-days">
         {sampleDays.map((day, index) => (

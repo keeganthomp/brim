@@ -3,6 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { address, getAddressEncoder } from '@solana/kit';
 import { Effect, Schema } from 'effect';
+import { createUpsertAgentPolicyInstruction } from '@brim/sdk';
 import { MINT, PROGRAM, TOKEN, localRpcEffect } from './config.ts';
 import { decode, fromPromise, run } from './effects.ts';
 import {
@@ -20,14 +21,11 @@ import {
   SYSTEM,
   createAta,
   createLocalClient,
-  i64,
   ix,
   pda,
   readonly,
   signer,
   tokenAccount,
-  u32,
-  u64,
   writable,
   writableSigner,
 } from './transactions.ts';
@@ -136,29 +134,21 @@ export function bootstrapLocalEffect({
       yield* localRpcEffect(rpcUrl, 'getAccountInfo', [policy]),
     );
     if (!policyState.value) {
-      const limits = Buffer.concat([
-        u64(1_000_000),
-        u64(50_000_000),
-        i64(86_400),
-        i64(0),
-        Buffer.from([1]),
-        u32(1),
-        Buffer.from(encoder.encode(merchant)),
-      ]);
-      yield* client.sendEffect(owner, [
-        ix(
-          'upsert_agent_policy',
-          [
-            writableSigner(owner),
-            signer(owner),
-            writable(vault),
-            writable(policy),
-            readonly(SYSTEM),
-          ],
-          Buffer.from(encoder.encode(agent.address)),
-          limits,
-        ),
-      ]);
+      const { instruction } = yield* createUpsertAgentPolicyInstruction({
+        programAddress: PROGRAM,
+        ownerAddress: owner.address,
+        vaultAddress: vault,
+        agentKey: agent.address,
+        limits: {
+          maxPerTx: 1_000_000n,
+          windowLimit: 50_000_000n,
+          windowDuration: 86_400n,
+          minTxInterval: 0n,
+          allowlistEnabled: true,
+          allowlist: [merchant],
+        },
+      });
+      yield* client.sendEffect(owner, [instruction]);
     }
     const merchantAta = yield* fromPromise(
       () => tokenAccount(merchant),

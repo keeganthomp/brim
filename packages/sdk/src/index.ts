@@ -27,3 +27,6 @@ export { decodeAgentPolicy, findBrimPolicyAddress, findTokenAccount } from './so
 export { validatePaymentRequirements } from './validation.js';
 
 export { resolveBrimRpcUrl } from './rpc.js';
+
+export { createUpsertAgentPolicyInstruction } from './owner-policy.js';
+export type { OwnerPolicyLimits, UpsertAgentPolicyInput } from './owner-policy.js';

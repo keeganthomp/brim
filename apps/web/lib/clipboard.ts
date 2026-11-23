@@ -1,6 +1,7 @@
 import { SDK_TEMPLATE } from './sdk-template';
 
-export type ClipboardOperation = 'copy-template' | 'copy-signature' | 'copy-vault-config';
+export type ClipboardOperation =
+  'copy-template' | 'copy-signature' | 'copy-vault-config' | 'copy-agent-key';
 
 /** Start before any await/import so Safari retains transient clipboard activation. */
 export function copyText(text: string, operation: ClipboardOperation): Promise<boolean> {

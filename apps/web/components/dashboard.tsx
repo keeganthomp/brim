@@ -26,12 +26,18 @@ export function Dashboard() {
       <main className="main-shell">
         <WorkspaceHeading
           mode={mode}
-          localStatus={dashboard.localStatus}
-          localPaused={dashboard.localPaused}
+          chainStatus={dashboard.chainStatus}
+          chainPaused={dashboard.chainPaused}
+          liveConfigured={dashboard.liveConfigured}
+          connectedOwner={dashboard.connectedOwner}
+          ownerWallet={dashboard.ownerWallet}
+          canWritePolicy={dashboard.canWritePolicy}
+          onAddPolicy={() => policy.openAgent()}
+          onPolicyIntent={preloadPolicyDrawer}
           onExploreDemo={() => dashboard.changeMode('demo')}
           onCopyVaultConfig={dashboard.canCopyVaultConfig ? dashboard.copyVaultConfig : undefined}
         />
-        <div className="dashboard-grid">
+        <div className={`dashboard-grid${mode === 'live' ? ' dashboard-grid-live' : ''}`}>
           <BalanceOverview
             mode={mode}
             balance={balance}
@@ -42,28 +48,26 @@ export function Dashboard() {
           <AgentList
             mode={mode}
             ready={ready}
-            editable={editable}
+            canEdit={ready && (editable || mode !== 'demo')}
+            canFreeze={editable}
             agents={dashboard.agents}
-            budget={dashboard.budget}
             onEdit={policy.openAgent}
             onFreeze={policy.freezeAgent}
             onPolicyIntent={preloadPolicyDrawer}
           />
-          <ActivityFeed
-            mode={mode}
-            ready={ready}
-            activities={dashboard.activities}
-            filter={dashboard.filter}
-            onFilterChange={dashboard.setFilter}
-            onSelect={dashboard.selectActivity}
-          />
-          <SpendOverview
-            mode={mode}
-            ready={ready}
-            indexedSpend={dashboard.indexedSpend}
-            activeCount={dashboard.activeCount}
-            spent={dashboard.spent}
-          />
+          {mode !== 'live' && (
+            <>
+              <ActivityFeed
+                mode={mode}
+                ready={ready}
+                activities={dashboard.activities}
+                filter={dashboard.filter}
+                onFilterChange={dashboard.setFilter}
+                onSelect={dashboard.selectActivity}
+              />
+              <SpendOverview mode={mode} ready={ready} indexedSpend={dashboard.indexedSpend} />
+            </>
+          )}
         </div>
       </main>
       {policy.draft && <DeferredPolicyDrawer controller={policy} />}

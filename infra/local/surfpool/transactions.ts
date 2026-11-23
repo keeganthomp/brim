@@ -8,6 +8,7 @@ import {
   createTransactionMessage,
   getAddressEncoder,
   getBase64EncodedWireTransaction,
+  getSignatureFromTransaction,
   getProgramDerivedAddress,
   pipe,
   setTransactionMessageFeePayerSigner,
@@ -166,11 +167,7 @@ export function createLocalClient(rpcUrl: string) {
         message: 'Local transaction confirmation timed out.',
       });
     });
-  const sendEffect = (
-    payer: TransactionSigner,
-    instructions: readonly Instruction[],
-    skipPreflight = false,
-  ) =>
+  const prepareEffect = (payer: TransactionSigner, instructions: readonly Instruction[]) =>
     Effect.gen(function* () {
       const lifetime = yield* decode(
         Blockhash,
@@ -212,24 +209,43 @@ export function createLocalClient(rpcUrl: string) {
         () => getBase64EncodedWireTransaction(signed),
         'Could not encode a local transaction.',
       );
+      const signature = yield* attempt(
+        () => getSignatureFromTransaction(signed),
+        'Could not identify a local transaction.',
+      );
+      return { wire, signature, lastValidBlockHeight: BigInt(lifetime.value.lastValidBlockHeight) };
+    });
+  const submitEffect = (prepared: { wire: string; signature: string }, skipPreflight = false) =>
+    Effect.gen(function* () {
       const signature = yield* decode(
         Schema.String,
         yield* rpcEffect('sendTransaction', [
-          wire,
-          {
-            encoding: 'base64',
-            skipPreflight,
-            preflightCommitment: 'confirmed',
-            maxRetries: 3,
-          },
+          prepared.wire,
+          { encoding: 'base64', skipPreflight, preflightCommitment: 'confirmed', maxRetries: 3 },
         ]),
       );
-      return yield* confirmEffect(signature);
+      if (signature !== prepared.signature)
+        return yield* new LocalSurfpoolError({
+          message: 'Local transaction signature did not match.',
+        });
+      return signature;
+    });
+  const sendEffect = (
+    payer: TransactionSigner,
+    instructions: readonly Instruction[],
+    skipPreflight = false,
+  ) =>
+    Effect.gen(function* () {
+      const prepared = yield* prepareEffect(payer, instructions);
+      yield* submitEffect(prepared, skipPreflight);
+      return yield* confirmEffect(prepared.signature);
     });
   return {
     rpc,
     rpcEffect,
     sendEffect,
+    prepareEffect,
+    submitEffect,
     confirmEffect,
     accountBytes,
     tokenBalance,

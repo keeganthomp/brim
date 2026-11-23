@@ -1,60 +1,90 @@
-import { FlaskConical, LockKeyhole } from 'lucide-react';
+import { FlaskConical, Plus } from 'lucide-react';
+import type { OwnerWalletController } from '../hooks/use-owner-wallet';
 import type { LocalWorkspaceStatus, WorkspaceMode } from '../lib/workspace';
+import { LiveWorkspaceBar } from './live-workspace-bar';
 
 const localMessages: Record<LocalWorkspaceStatus, string> = {
-  connecting: 'Connecting to your local workspace',
-  ready: 'Test funds · Read-only',
+  connecting: 'Connecting to local workspace…',
+  ready: 'Local test funds',
   unavailable: 'Local workspace is unavailable',
-  paused: 'Local updates are paused',
+  paused: 'Updates paused',
 };
 
 interface WorkspaceHeadingProps {
   mode: WorkspaceMode;
-  localStatus: LocalWorkspaceStatus;
-  localPaused: boolean;
+  chainStatus: LocalWorkspaceStatus;
+  chainPaused: boolean;
+  liveConfigured: boolean;
+  connectedOwner: boolean;
+  ownerWallet: OwnerWalletController;
+  canWritePolicy: boolean;
+  onAddPolicy: () => void;
+  onPolicyIntent: () => void;
   onExploreDemo: () => void;
   onCopyVaultConfig?: (() => void) | undefined;
 }
 
 export function WorkspaceHeading({
   mode,
-  localStatus,
-  localPaused,
+  chainStatus,
+  chainPaused,
+  liveConfigured,
+  connectedOwner,
+  ownerWallet,
+  canWritePolicy,
+  onAddPolicy,
+  onPolicyIntent,
   onExploreDemo,
   onCopyVaultConfig,
 }: WorkspaceHeadingProps) {
+  const connectWallet = mode === 'live' && chainStatus === 'ready' && !connectedOwner;
   return (
     <>
       <div className="page-heading">
         <h1>Treasury</h1>
-        <span className="network-label">
-          <svg
-            className="network-symbol"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
+        {connectWallet ? (
+          <button
+            className="button primary add-policy-button"
+            disabled={ownerWallet.connecting}
+            onClick={() => void ownerWallet.connect()}
           >
-            <path d="m6 4-3 3h15l3-3H6Zm-3 6 3 3h15l-3-3H3Zm3 6-3 3h15l3-3H6Z" />
-          </svg>
-          Solana
-        </span>
+            {ownerWallet.connecting ? 'Connecting…' : 'Connect owner wallet'}
+          </button>
+        ) : (
+          <button
+            className="button primary add-policy-button"
+            disabled={!canWritePolicy}
+            onClick={onAddPolicy}
+            onPointerEnter={onPolicyIntent}
+            onFocus={onPolicyIntent}
+            onTouchStart={onPolicyIntent}
+          >
+            <Plus size={16} aria-hidden="true" /> Add policy
+          </button>
+        )}
       </div>
       {mode === 'local' && (
         <div
-          className={`live-banner local-banner ${localPaused ? 'is-paused' : ''}`}
+          className={`live-banner local-banner ${chainPaused ? 'is-paused' : ''}`}
           role="status"
           aria-live="polite"
         >
-          <FlaskConical size={18} aria-hidden="true" />
+          <FlaskConical size={16} aria-hidden="true" />
           <div>
-            <strong>{localPaused ? 'Local treasury is paused' : localMessages[localStatus]}</strong>
-            {localStatus === 'unavailable' && (
+            <strong>
+              {chainPaused
+                ? 'Treasury paused'
+                : chainStatus === 'ready' && !canWritePolicy
+                  ? 'Local test funds · Read-only'
+                  : localMessages[chainStatus]}
+            </strong>
+            {chainStatus === 'unavailable' && (
               <p>
-                Run <code>npm run dev</code> to view local balances and test payments.
+                Run <code>npm run dev</code> to reconnect.
               </p>
             )}
           </div>
-          {localStatus === 'ready' && onCopyVaultConfig ? (
+          {chainStatus === 'ready' && onCopyVaultConfig ? (
             <button type="button" onClick={onCopyVaultConfig}>
               Copy vault config
             </button>
@@ -64,14 +94,15 @@ export function WorkspaceHeading({
         </div>
       )}
       {mode === 'live' && (
-        <div className="live-banner">
-          <LockKeyhole size={18} aria-hidden="true" />
-          <div>
-            <strong>Live workspace needs setup</strong>
-            <p>Live payments require a deployed vault and an owner wallet connection.</p>
-          </div>
-          <button onClick={onExploreDemo}>Open demo</button>
-        </div>
+        <LiveWorkspaceBar
+          configured={liveConfigured}
+          status={chainStatus}
+          paused={chainPaused}
+          connected={connectedOwner}
+          wallet={ownerWallet}
+          onCopyVaultConfig={onCopyVaultConfig}
+          onExploreDemo={onExploreDemo}
+        />
       )}
     </>
   );

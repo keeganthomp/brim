@@ -9,6 +9,7 @@ Brim lets an agent spend USDC from a Solana vault within an on-chain policy. Sta
 
 - **Make the first payment:** follow the local steps below.
 - **Add Brim to application code:** use the [TypeScript SDK](/docs/sdk/).
+- **Register your existing agent:** use [Local workspace → Add policy](/docs/sdk/#register-your-agent-locally).
 - **Connect an existing assistant:** use [MCP](/docs/mcp/).
 - **Prepare a live environment:** review [production readiness](/docs/production/) first.
 
@@ -37,6 +38,14 @@ It verifies the vault debit, matching merchant credit, finalized program event, 
 
 Open `http://localhost:3000` in **Local workspace** to check the payment and balance. The separate Demo workspace simulates controls. See the [quickstart](/docs/quickstart/) for setup and shutdown.
 
+## Attach your own agent
+
+Keep its existing scoped Ed25519 keypair, or run `npm run agent:key -- --out .brim/research-agent.json`. The helper writes a new private file and prints only the public key and path.
+
+In **Local workspace → Add policy**, paste the public key and set its payment cap and 24-hour budget. Choose **Add policy** and wait for on-chain confirmation. Open the policy to see or copy the key. Agents on the same vault use the same public vault config and each keep their own private key.
+
+Use the [SDK end-to-end steps](/docs/sdk/#register-your-agent-locally) to run that key against the local report, or pass its file through the [local MCP override](/docs/mcp/#connect-your-own-local-agent). Never put private keys in dashboard fields or MCP tool arguments.
+
 ## Connect your runtime
 
 Use the SDK when you control application code. `createBrimFetch({ vaultConfig, agentKey })` provides a Promise-based fetch function. Effect applications can use `createBrimFetchEffect`. For a custom local integration, set `rpcUrl` to the `rpcUrl` field in `.brim/local.json`. It defaults to `http://127.0.0.1:8899`.
@@ -58,7 +67,7 @@ A receipt or successful HTTP response is not independent proof of settlement. Th
 
 ## Know the current scope
 
-The current payment path supports Solana USDC. Local owner writes are disabled; demo policy and funding controls are simulated. Live owner-wallet flows, external devnet settlement, authentication, security review, and deployment remain [production gates](/docs/production/). Local success proves the local integration.
+The current payment path supports Solana USDC. Local policy registration and edits use the generated Surfpool test owner. Funding, withdrawals, freezes, and pause remain read-only there; Demo workspace simulates controls. Configured Live policy writes use the ordinary vault owner wallet; they require a preexisting deployed vault and public dashboard configuration. External devnet settlement, live funding/freezes, Squads, tenant authentication, security review, and deployment remain [production gates](/docs/production/). Local success proves the local integration.
 
 ## Read documentation as text
 

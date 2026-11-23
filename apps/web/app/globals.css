@@ -10,13 +10,13 @@
 :root {
   --ink: #121417;
   --secondary: #626970;
-  --line: #e3e6e9;
+  --line: #e7eaee;
   --canvas: #fff;
-  --page: #f6f7f9;
+  --page: #f8f9fb;
   --surface: #f2f4f6;
   --green: #167445;
   --red: #af352f;
-  --card-radius: 16px;
+  --card-radius: 18px;
   --card-shadow: 0 1px 2px #12141705;
   --spring: cubic-bezier(0.22, 1, 0.36, 1);
   font-family:

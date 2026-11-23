@@ -2,7 +2,7 @@ import { Effect, Schema } from 'effect';
 import { readBrimVaultConfig, resolveBrimRpcUrl } from '@brim/sdk';
 import { attempt, fail, McpFailure } from './errors.js';
 import type { McpConfig } from './types.js';
-import { readLocalConfiguration } from './local-config.js';
+import { readLocalConfiguration, readLocalAgentKey } from './local-config.js';
 
 const fields = {
   vaultConfig: Schema.String.check(Schema.isBetweenLength(1, 4096)),
@@ -54,19 +54,21 @@ export function loadMcpConfig(args: readonly string[], env: NodeJS.ProcessEnv) {
       );
       return { ...config, rpcUrl, local: false } satisfies McpConfig;
     }
-    if (args.length !== 2 || args[0] !== '--local' || !args[1])
+    const hasKeyOverride = args.length === 4 && args[2] === '--agent-key-file' && Boolean(args[3]);
+    if ((args.length !== 2 && !hasKeyOverride) || args[0] !== '--local' || !args[1])
       return yield* fail(
         'INVALID_OPTIONS',
-        'Set BRIM_VAULT_CONFIG and BRIM_AGENT_KEY, or use --local /absolute/path/.brim/local.json.',
+        'Use --local CONFIG [--agent-key-file PRIVATE_KEY_FILE], or configure BRIM_VAULT_CONFIG and BRIM_AGENT_KEY.',
       );
     const text = yield* readLocalConfiguration(args[1]);
     const source = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(LocalSource))(text).pipe(
       Effect.mapError(invalidLocalSetup),
     );
+    const agentKey = hasKeyOverride ? yield* readLocalAgentKey(args[3]!) : source.agentKey;
     // A present canonical value must validate; an invalid new field never falls back silently.
     const config = yield* Schema.decodeUnknownEffect(LocalConfig)({
       vaultConfig: Object.hasOwn(source, 'vaultConfig') ? source.vaultConfig : source.card,
-      agentKey: source.agentKey,
+      agentKey,
       rpcUrl: source.rpcUrl,
     }).pipe(Effect.mapError(invalidLocalSetup));
     const url = yield* attempt(

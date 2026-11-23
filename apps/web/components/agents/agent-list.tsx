@@ -1,17 +1,15 @@
-import { Bot, ChevronRight, Code2, Database, Plus, Search } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import type { WorkspaceMode } from '../../lib/workspace';
 import type { Agent } from '../../lib/demo';
 import { dollars } from '../../lib/currency';
 import { PolicySwitch } from '../ui/policy-switch';
 
-const icons = { research: Search, data: Database, code: Code2 };
-
 interface AgentListProps {
   mode: WorkspaceMode;
   ready: boolean;
-  editable: boolean;
+  canEdit: boolean;
+  canFreeze: boolean;
   agents: Agent[];
-  budget: number;
   onEdit: (agent?: Agent) => void;
   onFreeze: (agent: Agent, frozen: boolean) => void;
   onPolicyIntent: () => void;
@@ -20,14 +18,13 @@ interface AgentListProps {
 export function AgentList({
   mode,
   ready,
-  editable,
+  canEdit,
+  canFreeze,
   agents,
-  budget,
   onEdit,
   onFreeze,
   onPolicyIntent,
 }: AgentListProps) {
-  const demo = mode === 'demo';
   const intent = {
     onPointerEnter: onPolicyIntent,
     onFocus: onPolicyIntent,
@@ -37,39 +34,23 @@ export function AgentList({
     <section className="agents-section" aria-labelledby="agents-heading">
       <div className="section-heading">
         <h2 id="agents-heading">Spending policies</h2>
-        {demo && (
-          <button
-            className="button secondary new-agent-button"
-            {...intent}
-            onClick={() => onEdit()}
-            disabled={!editable}
-          >
-            <Plus size={15} aria-hidden="true" /> Add policy
-          </button>
-        )}
+        {ready && agents.length > 0 && <span className="agent-count">{agents.length}</span>}
       </div>
       <div className="agent-list">
         {agents.map((agent) => {
-          const Icon = icons[agent.icon];
           const usage = agent.budget > 0 ? Math.min((agent.spent / agent.budget) * 100, 100) : 0;
+          const Row = canEdit ? 'button' : 'div';
           return (
             <div className={`agent-row ${agent.frozen ? 'frozen' : ''}`} key={agent.id}>
-              <button
-                disabled={!editable}
+              <Row
                 className="agent-main"
                 {...intent}
-                onClick={() => onEdit(agent)}
-                aria-description={`Edit ${agent.name} policy`}
+                onClick={canEdit ? () => onEdit(agent) : undefined}
+                aria-description={canEdit ? `View ${agent.name} spending policy` : undefined}
               >
-                <span className="agent-avatar">
-                  <Icon size={19} strokeWidth={1.6} aria-hidden="true" />
-                </span>
-                <span className="agent-info">
-                  <span className="agent-title">
-                    <span className="agent-name">{agent.name}</span>
-                    {editable && <ChevronRight size={14} aria-hidden="true" />}
-                  </span>
-                  <span className="agent-role">{agent.role}</span>
+                <span className="agent-title">
+                  <span className="agent-name">{agent.name}</span>
+                  {canEdit && <ChevronRight size={14} aria-hidden="true" />}
                 </span>
                 <span className="agent-budget">
                   <span className="budget-line">
@@ -77,47 +58,41 @@ export function AgentList({
                       <strong>{dollars(agent.spent)}</strong>
                       <span className="budget-limit"> / {dollars(agent.budget)}</span>
                     </span>
-                    <span>{mode === 'local' ? 'This window' : 'Today'}</span>
+                    <span>{mode === 'demo' ? 'Today' : 'This window'}</span>
                   </span>
                   <span className="progress-track" aria-hidden="true">
                     <span style={{ width: `${usage}%` }} />
                   </span>
                 </span>
-              </button>
+              </Row>
               <div className="agent-toggle">
                 <span className={agent.frozen ? 'frozen-label' : 'active-label'}>
                   {agent.frozen ? 'Frozen' : 'Active'}
                 </span>
-                <PolicySwitch
-                  disabled={!editable}
-                  checked={!agent.frozen}
-                  onChange={(value) => onFreeze(agent, !value)}
-                  label={`${agent.name} payments`}
-                />
+                {canFreeze && (
+                  <PolicySwitch
+                    checked={!agent.frozen}
+                    onChange={(value) => onFreeze(agent, !value)}
+                    label={`${agent.name} payments`}
+                  />
+                )}
               </div>
             </div>
           );
         })}
         {agents.length === 0 && (
           <div className="empty-state">
-            <Bot size={25} strokeWidth={1.5} aria-hidden="true" />
-            <h3>{mode === 'local' ? 'Waiting for local policies' : 'No spending policies yet'}</h3>
+            <h3>{mode === 'local' && !ready ? 'Waiting for local policies' : 'No agents yet'}</h3>
             <p>
-              {mode === 'local'
-                ? 'Your local agent will appear when the stack is connected.'
-                : demo
-                  ? 'Add a policy to set an agent’s spending limits.'
-                  : 'Spending limits appear when your vault is connected.'}
+              {mode === 'local' && !ready
+                ? 'Policies appear when the local stack connects.'
+                : mode === 'live' && !ready
+                  ? 'Connect your vault to view its policies.'
+                  : 'Add a policy to set your first agent’s spending limits.'}
             </p>
           </div>
         )}
       </div>
-      {ready && agents.length > 0 && (
-        <div className="budget-summary">
-          <span>{mode === 'local' ? 'Combined window budget' : 'Combined daily budget'}</span>
-          <strong className="mono">{dollars(budget)}</strong>
-        </div>
-      )}
     </section>
   );
 }

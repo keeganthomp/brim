@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, LockKeyhole } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import type { FundsMode } from '../../hooks/use-funds';
 import { dollars } from '../../lib/currency';
 import type { WorkspaceMode } from '../../lib/workspace';
@@ -44,7 +44,7 @@ export function BalanceOverview({
           </span>
         )}
       </p>
-      {demo ? (
+      {demo && (
         <div className="balance-actions">
           <button
             className="button vault-primary"
@@ -63,11 +63,6 @@ export function BalanceOverview({
             <ArrowUpFromLine size={15} aria-hidden="true" /> Withdraw
           </button>
         </div>
-      ) : (
-        <p className="balance-note">
-          <LockKeyhole size={14} aria-hidden="true" />
-          {mode === 'local' ? 'Read-only vault' : 'Waiting for vault setup'}
-        </p>
       )}
     </section>
   );

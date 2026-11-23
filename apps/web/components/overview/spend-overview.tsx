@@ -6,38 +6,22 @@ interface SpendOverviewProps {
   mode: WorkspaceMode;
   ready: boolean;
   indexedSpend: number;
-  spent: number;
-  activeCount: number;
 }
 
-export function SpendOverview({
-  mode,
-  ready,
-  indexedSpend,
-  spent,
-  activeCount,
-}: SpendOverviewProps) {
+export function SpendOverview({ mode, ready, indexedSpend }: SpendOverviewProps) {
   const demo = mode === 'demo';
   return (
     <section className="chart-area" aria-labelledby="spend-heading">
-      <h2 id="spend-heading">
-        {demo ? '7-day spend' : mode === 'local' ? 'Recent settled spend' : 'Agent spend'}
-      </h2>
+      <h2 id="spend-heading">{demo ? '7-day spend' : 'Recent settled spend'}</h2>
       <p className="chart-amount mono">
         {demo ? dollars(demoSpendTotal) : ready ? paymentDollars(indexedSpend) : '—'}
       </p>
-      {demo ? <SpendChart /> : null}
-      {ready && (
-        <dl className="spend-summary">
-          <div>
-            <dt>{demo ? 'Spent today' : 'Current policy spend'}</dt>
-            <dd className="mono">{paymentDollars(spent)}</dd>
-          </div>
-          <div>
-            <dt>Active agents</dt>
-            <dd>{activeCount}</dd>
-          </div>
-        </dl>
+      {demo ? (
+        <SpendChart />
+      ) : (
+        <p className="chart-context">
+          {ready ? 'From the verified activity feed' : 'Waiting for payments'}
+        </p>
       )}
     </section>
   );

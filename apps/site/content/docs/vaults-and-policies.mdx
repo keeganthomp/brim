@@ -13,6 +13,27 @@ Register an existing bot's public key with an owner-signed `upsert_agent_policy`
 
 Agents share the vault balance. A $50 policy limits one agent's spending; it does not reserve $50 for that agent. Payments also require enough USDC in the vault.
 
+## Register an existing agent locally
+
+Keep `npm run dev` running and open **Local workspace** in the dashboard.
+
+1. Choose **Add policy**.
+2. Paste the existing agent's Ed25519 **public key**.
+3. Set its **per-payment cap** and **daily budget**. Advanced controls hold payment spacing and approved recipients.
+4. Choose **Add policy** and wait for confirmation. The server uses the generated Surfpool test owner to register that key on-chain.
+
+The agent then appears in the list. Open its details to inspect or copy the registered public key and adjust limits. The key identifies this policy; an edit does not replace it. Policy edits retain consumed budget, freeze state, window timing, and unchanged payment spacing. A daily budget is a fixed 24-hour window, not a midnight reset.
+
+Copy the same **vault config** for every agent on this vault. Each agent keeps its own private key in its runtime. See the [SDK steps](/docs/sdk/#register-your-agent-locally) for key generation and a paid report, or [MCP](/docs/mcp/#connect-your-own-local-agent).
+
+This is an offline test-owner signing path. Local funding and freeze controls remain read-only; the separately configured [Live workspace](/docs/production/#configure-owner-wallet-policy-writes) uses the actual vault owner wallet instead.
+
+## Register through the configured owner wallet
+
+For an existing deployed vault, [configure the Live workspace](/docs/production/#configure-owner-wallet-policy-writes), connect its ordinary Wallet Standard owner wallet, and use **Add policy**. The wallet confirms the registration transaction; the agent private key stays in its runtime. Existing policy keys cannot be replaced by editing limits.
+
+Live funding, freezes, tenant activity, and Squads-owned vault execution are outside this policy path. No public deployment is included.
+
 ## Set enforceable limits
 
 These are the current policy fields, expressed in USDC base units. One USDC is `1_000_000` units.
@@ -62,4 +83,4 @@ Several agents can share the same public vault config when they use the same vau
 
 Follow the [SDK handoff guide](/docs/sdk/#who-hands-over-what) for exact value formats, the operator's `createBrimVaultConfig` step, and the current dashboard template behavior. The same values also connect through [MCP](/docs/mcp/).
 
-The local workspace reads real Surfpool balances and verified payment rows. Its owner actions are disabled; the separate demo simulates those controls. See [production readiness](/docs/production/) before connecting real funds.
+The local workspace reads real Surfpool balances and verified payment rows and can submit test-owner policy registration and updates. Funding and freezes remain read-only. The separate demo simulates policy, funding, and freeze controls; a public key is optional in a demo policy. See [production readiness](/docs/production/) before connecting real funds.

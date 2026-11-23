@@ -1,11 +1,5 @@
-/* One status marker and one amount column keep the ledger easy to scan. */
+/* Merchant and amount lead; verified rows retain a quiet copy affordance. */
 .live-indicator {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  padding: 4px 7px;
-  border: 1px solid #e8ecf0;
-  border-radius: 6px;
   color: var(--secondary);
   font-size: 11px;
   line-height: 1.5;
@@ -13,29 +7,27 @@
 }
 .verified-indicator {
   color: var(--green);
-  border-color: #e0eee5;
-  background: #fbfdfb;
 }
 .feed-filter {
   display: flex;
   gap: 22px;
   padding: 0 24px;
-  border-bottom: 1px solid #eef1f4;
+  border-bottom: 1px solid var(--line);
 }
 .feed-filter button {
   position: relative;
-  min-height: 44px;
-  padding: 10px 0;
+  min-height: 42px;
+  padding: 5px 0 12px;
   color: var(--secondary);
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.5;
   transition: color 150ms;
 }
 .feed-filter button:hover {
-  color: #4d5965;
+  color: #46525f;
 }
 .feed-filter button.selected {
-  color: #313c47;
+  color: #303b46;
   font-weight: 550;
 }
 .feed-filter button.selected::after {
@@ -45,58 +37,53 @@
   left: 0;
   height: 2px;
   border-radius: 2px 2px 0 0;
-  background: #53606c;
+  background: #586675;
   content: '';
 }
 .activity-list {
-  flex: 1;
+  max-height: 425px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #d4dbe2 transparent;
+}
+.activity-list:focus-visible {
+  outline: 2px solid #8e9baa;
+  outline-offset: -2px;
 }
 .activity-row {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px 12px;
+  gap: 8px 20px;
   width: 100%;
-  min-height: 64px;
-  padding: 11px 22px;
-  border-bottom: 1px solid #f0f3f5;
+  min-height: 76px;
+  padding: 17px 24px;
+  border-bottom: 1px solid #f0f2f4;
   text-align: left;
-  transition: background 150ms;
+}
+.activity-row:last-child {
+  border-bottom: 0;
 }
 button.activity-row:hover {
   background: #fafbfd;
 }
-button.activity-row:focus-visible {
+.activity-row:focus-visible {
   outline-offset: -3px;
-}
-.payment-icon {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #f3f5f7;
-  color: #6d7883;
-}
-.payment-icon.settled-state {
-  background: #f0f8f3;
-}
-.payment-icon.blocked-state {
-  background: #fceeea;
 }
 .activity-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
 }
 .merchant-name {
   overflow: hidden;
-  color: #303a44;
-  font-size: 13px;
+  color: #2c3743;
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: -0.15px;
   line-height: 1.5;
+  letter-spacing: -0.15px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -117,24 +104,30 @@ button.activity-row:focus-visible {
 }
 .activity-time {
   flex-shrink: 0;
+  font-size: 11px;
   white-space: nowrap;
 }
 .activity-amount {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 5px;
+  gap: 6px;
   min-width: 58px;
-  padding-left: 4px;
   text-align: right;
   white-space: nowrap;
 }
 .activity-amount strong {
   color: #303b46;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.15px;
+}
+.activity-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
 }
 .payment-state {
   color: var(--secondary);
@@ -147,97 +140,78 @@ button.activity-row:focus-visible {
 .blocked-state {
   color: var(--red);
 }
-.activity-row.blocked {
-  background: #fff9f8;
-  border-color: #f7eeec;
+.activity-copy {
+  color: #99a4af;
+  opacity: 0;
+  transition: opacity 150ms;
 }
-button.activity-row.blocked:hover {
-  background: #fff5f2;
+.activity-row:hover .activity-copy,
+.activity-row:focus-visible .activity-copy {
+  opacity: 1;
+}
+.activity-row.blocked {
+  background: #fffaf9;
+  border-color: #f7eeeb;
 }
 .blocked-reason {
-  grid-column: 2 / -1;
+  grid-column: 1/-1;
   color: var(--red);
   font-size: 11px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .blocked .activity-amount strong {
-  color: var(--red);
+  color: #87584f;
   text-decoration: line-through;
   text-decoration-color: #c1a79e;
 }
-.activity-footer {
-  padding: 14px 22px;
-  color: var(--secondary);
-  font-size: 11px;
-  line-height: 1.5;
-  text-align: center;
-}
 .activity-section .empty-state {
-  min-height: 166px;
-  border-top: 1px solid var(--line);
-  color: #9ca6b0;
+  min-height: 250px;
+  gap: 9px;
+  padding: 30px 24px;
 }
 .activity-section .empty-state h3 {
   color: #57636f;
   font-size: 14px;
+  font-weight: 500;
 }
 .activity-section .empty-state p {
   color: var(--secondary);
   font-size: 12px;
 }
-
-@media (min-width: 801px) and (max-width: 1080px) {
-  .activity-row {
-    padding-left: 20px;
-    padding-right: 20px;
-    column-gap: 10px;
+@media (hover: none) {
+  .activity-copy {
+    opacity: 1;
   }
+}
+@media (max-width: 1040px) {
+  .activity-row,
   .feed-filter {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-  .activity-context {
-    gap: 7px;
+    padding-inline: 22px;
   }
 }
 @media (max-width: 800px) {
   .activity-row {
-    padding-left: 22px;
-    padding-right: 22px;
+    padding: 17px 20px;
   }
   .feed-filter {
-    padding-left: 22px;
-    padding-right: 22px;
+    padding-inline: 20px;
+  }
+  .activity-list {
+    max-height: 450px;
+    overscroll-behavior-y: auto;
   }
 }
 @media (max-width: 380px) {
   .activity-row {
-    grid-template-columns: 24px minmax(0, 1fr) auto;
     padding-inline: 18px;
-    column-gap: 9px;
-  }
-  .payment-icon {
-    width: 24px;
-    height: 24px;
+    column-gap: 12px;
   }
   .feed-filter {
-    padding-left: 18px;
-    padding-right: 18px;
-    gap: 19px;
-  }
-  .live-indicator {
-    font-size: 10px;
-  }
-  .merchant-name,
-  .activity-amount strong {
-    font-size: 12px;
+    padding-inline: 18px;
+    gap: 20px;
   }
   .activity-context {
-    gap: 6px;
-  }
-  .activity-footer {
-    padding-left: 18px;
-    padding-right: 18px;
+    gap: 7px;
   }
 }

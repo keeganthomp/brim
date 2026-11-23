@@ -4,6 +4,8 @@ import { isLoopback, LocalWorkspaceError } from './local-schema';
 interface LocalAccess {
   environment: string | undefined;
   configured: boolean;
+  method?: 'GET' | 'POST';
+  requireOrigin?: boolean;
 }
 const denied = () => new LocalWorkspaceError({ code: 'LOCAL_ONLY' });
 
@@ -16,7 +18,11 @@ export const localRequest = (
   },
 ) =>
   Effect.gen(function* () {
-    if (access.environment !== 'development' || !access.configured || request.method !== 'GET') {
+    if (
+      access.environment !== 'development' ||
+      !access.configured ||
+      request.method !== (access.method ?? 'GET')
+    ) {
       return yield* denied();
     }
     const host = yield* Effect.try({
@@ -39,6 +45,7 @@ export const localRequest = (
     }
     const origin = request.headers.get('origin');
     if (
+      (access.requireOrigin && !origin) ||
       (origin && origin !== host.origin) ||
       request.headers.get('sec-fetch-site') === 'cross-site'
     ) {

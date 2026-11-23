@@ -11,10 +11,7 @@ description: Give an existing agent permission to pay from a USDC vault.
 
 ## The setup
 
-An operator funds a USDC vault and registers the agent's public key with a spending policy. The agent receives two things:
-
-1. **Public vault config** with connection details.
-2. **A private agent key** that can spend only within the registered policy.
+An operator funds a USDC vault and registers the agent's public key with a spending policy. The integrator keeps the private key in the agent runtime and receives the **public vault config** from the operator. The config is shared connection metadata; each agent's key selects its own policy.
 
 Creating the config does not attach a policy. [See how that attachment works](/docs/vaults-and-policies/).
 
@@ -22,6 +19,6 @@ Creating the config does not attach a policy. [See how that attachment works](/d
 
 The local stack runs the compiled Solana program, real SDK and MCP payments, and a verified PostgreSQL ledger. The program enforces spending caps, budgets, recipient restrictions, and freeze state.
 
-The dashboard's local workspace reads those actual local balances and payments. Its separate demo workspace simulates funding and policy edits.
+In **Local workspace**, add an existing agent's public key, set its limits, and confirm an actual policy on the offline chain. Registered keys and policies appear in the dashboard. Funding and freeze controls remain read-only there; **Demo workspace** simulates those controls.
 
-Start with the [quickstart](/docs/quickstart/). Live operation still needs owner-wallet integration, authentication, external settlement testing, security review, and deployment.
+Start with the [quickstart](/docs/quickstart/). A configured Live workspace can request owner-wallet policy signatures for an existing vault. External deployment and settlement validation, tenant authentication, and security review remain [production work](/docs/production/).

@@ -25,7 +25,7 @@ The latest inspected x402 SVM package supports an opt-in smart-wallet verificati
 
 ## Operator surface
 
-The dashboard has a browser-local demo, a read-only local Surfpool workspace with real balances and verified ledger payments, and an unconfigured live mode that refuses writes. Demo controls never submit wallet transactions. Production integration still needs wallet ownership authentication, owner-signed policy/funding transactions, and authenticated tenant-scoped APIs.
+The dashboard has a browser-local demo and a Surfpool workspace with real test balances, verified payments, and test-owner policy registration. A Live workspace configured for an existing vault reads public chain accounts. Its Wallet Standard owner signs policy changes in the browser. Funding, freeze controls, authenticated tenant activity, and live deployment remain production work.
 
 TypeScript domain workflows use Effect 4.1.5: Schema at boundaries, tagged errors, services for external dependencies, scoped resources, and bounded concurrency. Promise APIs bridge ordinary fetch/Next.js callers. Pure rendering, binary codecs and immutable constants stay plain code. Framework adapters are thin; contract, SDK, indexer and UI features live in focused modules.
 

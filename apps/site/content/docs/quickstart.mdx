@@ -32,8 +32,16 @@ Look for `status: "settled"` and a transaction signature. Open the [dashboard](h
 
 The payment runner loads its test values automatically. For your own app, the [SDK guide](/docs/sdk/#get-your-local-config) shows how to supply the test key and local RPC.
 
-## Connect your agent
+## Register your own agent
 
-Use the [SDK](/docs/sdk/) in code or [MCP](/docs/mcp/) in an agent client. For your own integration, follow the [SDK handoff](/docs/sdk/#who-hands-over-what): the operator provides the public config, and the integrator keeps the scoped keypair in its runtime. Each new agent's public key needs an [on-chain policy](/docs/vaults-and-policies/).
+The payment runner above uses the starter agent. To attach your own bot or app:
+
+1. Keep its existing Ed25519 keypair, or run `npm run agent:key -- --out .brim/research-agent.json` from the repository root. The helper prints only a public key and file path; the private key stays in a new mode-`0600` file.
+2. In **Local workspace**, choose **Add policy**. Paste the **public key** and set a per-payment cap and 24-hour budget. A $1 cap and $50 budget cover the included $0.04 report. Advanced settings hold spacing and recipients.
+3. Choose **Add policy** and wait for confirmation. The generated Surfpool test owner registers the policy on-chain; the new agent appears in the list.
+4. Copy the shared **vault config**. Give your agent that public value and its own private key through runtime configuration.
+5. Follow the [SDK run command](/docs/sdk/#register-your-agent-locally) or [MCP key-file setup](/docs/mcp/#connect-your-own-local-agent) to pay for the local report.
+
+Open the policy's details to copy its registered public key or edit limits. Edits preserve on-chain usage, freeze state, window timing, and unchanged spacing. Never paste the private key into the dashboard. Local funding and freeze controls remain read-only; Demo workspace simulates them.
 
 Press Ctrl-C to stop the apps. Run `npm run local:down` to stop Docker services and preserve database data.

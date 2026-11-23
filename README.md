@@ -13,7 +13,7 @@ npm run dev
 
 This builds internal packages and the devnet program, starts **Surfpool 1.7.0 + PostgreSQL 18**, applies checksum-verified migrations, loads the program, creates a funded test vault and scoped agent, then starts the dashboard and a real x402 paid API. The first Docker-only chain build downloads the pinned toolchain; subsequent builds use caches. A compatible cached native toolchain is used automatically when available.
 
-The dashboard runs at `http://localhost:3000`. The paid API runs at `http://127.0.0.1:4020`. Surfpool runs offline with fake keys and funds. The local setup saves its values in the ignored `.brim/local.json` file with mode `0600`. The local dashboard reads real test balances and verified payment rows. The demo workspace simulates policy and funding controls in the browser.
+The dashboard runs at `http://localhost:3000`. The paid API runs at `http://127.0.0.1:4020`. Surfpool runs offline with fake keys and funds. The local setup saves its values in the ignored `.brim/local.json` file with mode `0600`. The local dashboard reads real test balances and verified payment rows. Its **Add policy** flow registers an existing agent public key and confirms its spending limits using the generated Surfpool test owner. Policy edits preserve on-chain usage and freeze state. Funding and freeze controls remain read-only; the Demo workspace simulates them in the browser.
 
 Ctrl-C stops the web and API processes while the test chain and database keep running. `npm run local:down` removes the test chain container and keeps the Postgres data. The next startup recreates the chain using the saved local keypairs.
 
@@ -40,7 +40,7 @@ const response = await brimFetch('https://api.example.com/paid-resource');
 
 The treasury operator sends you a public `BRIM_VAULT_CONFIG` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`. Open **Local workspace** in the dashboard and select **Copy vault config** to get the public value.
 
-See the [SDK quickstart](packages/sdk/README.md) for examples and the local RPC override, or [MCP setup](packages/mcp/README.md) for an existing agent client.
+To attach your own agent, generate a scoped keypair, open **Local workspace → Add policy**, paste only its public key, and confirm the limits. Copy the shared vault config and keep the private key in your agent runtime. Follow the [end-to-end SDK guide](apps/site/content/docs/sdk.mdx#register-your-agent-locally) or [local MCP guide](apps/site/content/docs/mcp.mdx#connect-your-own-local-agent).
 
 ## Marketing and docs
 
@@ -50,19 +50,20 @@ For agents, start with `/llms.txt` at the site root. Use `/llms-full.txt` to loa
 
 ## Useful commands
 
-| Command               | What it does                                                                 |
-| --------------------- | ---------------------------------------------------------------------------- |
-| `npm run doctor`      | Check local prerequisites with actionable errors                             |
-| `npm run dev`         | Start the complete local stack with hot-reloading Next.js                    |
-| `npm run local:up`    | Prepare chain/database/test credentials without starting web/API processes   |
-| `npm run local:down`  | Stop Surfpool/Postgres (including the test instance); preserve database data |
-| `npm run dev:demo`    | Start only the browser-local dashboard demo                                  |
-| `npm run check`       | Typecheck all TS/tools, unit tests, and production builds                    |
-| `npm run test:chain`  | Execute contract security/transfer checks on an isolated Surfpool instance   |
-| `npm run test:db`     | Apply migrations and run real Postgres integration checks                    |
-| `npm run test:local`  | Automated real x402 → program → verified database payment test               |
-| `npm run chain:build` | Build devnet SBF using cached native tools or the Docker fallback            |
-| `npm run db:migrate`  | Apply local database migrations safely; repeatable                           |
+| Command                                                | What it does                                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `npm run agent:key -- --out .brim/research-agent.json` | Create a private scoped key file; print only its public key and path         |
+| `npm run doctor`                                       | Check local prerequisites with actionable errors                             |
+| `npm run dev`                                          | Start the complete local stack with hot-reloading Next.js                    |
+| `npm run local:up`                                     | Prepare chain/database/test credentials without starting web/API processes   |
+| `npm run local:down`                                   | Stop Surfpool/Postgres (including the test instance); preserve database data |
+| `npm run dev:demo`                                     | Start only the browser-local dashboard demo                                  |
+| `npm run check`                                        | Typecheck all TS/tools, unit tests, and production builds                    |
+| `npm run test:chain`                                   | Execute contract security/transfer checks on an isolated Surfpool instance   |
+| `npm run test:db`                                      | Apply migrations and run real Postgres integration checks                    |
+| `npm run test:local`                                   | Automated real x402 → program → verified database payment test               |
+| `npm run chain:build`                                  | Build devnet SBF using cached native tools or the Docker fallback            |
+| `npm run db:migrate`                                   | Apply local database migrations safely; repeatable                           |
 
 Override local ports with `BRIM_WEB_PORT`, `BRIM_RPC_PORT`, `BRIM_WS_PORT`, and `BRIM_DB_PORT` when needed. In a corporate TLS proxy, supply `BRIM_BUILD_CA_CERT` for the Docker chain build; certificates stay in secret mounts and TLS verification remains enabled.
 
@@ -81,7 +82,7 @@ Effect **4.1.5** is the TypeScript runtime and validation foundation. Pure rende
 
 ## Before production funds
 
-The program, real local settlement and database path are exercised locally. A live product still needs owner-wallet/Squads integration, tenant authentication, external devnet settlement, independent security review/fuzzing, and production deployment. Local-only routes are disabled in production. No mainnet program or cloud deployment is claimed.
+The program, real local settlement and database path are exercised locally. Local policy signing uses only the generated fake-funds owner. The configured Live workspace can request policy registration and update signatures from an ordinary Wallet Standard owner of an already deployed vault. Live funding/freezes, Squads execution, tenant authentication, external devnet settlement, independent security review/fuzzing, and production deployment remain open. See [Live configuration](apps/site/content/docs/production.mdx#configure-owner-wallet-policy-writes). Local-only routes are disabled in production. No mainnet program or cloud deployment is claimed.
 
 Budgets use fixed windows and minimum payment spacing. A freeze takes effect when its transaction executes; no fixed millisecond finality is promised. USDC v1 pins the official mint and legacy token program. Latest x402 smart-wallet verification must be explicitly enabled and allowlist the deployed Brim program.
 

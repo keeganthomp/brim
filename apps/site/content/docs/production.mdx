@@ -5,17 +5,17 @@ description: What works today, what the local tests prove, and what remains befo
 
 Brim has a working local payment path. It has not been deployed as a production treasury service, and no mainnet program or GCP resources have been provisioned.
 
-The public documentation and demo are intentional. Demo controls simulate balances and policy changes. The local workspace reads the actual offline chain and verified ledger, with owner writes disabled. A public demo does not create a live vault or grant spending authority.
+The local workspace reads the offline chain and verified ledger. It can register and edit spending policies using the generated **Surfpool test owner**. Local funding, withdrawals, freezes, and pause controls remain read-only. Demo controls simulate changes in the browser. These local and demo paths do not authorize a production wallet or move real funds. A separately configured Live workspace can ask the actual vault owner wallet to sign policy registration and updates; no public deployment is claimed.
 
 ## Move from local proof to a live service
 
-| Stage              | Current state                                                                                                                             |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Local execution    | Compiled program runs on offline Surfpool; 20 transaction checks exercise transfers, policy enforcement, authorization, and CPI rollback. |
-| Local integration  | The SDK, real x402 verifier/settler, program, and Postgres complete a verified payment with fake funds.                                   |
-| External devnet    | Deployment with a real program address, external RPC, and compatible facilitator settlement remains to be completed.                      |
-| Owner experience   | Branded wallet and Squads funding, policy changes, freezes, and withdrawals remain to be integrated and tested.                           |
-| Production service | Tenant authentication, operational controls, independent security review, and cloud deployment remain release work.                       |
+| Stage              | Current state                                                                                                                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local execution    | Compiled program runs on offline Surfpool; 20 transaction checks exercise transfers, policy enforcement, authorization, and CPI rollback.                                                             |
+| Local integration  | The SDK, real x402 verifier/settler, program, and Postgres complete a verified payment with fake funds.                                                                                               |
+| External devnet    | Deployment with a real program address, external RPC, and compatible facilitator settlement remains to be completed.                                                                                  |
+| Owner experience   | Local policy registration and edits use the generated test owner. Configured Live policy writes use an ordinary owner wallet. Live funding, freezes, withdrawals, and Squads CPI support remain open. |
+| Production service | Tenant authentication, operational controls, independent security review, and cloud deployment remain release work.                                                                                   |
 
 Start with the [quickstart](/docs/quickstart/). Use the [SDK](/docs/sdk/) or [MCP](/docs/mcp/) against the local stack before planning an external rollout.
 
@@ -29,7 +29,25 @@ Start with the [quickstart](/docs/quickstart/). Use the [SDK](/docs/sdk/) or [MC
 | Program upgrade authority | Can change the program enforcing treasury rules. Publish whether the release is immutable or protected by documented multisig/timelock controls. |
 | Indexer                   | Verifies chain events and writes activity. It needs RPC and database access, not a treasury signing key.                                         |
 
-A dashboard session is not owner authorization. Live writes need authenticated ownership checks and an actual owner-signed transaction. Keep RPC, webhook, and database credentials server-side; keep owner, agent, sponsor, and upgrade credentials separate.
+The local development server signs policy changes with its generated fake-funds owner. The live flow asks the owner's wallet to sign, verifies the signed transaction matches the reviewed policy, and submits it over Solana RPC. The dashboard collects only the agent's **public key**. Keep private keys in the owner wallet and agent runtime. Server credentials and private tenant APIs have their own access controls.
+
+## Configure owner-wallet policy writes
+
+This capability requires an **already deployed Brim program and initialized USDC vault**. The wallet address stored as that vault's owner must be an ordinary Solana signer supported by Wallet Standard. The dashboard does not deploy a program, initialize a live vault, or fund it.
+
+Set public configuration for the dashboard before starting development or building it. For local development, place it in `apps/web/.env.local`:
+
+```dotenv
+NEXT_PUBLIC_BRIM_LIVE_VAULT_CONFIG=brim:v1:YOUR_COMPLETE_PUBLIC_VAULT_CONFIG
+# Optional browser-public HTTPS RPC; omit to use the network default.
+NEXT_PUBLIC_BRIM_LIVE_RPC_URL=https://YOUR_PUBLIC_RPC_ENDPOINT
+```
+
+These values are shipped to the browser. Do not put RPC secrets, agent keypairs, or owner keys in them. Changing public configuration for a deployed Next.js build requires rebuilding it.
+
+Choose **Live workspace → Connect owner wallet → Add policy**. Paste the existing agent's public key and set its limits. Select **Review in wallet**, approve the transaction, and wait for confirmation. Open a policy to view or copy its public key. Limit edits retain recorded spending, freeze state, window timing, and unchanged spacing.
+
+The application receives no owner private key. This path covers policy registration and editing for one configured vault. Live funding, withdrawals, freeze/pause actions, tenant activity, and Squads-owned vault execution remain open. Public-chain deployment and external settlement testing remain release work. Offline validator testing is not public-network validation.
 
 ## Know what the ledger proves
 
@@ -45,6 +63,6 @@ The repository includes Cloud Build and Cloud Run/Cloud SQL preparation. No clou
 
 A live service needs tenant-scoped APIs, authenticated webhook intake, finalized RPC verification, durable pending-event reconciliation, database migrations/backups, and managed secrets. Program deployment and upgrade custody require their own release process; deploying the web app does not deploy or audit the program.
 
-Before accepting real funds, complete external devnet payments and owner-wallet flows, test adversarial concurrency and replay, fuzz the contract, and obtain independent security review. The local tests establish specific behavior; they do not establish an audited or operationally ready production release.
+Before accepting real funds, complete external devnet payments and production owner-wallet validation, test adversarial concurrency and replay, fuzz the contract, and obtain independent security review. The local tests establish specific behavior; they do not establish an audited or operationally ready production release.
 
 Auto / Ask / Block approvals, passkey approval authority, and a threat-driven freeze service are proposed follow-up work. They are not active features of the current program.

@@ -1,137 +1,116 @@
 .balance-summary,
 .chart-area {
   min-width: 0;
-  padding: clamp(20px, 2.5vw, 26px);
+  padding: 28px;
   border-radius: var(--card-radius);
 }
 .balance-summary {
-  isolation: isolate;
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(122deg, #181a1e, #242831);
+  overflow: hidden;
+  background: #1c2027;
   color: #fff;
-  box-shadow: 0 2px 3px #10121712;
-}
-.balance-summary::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: repeating-radial-gradient(
-    circle at 94% 0%,
-    transparent 0 26px,
-    #fff1 27px,
-    transparent 28px 48px
-  );
-  opacity: 0.58;
-  content: '';
-  mask-image: linear-gradient(270deg, #000, transparent 60%);
-  pointer-events: none;
 }
 .balance-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
 }
 .balance-header h2,
 .chart-area h2 {
-  font-size: 14px;
-  font-weight: 550;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .balance-header h2 {
-  color: #d3d6dd;
+  color: #d0d5dd;
 }
 .balance-unit {
-  flex: none;
-  padding: 4px 8px;
-  border: 1px solid #ffffff15;
-  border-radius: 6px;
-  background: #ffffff12;
-  color: #e2e5eb;
+  color: #aeb7c4;
   font-size: 11px;
-  font-weight: 550;
-  line-height: 1.2;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 .balance {
-  font-size: clamp(2.125rem, 5.05vw, 4.125rem);
-  font-weight: 530;
-  letter-spacing: -0.08em;
+  margin: 18px 0 26px;
+  font-size: clamp(2.15rem, 5vw, 4.125rem);
+  font-weight: 500;
+  letter-spacing: -0.075em;
   line-height: 1.15;
-  margin: 15px 0 20px;
   overflow-wrap: anywhere;
 }
 .balance-decimals {
-  color: #c1c8d4;
+  color: #a6b0be;
   font-size: 0.69em;
 }
-.balance-actions,
-.balance-note {
+.balance-actions {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   margin-top: auto;
 }
-.balance-note {
-  gap: 7px;
-  color: #d1d5dd;
-  font-size: 12px;
-}
 .balance-actions .button {
-  min-height: 44px;
+  min-height: 42px;
+  height: 42px;
   border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 500;
 }
 .balance-actions .vault-primary {
-  background: #f9fafb;
-  color: #181a1e;
+  color: #181d24;
+  background: #f8f9fb;
 }
 .balance-actions .vault-secondary {
-  background: #ffffff0c;
-  border-color: #ffffff3b;
-  color: #fff;
+  color: #d9dfe7;
+  border-color: #ffffff2b;
+  background: transparent;
 }
 .balance-actions .button:focus-visible {
   outline-color: #e1e5f0;
 }
 @media (hover: hover) {
   .balance-actions .vault-primary:hover {
-    background: #e6e9ee;
+    background: #e6ebf2;
   }
   .balance-actions .vault-secondary:hover {
-    background: #ffffff20;
+    background: #ffffff0c;
   }
 }
 .chart-area {
   background: var(--canvas);
   border: 1px solid var(--line);
-  box-shadow: var(--card-shadow);
 }
 .chart-area h2 {
   color: var(--secondary);
 }
 .chart-amount {
-  margin-top: 6px;
-  font-size: 28px;
-  font-weight: 580;
-  letter-spacing: -0.07em;
+  margin-top: 9px;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.065em;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
+.chart-context {
+  margin-top: 22px;
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
 .spend-chart {
-  margin: 8px 0 0;
-  color: var(--ink);
+  margin: 14px 0 0;
+  color: #626d7a;
 }
 .spend-chart svg {
   display: block;
   width: 100%;
-  height: 64px;
+  height: 70px;
 }
 .chart-grid {
   fill: none;
   stroke: var(--line);
   stroke-width: 1;
-  stroke-dasharray: 3 5;
   vector-effect: non-scaling-stroke;
 }
 .chart-line {
@@ -142,55 +121,35 @@
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
-.chart-point {
-  fill: var(--canvas);
-  stroke: currentColor;
-  stroke-width: 1.35;
-  vector-effect: non-scaling-stroke;
-}
 .chart-days {
   display: flex;
   justify-content: space-between;
   list-style: none;
-  padding: 6px 0 0;
+  padding: 8px 0 0;
   margin: 0;
   color: var(--secondary);
-  font-size: 11px;
-}
-.spend-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 22px;
-  margin: 13px 0 0;
-  padding-top: 11px;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
-}
-.spend-summary > div {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.spend-summary dt {
-  color: var(--secondary);
-}
-.spend-summary dd {
-  margin: 0;
-  font-weight: 550;
-  overflow-wrap: anywhere;
-  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  line-height: 1.5;
 }
 @media (max-width: 800px) {
+  .balance-summary,
+  .chart-area {
+    padding: 24px;
+  }
   .balance {
+    margin-block: 20px 25px;
     font-size: clamp(2.25rem, 9vw, 3.5rem);
-    margin-block: 14px 18px;
   }
   .chart-amount {
-    font-size: 24px;
+    font-size: 28px;
   }
 }
 @media (max-width: 380px) {
+  .balance-summary,
+  .chart-area {
+    padding: 21px;
+  }
   .balance-actions .button {
-    padding-inline: 10px;
+    padding-inline: 12px;
   }
 }

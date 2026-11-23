@@ -32,7 +32,8 @@
     "demo:payment": "node infra/local/payments/client.ts",
     "mcp": "node packages/mcp/dist/cli.js",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "agent:key": "node scripts/agent-key.ts"
   },
   "devDependencies": {
     "typescript": "7.0.2",
