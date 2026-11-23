@@ -3,7 +3,9 @@ import { Question } from './question';
 export function Questions() {
   return (
     <section className="site-shell questions" aria-labelledby="questions-title">
-      <h2 id="questions-title">Common questions</h2>
+      <h2 id="questions-title" data-reveal="">
+        Common questions
+      </h2>
       <div className="questions-list">
         <Question title="Who holds the keys?">
           <p>

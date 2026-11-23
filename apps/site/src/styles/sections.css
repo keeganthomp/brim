@@ -117,6 +117,16 @@
   width: 28.4%;
   height: 100%;
   background: var(--brim-ink);
+  transform-origin: left center;
+}
+/* The example budget fills as its card arrives. */
+.policy-example[data-reveal='shown'] .policy-meter > span {
+  animation: meter-fill 1100ms var(--spring) 420ms backwards;
+}
+@keyframes meter-fill {
+  from {
+    transform: scaleX(0);
+  }
 }
 .spending-steps {
   grid-column: 1/-1;
@@ -200,6 +210,16 @@
   font-weight: 500;
   font-size: 16px;
   line-height: 1.45;
+  transition: color var(--motion-hover) ease;
+}
+@media (hover: hover) {
+  .questions-list summary:hover {
+    color: #000;
+  }
+  .questions-list summary:hover::before,
+  .questions-list summary:hover::after {
+    background: var(--brim-ink);
+  }
 }
 .questions-list summary::-webkit-details-marker {
   display: none;
@@ -214,12 +234,14 @@
   height: 1px;
   background: var(--brim-muted);
   transform: translateY(-50%);
+  transition: background-color var(--motion-hover) ease;
 }
 .questions-list summary::after {
   transform: translateY(-50%) rotate(90deg);
   transition:
-    transform 180ms ease-out,
-    opacity 180ms ease-out;
+    background-color var(--motion-hover) ease,
+    transform 340ms var(--spring),
+    opacity var(--motion-base) ease-out;
 }
 .questions-list details[open]:not([data-expanded='false']) summary::after {
   opacity: 0;
@@ -256,8 +278,10 @@
   color: var(--brim-paper);
   flex: none;
 }
-.dark-button:hover {
-  background: color-mix(in srgb, var(--brim-ink) 85%, var(--brim-paper));
+@media (hover: hover) {
+  .dark-button:hover {
+    background: color-mix(in srgb, var(--brim-ink) 88%, var(--brim-paper));
+  }
 }
 @media (max-width: 740px) {
   .spending-flow,

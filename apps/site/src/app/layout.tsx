@@ -11,6 +11,16 @@ const inter = localFont({
   adjustFontFallback: 'Arial',
 });
 
+// The dashboard's mono, so numbers and code read the same on every Brim surface.
+const mono = localFont({
+  src: '../../../web/public/fonts/jetbrains-mono-latin-variable.woff2',
+  variable: '--brim-mono-font',
+  display: 'swap',
+  weight: '100 800',
+  fallback: ['ui-monospace', 'monospace'],
+  adjustFontFallback: false,
+});
+
 export const metadata: Metadata = {
   title: { default: 'Brim | Spend controls for AI agents', template: '%s | Brim' },
   description:
@@ -19,7 +29,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    // Smooth in-page anchors; Next keeps route changes instant with this attribute.
+    <html lang="en" className={`${inter.variable} ${mono.variable}`} data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );

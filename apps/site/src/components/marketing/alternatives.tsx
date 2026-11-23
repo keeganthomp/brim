@@ -1,8 +1,10 @@
 export function Alternatives() {
   return (
     <section className="site-shell why-alternatives" aria-labelledby="alternatives-title">
-      <h2 id="alternatives-title">Where the limits live.</h2>
-      <div className="why-table-wrap">
+      <h2 id="alternatives-title" data-reveal="">
+        Where the limits live.
+      </h2>
+      <div className="why-table-wrap" data-reveal="">
         <table className="why-table" role="table" aria-labelledby="alternatives-title">
           <thead role="rowgroup">
             <tr role="row">

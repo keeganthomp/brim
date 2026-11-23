@@ -44,13 +44,18 @@
   font-weight: 550;
   white-space: nowrap;
   transition:
-    background 0.18s,
-    border-color 0.18s,
-    transform 0.25s var(--spring),
-    box-shadow 0.2s;
+    background-color var(--motion-hover) ease,
+    border-color var(--motion-hover) ease,
+    box-shadow var(--motion-base) ease,
+    opacity var(--motion-base) ease,
+    transform 260ms var(--spring);
 }
+/* Presses land fast and release on a spring. */
 .button:active:not(:disabled) {
-  transform: scale(0.975);
+  transform: scale(0.97);
+  transition-duration:
+    var(--motion-hover), var(--motion-hover), var(--motion-base), var(--motion-base),
+    var(--motion-press);
 }
 .button:focus-visible,
 .icon-button:focus-visible {
@@ -63,18 +68,23 @@
   color: #fff;
   box-shadow: 0 1px 2px #00000013;
 }
-.primary:hover:not(:disabled) {
-  background: #303034;
-  border-color: #303034;
-  box-shadow: 0 3px 8px #11111117;
-}
 .secondary {
   border: 1px solid #e0e0e5;
   background: #fff;
 }
-.secondary:hover:not(:disabled) {
-  border-color: #d2d2d9;
-  background: #f7f7f9;
+@media (hover: hover) {
+  .primary:hover:not(:disabled) {
+    background: #2c2c31;
+    border-color: #2c2c31;
+    box-shadow: 0 4px 12px #11111119;
+  }
+  .secondary:hover:not(:disabled) {
+    border-color: #d2d2d9;
+    background: #f7f7f9;
+  }
+}
+.secondary:active:not(:disabled) {
+  background: #f1f1f4;
 }
 .small {
   height: 34px;
@@ -104,8 +114,8 @@
   background: #d8d8df;
   cursor: pointer;
   transition:
-    background 0.25s var(--spring),
-    box-shadow 0.2s;
+    background-color 260ms var(--spring),
+    box-shadow var(--motion-hover);
 }
 .switch::before {
   content: '';
@@ -131,10 +141,19 @@
   background: #fff;
   box-shadow: 0 1px 3px #0003;
   transform: translateX(2px);
-  transition: transform 0.28s var(--spring);
+  transform-origin: left center;
+  transition: transform 300ms var(--spring);
 }
 .switch-thumb[data-state='checked'] {
   transform: translateX(16px);
+  transform-origin: right center;
+}
+/* The thumb stretches toward its destination while pressed. */
+.switch:active:not(:disabled) .switch-thumb {
+  transform: translateX(2px) scaleX(1.18);
+}
+.switch:active:not(:disabled) .switch-thumb[data-state='checked'] {
+  transform: translateX(16px) scaleX(1.18);
 }
 .icon-button {
   display: inline-flex;
@@ -147,12 +166,19 @@
   border-radius: 9px;
   color: var(--secondary);
   transition:
-    background 0.18s,
-    color 0.18s;
+    background-color var(--motion-hover) ease,
+    color var(--motion-hover) ease,
+    transform 260ms var(--spring);
 }
-.icon-button:hover {
-  background: #f0f0f3;
-  color: #33333b;
+@media (hover: hover) {
+  .icon-button:hover {
+    background: #f0f0f3;
+    color: #33333b;
+  }
+}
+.icon-button:active {
+  transform: scale(0.9);
+  transition-duration: var(--motion-hover), var(--motion-hover), var(--motion-press);
 }
 .empty-state {
   display: flex;
@@ -164,6 +190,7 @@
   gap: 14px;
   color: #a1a1a8;
   text-align: center;
+  animation: fade-in var(--motion-base) ease-out;
 }
 .empty-state h3 {
   color: #72727a;
@@ -180,7 +207,12 @@
   inset: 0;
   z-index: 20;
   background: #11111142;
-  animation: fadeIn 0.25s var(--spring);
+  animation: fade-in 300ms ease-out;
+}
+/* Radix keeps closing surfaces mounted until a differently named animation ends. */
+.dialog-overlay[data-state='closed'] {
+  animation: fade-out var(--motion-exit) ease-out forwards;
+  pointer-events: none;
 }
 .field-label {
   display: block;
@@ -199,15 +231,17 @@
   color: #33333b;
   font-size: 14px;
   transition:
-    border-color 0.18s,
-    box-shadow 0.18s;
+    border-color var(--motion-hover) ease,
+    box-shadow var(--motion-base) ease;
 }
-.text-input:hover {
-  border-color: #c8c8d1;
+@media (hover: hover) {
+  .text-input:hover:not(:focus) {
+    border-color: #c8c8d1;
+  }
 }
 .text-input:focus {
   border-color: #888892;
-  box-shadow: 0 0 0 3px #11111108;
+  box-shadow: 0 0 0 3px #1111110a;
 }
 .text-input::placeholder {
   color: #b1b1b9;
@@ -223,54 +257,92 @@
   color: #d33e36;
   font-size: 12px;
   line-height: 1.6;
+  animation: rise-in var(--motion-base) var(--spring);
 }
 .form-error svg {
   margin-top: 2px;
 }
-.toast {
+/* The region is always present for screen readers; only the card animates. */
+.toast-region {
   position: fixed;
-  left: 50%;
-  bottom: 24px;
+  inset: auto 0 0;
   z-index: 30;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  width: calc(100% - 40px);
+  justify-content: center;
+  padding: 0 20px max(24px, env(safe-area-inset-bottom));
+  pointer-events: none;
+  transition: right var(--motion-sheet) var(--spring);
+}
+.toast {
+  --toast-shift: 14px;
+  width: 100%;
   max-width: 580px;
-  padding: 0;
+  overflow: hidden;
   border: 1px solid #ffffff12;
   border-radius: 14px;
   background: #202024;
   color: #eee;
-  box-shadow: 0 8px 35px #0002;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, 16px);
+  box-shadow:
+    0 12px 40px #1111112e,
+    0 2px 6px #1111111a;
   font-size: 13px;
   line-height: 1.6;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(var(--toast-shift)) scale(0.97);
   transition:
-    opacity 0.25s,
-    transform 0.32s var(--spring);
+    opacity var(--motion-exit) ease-out,
+    transform var(--motion-exit) var(--spring),
+    visibility 0s linear var(--motion-exit);
 }
-.toast.visible {
-  padding: 15px 17px;
+.toast[data-state='open'] {
   opacity: 1;
+  visibility: visible;
+  transform: none;
   pointer-events: auto;
-  transform: translate(-50%, 0);
+  transition:
+    opacity 240ms ease-out,
+    transform 420ms var(--spring),
+    visibility 0s;
 }
-.toast > svg {
+.toast-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 17px;
+  animation: toast-swap 280ms var(--spring);
+}
+.toast-body > svg {
   color: #aaaab2;
 }
-.toast > span {
+.toast-body > span {
   flex: 1;
 }
 .toast .icon-button {
   margin-left: auto;
   color: #aaaab2;
 }
-.toast .icon-button:hover {
-  background: #36363d;
-  color: #fff;
+@media (hover: hover) {
+  .toast .icon-button:hover {
+    background: #36363d;
+    color: #fff;
+  }
+}
+/* Toasts never cover sheet actions: they slide aside on wide screens and sit up top on narrow ones. */
+@media (min-width: 820px) {
+  .toast-region[data-placement='sheet'] {
+    right: 480px;
+  }
+}
+@media (max-width: 819px) {
+  .toast-region {
+    top: 0;
+    bottom: auto;
+    padding: max(12px, env(safe-area-inset-top)) 12px 0;
+  }
+  .toast {
+    --toast-shift: -14px;
+  }
 }
 .sheet-loading {
   position: fixed;
@@ -288,6 +360,8 @@
   box-shadow: 0 5px 25px #1111;
   transform: translateX(-50%);
   font-size: 12px;
+  /* Fast chunk loads never flash the pill. */
+  animation: loading-in var(--motion-base) var(--spring) 180ms backwards;
 }
 .sheet-loading > span {
   width: 12px;
@@ -297,12 +371,32 @@
   border-radius: 50%;
   animation: sheetLoading 0.8s linear infinite;
 }
-@keyframes fadeIn {
+@keyframes fade-in {
   from {
     opacity: 0;
   }
+}
+@keyframes fade-out {
   to {
-    opacity: 1;
+    opacity: 0;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes toast-swap {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+@keyframes loading-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
   }
 }
 @keyframes sheetLoading {
@@ -324,8 +418,6 @@
     font-size: 12px;
   }
   .toast {
-    bottom: 15px;
-    max-width: calc(100% - 24px);
     font-size: 12px;
   }
   .policy-drawer .icon-button,
@@ -339,6 +431,7 @@
   .switch,
   .switch-thumb,
   .toast,
+  .toast-region,
   .icon-button {
     transition: none;
   }

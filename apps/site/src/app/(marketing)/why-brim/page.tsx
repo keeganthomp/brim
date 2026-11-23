@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Alternatives } from '@/components/marketing/alternatives';
+import { ArrowRight } from '@/components/marketing/arrow-right';
 import { EvidenceCards } from '@/components/marketing/evidence-cards';
 import { PolicyIllustration } from '@/components/marketing/policy-illustration';
 import '@/styles/why-brim.css';
@@ -27,7 +28,7 @@ export default function WhyBrim() {
       <EvidenceCards />
       <Alternatives />
       <PolicyIllustration />
-      <section className="site-shell why-next" aria-labelledby="next-title">
+      <section className="site-shell why-next" aria-labelledby="next-title" data-reveal="">
         <div>
           <h2 id="next-title">Try a payment locally.</h2>
           <p>
@@ -39,6 +40,7 @@ export default function WhyBrim() {
         </div>
         <a className="site-button dark-button" href="/docs/quickstart/">
           Start locally
+          <ArrowRight />
         </a>
       </section>
     </div>

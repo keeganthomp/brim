@@ -1,12 +1,17 @@
 import { ChevronDown, Copy } from 'lucide-react';
+import { Disclosure } from '../ui/disclosure';
 
 export function PolicySetup({ onCopy }: { onCopy: () => void }) {
   return (
-    <details className="policy-details policy-setup">
-      <summary>
-        SDK setup
-        <ChevronDown size={16} aria-hidden="true" />
-      </summary>
+    <Disclosure
+      className="policy-details policy-setup"
+      summary={
+        <>
+          SDK setup
+          <ChevronDown size={16} aria-hidden="true" />
+        </>
+      }
+    >
       <div className="policy-details-content">
         <p>Connect your agent with the public vault config and its scoped signing key.</p>
         <button type="button" className="button secondary small" onClick={onCopy}>
@@ -14,6 +19,6 @@ export function PolicySetup({ onCopy }: { onCopy: () => void }) {
           Copy SDK template
         </button>
       </div>
-    </details>
+    </Disclosure>
   );
 }

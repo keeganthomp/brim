@@ -19,9 +19,12 @@
   text-decoration: underline;
   text-decoration-color: #b3b3b3;
   text-underline-offset: 0.3em;
+  transition: text-decoration-color var(--motion-hover) ease;
 }
-.marketing a.text-link:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  .marketing a.text-link:hover {
+    text-decoration-color: currentColor;
+  }
 }
 .site-shell {
   width: min(calc(100% - var(--page-gutter) * 2), 1120px);
@@ -64,13 +67,16 @@
   font-size: 13px;
   font-weight: 450;
   color: var(--brim-muted);
+  transition: color var(--motion-hover) ease;
 }
 .site-nav a {
   padding-block: 14px;
 }
-.site-nav a:hover,
-.site-footer nav a:hover {
-  color: var(--brim-ink);
+@media (hover: hover) {
+  .site-nav a:hover,
+  .site-footer nav a:hover {
+    color: var(--brim-ink);
+  }
 }
 .site-button {
   display: inline-flex;
@@ -85,7 +91,27 @@
   font-size: 14px;
   line-height: 1.4;
   font-weight: 500;
-  transition: background-color 150ms;
+  transition:
+    background-color var(--motion-hover) ease,
+    box-shadow 240ms ease,
+    transform 260ms var(--spring);
+}
+/* Presses land fast and release on a spring, like the dashboard's buttons. */
+.site-button:active {
+  transform: scale(0.97);
+  transition-duration: var(--motion-hover), 240ms, var(--motion-press);
+}
+.button-arrow {
+  margin-right: -3px;
+  transition: transform 300ms var(--spring);
+}
+@media (hover: hover) {
+  .site-button:hover {
+    box-shadow: 0 6px 18px #1717171f;
+  }
+  .site-button:hover .button-arrow {
+    transform: translateX(3px);
+  }
 }
 .hero {
   padding-block: 104px 120px;
@@ -94,6 +120,53 @@
 .hero-content {
   max-width: 800px;
   margin-inline: auto;
+}
+/* The hero settles in on load: pure CSS, so it never waits on scripts. */
+.hero-content > * {
+  animation: hero-in 760ms var(--spring) backwards;
+}
+.hero-content > :nth-child(2) {
+  animation-delay: 60ms;
+}
+.hero-content > :nth-child(3) {
+  animation-delay: 130ms;
+}
+.hero-content > :nth-child(4) {
+  animation-delay: 200ms;
+}
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+/* Scroll reveal. Only content that starts below the fold is ever hidden, and only once JS runs. */
+.marketing [data-reveal='pending'] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.marketing [data-reveal='shown'] {
+  transition:
+    opacity 600ms ease-out var(--reveal-delay, 0ms),
+    transform 760ms var(--spring) var(--reveal-delay, 0ms);
+}
+.marketing :is(.policy-example, .source-example)[data-reveal] {
+  --reveal-delay: 90ms;
+}
+.marketing :is(.spending-steps > li, .demo-step, .questions-list > details):nth-child(2) {
+  --reveal-delay: 70ms;
+}
+.marketing :is(.spending-steps > li, .demo-step, .questions-list > details):nth-child(3) {
+  --reveal-delay: 140ms;
+}
+.marketing .questions-list > details:nth-child(4) {
+  --reveal-delay: 210ms;
+}
+@media print {
+  .marketing [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 .hero-network {
   margin-bottom: 28px;
@@ -123,8 +196,10 @@
   background: var(--brim-ink);
   color: #fff;
 }
-.hero-primary:hover {
-  background: #333;
+@media (hover: hover) {
+  .hero-primary:hover {
+    background: #2e2e2e;
+  }
 }
 .site-footer {
   display: flex;
@@ -189,7 +264,10 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .marketing * {
+  .marketing *,
+  .marketing *::before,
+  .marketing *::after {
+    animation: none !important;
     transition: none !important;
   }
 }

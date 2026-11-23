@@ -2,28 +2,24 @@ import { ChevronRight } from 'lucide-react';
 import type { WorkspaceMode } from '../../lib/workspace';
 import type { Agent } from '../../lib/demo';
 import { dollars } from '../../lib/currency';
-import { PolicySwitch } from '../ui/policy-switch';
-import { StatusDot } from '../ui/status-dot';
+import { FrozenStatus } from './frozen-status';
 
 interface AgentListProps {
   mode: WorkspaceMode;
   ready: boolean;
   canEdit: boolean;
-  canFreeze: boolean;
   agents: Agent[];
   onEdit: (agent?: Agent) => void;
-  onFreeze: (agent: Agent, frozen: boolean) => void;
   onPolicyIntent: () => void;
 }
 
+/** Each row opens its policy sheet; freezing lives in the sheet, so rows only report status. */
 export function AgentList({
   mode,
   ready,
   canEdit,
-  canFreeze,
   agents,
   onEdit,
-  onFreeze,
   onPolicyIntent,
 }: AgentListProps) {
   const intent = {
@@ -39,48 +35,34 @@ export function AgentList({
       </div>
       <div className="agent-list">
         {agents.map((agent) => {
-          const usage = agent.budget > 0 ? Math.min((agent.spent / agent.budget) * 100, 100) : 0;
+          const usage = agent.budget > 0 ? Math.min(agent.spent / agent.budget, 1) : 0;
           const Row = canEdit ? 'button' : 'div';
           return (
-            <div className={`agent-row ${agent.frozen ? 'frozen' : ''}`} key={agent.id}>
-              <Row
-                className="agent-main"
-                {...intent}
-                onClick={canEdit ? () => onEdit(agent) : undefined}
-                aria-description={canEdit ? `View ${agent.name} spending policy` : undefined}
-              >
-                <span className="agent-title">
-                  <span className="agent-name">{agent.name}</span>
-                  {canEdit && <ChevronRight size={14} aria-hidden="true" />}
-                </span>
-                <span className="agent-budget">
-                  <span className="budget-line">
-                    <span className="mono">
-                      <strong>{dollars(agent.spent)}</strong>
-                      <span className="budget-limit"> / {dollars(agent.budget)}</span>
-                    </span>
-                    <span>{mode === 'demo' ? 'Today' : 'This window'}</span>
+            <Row
+              key={agent.id}
+              className={`agent-row${agent.frozen ? ' is-frozen' : ''}`}
+              {...intent}
+              onClick={canEdit ? () => onEdit(agent) : undefined}
+              aria-description={canEdit ? `View ${agent.name} spending policy` : undefined}
+            >
+              <span className="agent-title">
+                <span className="agent-name">{agent.name}</span>
+                {agent.frozen && <FrozenStatus />}
+              </span>
+              <span className="agent-budget">
+                <span className="budget-line">
+                  <span className="mono">
+                    <strong>{dollars(agent.spent)}</strong>
+                    <span className="budget-limit"> / {dollars(agent.budget)}</span>
                   </span>
-                  <span className="progress-track" aria-hidden="true">
-                    <span style={{ width: `${usage}%` }} />
-                  </span>
+                  <span>{mode === 'demo' ? 'Today' : 'This window'}</span>
                 </span>
-              </Row>
-              <div className="agent-toggle">
-                {agent.frozen ? (
-                  <span className="frozen-label">Frozen</span>
-                ) : (
-                  <StatusDot label="Active" pulsing />
-                )}
-                {canFreeze && (
-                  <PolicySwitch
-                    checked={!agent.frozen}
-                    onChange={(value) => onFreeze(agent, !value)}
-                    label={`${agent.name} payments`}
-                  />
-                )}
-              </div>
-            </div>
+                <span className="progress-track" aria-hidden="true">
+                  <span style={{ transform: `scaleX(${usage})` }} />
+                </span>
+              </span>
+              {canEdit && <ChevronRight className="agent-chevron" size={16} aria-hidden="true" />}
+            </Row>
           );
         })}
         {agents.length === 0 && (

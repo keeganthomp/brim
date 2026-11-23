@@ -28,6 +28,9 @@ body:has(.brim-docs),
   --brim-doc-code-background: #f7f7f7;
   --brim-doc-shadow: #17171703;
   --fd-layout-width: 1440px;
+  /* Code and numbers use the dashboard's mono. */
+  --font-mono: var(--brim-mono);
+  --default-mono-font-family: var(--brim-mono);
   background: var(--color-fd-background);
   color: var(--color-fd-foreground);
   font-size: 15px;
@@ -65,6 +68,14 @@ body:has(.brim-docs),
   font-size: 0.91rem;
   line-height: 1.55;
 }
+/* Fumadocs snaps hover on; Brim fades both ways, like the dashboard and marketing site. */
+.brim-docs #nd-sidebar :is(a, button),
+.brim-docs #nd-sidebar a:hover,
+.brim-docs #nd-sidebar button:hover {
+  transition:
+    background-color var(--motion-hover) ease,
+    color var(--motion-hover) ease;
+}
 .brim-docs #nd-sidebar a[href^='/docs/quickstart'] {
   color: var(--color-fd-primary);
   font-weight: 550;
@@ -89,6 +100,14 @@ body:has(.brim-docs),
   padding-top: 40px;
   padding-right: clamp(24px, 3vw, 56px);
   padding-left: clamp(24px, 3vw, 56px);
+  /* Each guide settles in as you move between pages. */
+  animation: brim-doc-in 420ms var(--spring) backwards;
+}
+@keyframes brim-doc-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
 .brim-doc-breadcrumb {
   margin-bottom: 10px;
@@ -120,7 +139,12 @@ body:has(.brim-docs),
   color: var(--color-fd-primary);
   font-size: 0.875rem;
   text-decoration: underline;
+  text-decoration-color: var(--brim-doc-link-decoration);
   text-underline-offset: 4px;
+  transition: text-decoration-color var(--motion-hover) ease;
+}
+.brim-doc-text-link:hover {
+  text-decoration-color: currentColor;
 }
 .brim-doc-prose {
   color: var(--brim-doc-prose);
@@ -158,6 +182,7 @@ body:has(.brim-docs),
   color: var(--color-fd-primary);
   text-decoration-color: var(--brim-doc-link-decoration);
   text-underline-offset: 4px;
+  transition: text-decoration-color var(--motion-hover) ease;
 }
 .brim-doc-prose a:hover {
   text-decoration-color: var(--color-fd-primary);
@@ -223,9 +248,27 @@ body:has(.brim-docs),
   background: var(--color-fd-card);
   padding: 18px;
   box-shadow: 0 1px 2px var(--brim-doc-shadow);
+  transition:
+    background-color var(--motion-hover) ease,
+    border-color var(--motion-hover) ease,
+    transform 260ms var(--spring);
 }
 .brim-doc-pagination a:hover {
+  border-color: #d9d9d9;
   background: var(--color-fd-muted);
+}
+.brim-doc-pagination a:active {
+  transform: scale(0.99);
+  transition-duration: var(--motion-hover), var(--motion-hover), var(--motion-press);
+}
+.brim-doc-pagination a svg {
+  transition: transform 300ms var(--spring);
+}
+.brim-doc-pagination a:hover .lucide-chevron-right {
+  transform: translateX(2px);
+}
+.brim-doc-pagination a:hover .lucide-chevron-left {
+  transform: translateX(-2px);
 }
 .brim-doc-pagination a > div {
   color: var(--color-fd-primary);

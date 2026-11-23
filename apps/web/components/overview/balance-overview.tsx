@@ -37,12 +37,11 @@ export function BalanceOverview({
       </div>
       <p className="balance mono">
         <span className="sr-only">{formattedBalance ?? 'Balance unavailable'}</span>
-        <span aria-hidden="true">{whole}</span>
-        {cents && (
-          <span className="balance-decimals" aria-hidden="true">
-            .{cents}
-          </span>
-        )}
+        {/* Keyed by amount so a deposit or withdrawal lands with a soft settle. */}
+        <span className="value-change" key={formattedBalance ?? 'none'} aria-hidden="true">
+          {whole}
+          {cents && <span className="balance-decimals">.{cents}</span>}
+        </span>
       </p>
       {demo && (
         <div className="balance-actions">

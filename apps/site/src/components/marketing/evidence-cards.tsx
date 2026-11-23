@@ -1,7 +1,7 @@
 export function EvidenceCards() {
   return (
     <section className="site-shell why-evidence" aria-label="Why enforcement and authority matter">
-      <article>
+      <article data-reveal="">
         <h2>You control the rules.</h2>
         <p className="evidence-outcome">
           Changing spending limits requires the owner’s wallet signature.
@@ -15,7 +15,7 @@ export function EvidenceCards() {
           </a>
         </div>
       </article>
-      <article>
+      <article data-reveal="">
         <h2>Solana checks each payment.</h2>
         <p className="evidence-outcome">
           Payment caps and budgets are checked on Solana before your vault transfers USDC.
@@ -30,7 +30,7 @@ export function EvidenceCards() {
           </a>
         </div>
       </article>
-      <aside className="why-fee" aria-label="Brim program fee">
+      <aside className="why-fee" aria-label="Brim program fee" data-reveal="">
         <p className="fee-label">$0 Brim program fee</p>
         <p>Network and provider fees can still apply.</p>
       </aside>

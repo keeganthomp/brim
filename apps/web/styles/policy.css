@@ -10,8 +10,12 @@
   background: #fff;
   border-left: 1px solid #ededf0;
   box-shadow: -12px 0 64px #11111114;
-  animation: policySlideIn 0.32s var(--spring);
+  animation: drawer-in var(--motion-sheet) var(--spring);
   outline: none;
+}
+.policy-drawer[data-state='closed'] {
+  animation: drawer-out 260ms var(--spring) forwards;
+  pointer-events: none;
 }
 .drawer-header {
   display: flex;
@@ -22,6 +26,12 @@
 }
 .drawer-header > div {
   min-width: 0;
+}
+.drawer-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 11px;
 }
 .drawer-header h2 {
   margin: 0;
@@ -149,11 +159,18 @@
   border-radius: 11px;
   background: #fafafa;
   transition:
-    border-color 0.18s,
-    box-shadow 0.18s;
+    background-color var(--motion-hover) ease,
+    border-color var(--motion-hover) ease,
+    box-shadow var(--motion-base) ease;
+}
+@media (hover: hover) {
+  .policy-number-input:hover:not(:focus-within) {
+    border-color: #d3d3da;
+  }
 }
 .policy-number-input:focus-within {
   border-color: #777780;
+  background: #fff;
   box-shadow: 0 0 0 3px #1111110a;
 }
 .policy-number-input input {
@@ -196,6 +213,15 @@
   font-weight: 500;
   list-style: none;
   cursor: pointer;
+  transition: color var(--motion-hover) ease;
+}
+@media (hover: hover) {
+  .policy-details > summary:hover {
+    color: var(--ink);
+  }
+  .policy-details > summary:hover svg {
+    color: #5c5c64;
+  }
 }
 .policy-details > summary::-webkit-details-marker {
   display: none;
@@ -203,9 +229,12 @@
 .policy-details > summary svg {
   flex-shrink: 0;
   color: #92929a;
-  transition: transform 0.2s var(--spring);
+  transition:
+    transform 320ms var(--spring),
+    color var(--motion-hover) ease;
 }
-.policy-details[open] > summary svg {
+/* data-expanded tracks the animated state, so the chevron turns as the panel moves. */
+.policy-details[open]:not([data-expanded='false']) > summary svg {
   transform: rotate(180deg);
 }
 .policy-details > summary:focus-visible {
@@ -231,8 +260,25 @@
   font-size: 13px;
   line-height: 1.6;
 }
+/* Recipients fold open and closed instead of popping in. */
+.allowlist-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 300ms var(--spring),
+    opacity var(--motion-base) ease;
+}
+.allowlist-reveal[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.allowlist-reveal > div {
+  min-height: 0;
+  overflow: hidden;
+}
 .allowlist-field {
-  margin-top: 19px;
+  padding-top: 19px;
 }
 .allowlist-field > label {
   display: block;
@@ -284,14 +330,16 @@
   color: #c3322a;
   font-size: 12px;
 }
-.freeze-button:hover:not(:disabled) {
-  background: #fff4f2;
-}
 .resume-button {
   color: #53535d;
 }
-.resume-button:hover:not(:disabled) {
-  background: #f7f7f8;
+@media (hover: hover) {
+  .freeze-button:hover:not(:disabled) {
+    background: #fff4f2;
+  }
+  .resume-button:hover:not(:disabled) {
+    background: #f5f5f7;
+  }
 }
 .policy-footer-note {
   margin-top: 11px;
@@ -303,14 +351,14 @@
 .policy-busy {
   animation: policySpin 1s linear infinite;
 }
-@keyframes policySlideIn {
+@keyframes drawer-in {
   from {
     transform: translateX(100%);
-    opacity: 0.5;
   }
+}
+@keyframes drawer-out {
   to {
-    transform: translateX(0);
-    opacity: 1;
+    transform: translateX(100%);
   }
 }
 @keyframes policySpin {
@@ -357,7 +405,8 @@
     animation: none;
   }
   .policy-details > summary svg,
-  .policy-number-input {
+  .policy-number-input,
+  .allowlist-reveal {
     transition: none;
   }
 }

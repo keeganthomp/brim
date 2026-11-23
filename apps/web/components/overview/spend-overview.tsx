@@ -14,7 +14,9 @@ export function SpendOverview({ mode, ready, indexedSpend }: SpendOverviewProps)
     <section className="chart-area" aria-labelledby="spend-heading">
       <h2 id="spend-heading">{demo ? '7-day spend' : 'Recent settled spend'}</h2>
       <p className="chart-amount mono">
-        {demo ? dollars(demoSpendTotal) : ready ? paymentDollars(indexedSpend) : '—'}
+        <span className="value-change" key={`${mode}:${ready}:${indexedSpend}`}>
+          {demo ? dollars(demoSpendTotal) : ready ? paymentDollars(indexedSpend) : '—'}
+        </span>
       </p>
       {demo ? (
         <SpendChart />

@@ -5,7 +5,7 @@ export function DeveloperExample() {
       id="developers"
       aria-labelledby="developers-title"
     >
-      <div className="section-intro">
+      <div className="section-intro" data-reveal="">
         <h2 id="developers-title">One fetch call.</h2>
         <p>
           Use <code>brimFetch</code> for x402 endpoints. Give it the public vault config and your
@@ -20,7 +20,11 @@ export function DeveloperExample() {
           </a>
         </div>
       </div>
-      <figure className="source-example" aria-label="TypeScript example using the Brim SDK">
+      <figure
+        className="source-example"
+        aria-label="TypeScript example using the Brim SDK"
+        data-reveal=""
+      >
         <figcaption>
           <span>agent.ts</span>
           <span>TypeScript</span>

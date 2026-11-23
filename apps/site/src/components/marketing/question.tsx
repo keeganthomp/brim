@@ -8,6 +8,9 @@ interface QuestionAnimation {
   opening: boolean;
 }
 
+// Matches the dashboard's disclosures: a springy open, a quicker close.
+const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
 /** Native disclosure with reversible opening and closing motion. */
 export function Question({ title, children }: { title: string; children: ReactNode }) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -51,13 +54,15 @@ export function Question({ title, children }: { title: string; children: ReactNo
     const endHeight = opening ? answer.getBoundingClientRect().height : 0;
     answer.style.height = `${startHeight}px`;
     answer.style.overflow = 'hidden';
-    const timing: KeyframeAnimationOptions = {
-      duration: 180,
-      easing: 'ease-out',
-      fill: 'both',
-    };
-    const height = answer.animate({ height: [`${startHeight}px`, `${endHeight}px`] }, timing);
-    const opacity = answer.animate({ opacity: [startOpacity, opening ? '1' : '0'] }, timing);
+    const duration = opening ? 340 : 240;
+    const height = answer.animate(
+      { height: [`${startHeight}px`, `${endHeight}px`] },
+      { duration, easing: EASE_OUT, fill: 'both' },
+    );
+    const opacity = answer.animate(
+      { opacity: [startOpacity, opening ? '1' : '0'] },
+      { duration: opening ? duration : 160, easing: 'ease-out', fill: 'both' },
+    );
     animationRef.current = { height, opacity, opening };
     height.onfinish = () => {
       if (animationRef.current?.height !== height) return;
@@ -72,7 +77,7 @@ export function Question({ title, children }: { title: string; children: ReactNo
   }
 
   return (
-    <details ref={detailsRef}>
+    <details ref={detailsRef} data-reveal="">
       <summary onClick={toggle}>{title}</summary>
       <div className="question-answer" ref={answerRef}>
         {children}
