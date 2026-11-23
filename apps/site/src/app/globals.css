@@ -1,10 +1,8 @@
 :root {
-  --brim-ink: #131613;
-  --brim-muted: #575d55;
-  --brim-border: #dfe3db;
-  --brim-paper: #f7f8f4;
-  --brim-green: #286447;
-  --brim-accent: #d7f4ad;
+  --brim-ink: #171717;
+  --brim-muted: #666;
+  --brim-border: #e8e8e8;
+  --brim-paper: #fff;
   --brim-mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   color-scheme: light;
   font-family: var(--brim-sans), Arial, sans-serif;
@@ -27,7 +25,7 @@ a {
   color: inherit;
 }
 :focus-visible {
-  outline: 2px solid #367b51;
+  outline: 2px solid #737373;
   outline-offset: 4px;
 }
 

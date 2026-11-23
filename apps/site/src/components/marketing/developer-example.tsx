@@ -8,8 +8,8 @@ export function DeveloperExample() {
       <div className="section-intro">
         <h2 id="developers-title">One fetch call.</h2>
         <p>
-          Use <code>brimFetch</code> for x402 endpoints. Give it the public vault config and the
-          bot’s signing key. Brim picks the RPC for that network.
+          Use <code>brimFetch</code> for x402 endpoints. Give it the public vault config and your
+          agent’s scoped signing key.
         </p>
         <div className="developer-links">
           <a className="text-link" href="/docs/sdk/">

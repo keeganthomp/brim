@@ -40,6 +40,26 @@
   line-height: 1;
   letter-spacing: -1.65px;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+}
+.header-docs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 42px;
+  color: var(--secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.header-docs-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .workspace-select {
   display: inline-grid;
   position: relative;
@@ -121,27 +141,22 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  overflow: hidden;
-  background: var(--canvas);
-  border: 1px solid var(--line);
-  border-radius: var(--card-radius);
 }
 .section-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 72px;
-  padding: 22px 24px;
+  min-height: 36px;
+  padding: 0 0 12px;
 }
 .section-heading > div {
   min-width: 0;
 }
 .section-heading h2 {
   color: var(--ink);
-  font-size: 15px;
-  font-weight: 550;
-  letter-spacing: -0.3px;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.4;
 }
 .live-banner {
@@ -199,9 +214,6 @@
   .dashboard-grid-live {
     grid-template-areas: 'balance' 'policies';
   }
-  .section-heading {
-    padding-inline: 22px;
-  }
 }
 @media (max-width: 800px) {
   .app-header {
@@ -240,10 +252,6 @@
     grid-template-areas: 'balance' 'policies' 'activity' 'spend';
     gap: 20px;
   }
-  .section-heading {
-    min-height: 66px;
-    padding: 20px;
-  }
   .live-banner {
     align-items: flex-start;
     padding-bottom: 18px;
@@ -262,12 +270,20 @@
     min-height: 28px;
   }
 }
+@media (max-width: 480px) {
+  .header-inner {
+    gap: 12px;
+  }
+  .header-actions {
+    gap: 16px;
+  }
+  .brand-wordmark {
+    display: none;
+  }
+}
 @media (max-width: 380px) {
   .header-inner,
   .main-shell {
     padding-inline: 16px;
-  }
-  .section-heading {
-    padding-inline: 18px;
   }
 }

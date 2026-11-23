@@ -65,6 +65,7 @@ const program = Effect.gen(function* () {
     ...process.env,
     BRIM_RPC_PORT: String(config.rpcPort),
     BRIM_DB_PORT: String(config.dbPort),
+    BRIM_SITE_PORT: String(config.sitePort),
     BRIM_TEST_RPC_PORT: String(config.testRpcPort),
     DATABASE_URL: config.databaseUrl,
     BRIM_RPC_URL: config.rpcUrl,
@@ -147,12 +148,18 @@ const program = Effect.gen(function* () {
     `\nDashboard: http://localhost:${config.webPort} (local test funds; verified payments)`,
   );
   console.log(`Solana RPC: ${config.rpcUrl}\nLocal paid API: http://127.0.0.1:4020`);
+  console.log(`SDK docs: http://localhost:${config.webPort}/docs/sdk/`);
   console.log(
-    'Try npm run demo:payment in another terminal. Ctrl-C stops web/API; npm run local:down stops Surfpool/Postgres.\n',
+    'Try npm run demo:payment in another terminal. Ctrl-C stops web/API/docs; npm run local:down stops Surfpool/Postgres.\n',
   );
   yield* Effect.all(
     [
       run('node', ['infra/local/payments/server.ts'], serverEnv),
+      run(
+        'node',
+        ['scripts/dev.mjs', '--site', '--hostname', '127.0.0.1', '--port', String(config.sitePort)],
+        { ...process.env, BRIM_LOCAL_DOCS_ASSET_PREFIX: '/brim-docs-assets' },
+      ),
       run(
         'node',
         ['scripts/dev.mjs', '--hostname', '127.0.0.1', '--port', String(config.webPort)],

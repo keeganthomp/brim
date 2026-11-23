@@ -17,6 +17,7 @@ export const configuration = Effect.try({
     const rpcPort = port(process.env.BRIM_RPC_PORT, 8899);
     const dbPort = port(process.env.BRIM_DB_PORT, 54329);
     const webPort = port(process.env.BRIM_WEB_PORT, 3000);
+    const sitePort = port(process.env.BRIM_SITE_PORT, 3200);
     const testRpcPort = port(process.env.BRIM_TEST_RPC_PORT, 18899);
     return {
       rpcPort,
@@ -25,12 +26,14 @@ export const configuration = Effect.try({
       rpcUrl: `http://127.0.0.1:${rpcPort}`,
       databaseUrl: `postgresql://brim:brim-local-only@127.0.0.1:${dbPort}/brim`,
       webPort,
+      sitePort,
       file: path.join(root, '.brim/local.json'),
     };
   },
   catch: () =>
     new LocalSetupError({
-      message: 'Invalid local ports. Check BRIM_RPC_PORT, BRIM_DB_PORT and BRIM_WEB_PORT.',
+      message:
+        'Invalid local ports. Check BRIM_RPC_PORT, BRIM_DB_PORT, BRIM_WEB_PORT and BRIM_SITE_PORT.',
     }),
 });
 

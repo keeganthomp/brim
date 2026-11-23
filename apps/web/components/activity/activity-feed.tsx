@@ -2,6 +2,7 @@ import type { WorkspaceMode } from '../../lib/workspace';
 import type { Activity } from '../../lib/demo';
 import type { ActivityFilter } from '../../hooks/use-dashboard';
 import { ActivityRow } from './activity-row';
+import { StatusDot } from '../ui/status-dot';
 
 interface ActivityFeedProps {
   mode: WorkspaceMode;
@@ -38,7 +39,7 @@ export function ActivityFeed({
         <h2 id="activity-heading">Activity</h2>
         {ready && (
           <span className={`live-indicator ${mode === 'local' ? 'verified-indicator' : ''}`}>
-            {label}
+            {mode === 'local' ? <StatusDot label={label} pulsing /> : label}
           </span>
         )}
       </div>

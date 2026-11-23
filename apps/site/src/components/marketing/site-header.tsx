@@ -9,17 +9,11 @@ export function SiteHeader() {
         </a>
         <nav className="site-nav" aria-label="Main navigation">
           <a href="/why-brim/">Why Brim</a>
-          <a className="desktop-nav" href="/#how-it-works">
-            How it works
-          </a>
           <a className="desktop-nav" href="/#developers">
             Developers
           </a>
           <a href="/docs/">Docs</a>
         </nav>
-        <a className="site-button nav-cta" href="/docs/quickstart/">
-          Quickstart
-        </a>
       </div>
     </header>
   );
