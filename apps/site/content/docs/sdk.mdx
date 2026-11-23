@@ -106,3 +106,5 @@ Failures use `BrimPolicyViolationError`, whose `_tag` is `"BrimPolicyViolationEr
 A successful HTTP response, receipt, or `onEvent` callback is not independent proof of settlement. Verify the finalized transaction and expected `PaymentExecuted` program event before marking a payment settled. The [quickstart](/docs/quickstart/) demonstrates that verification and a deduplicated ledger record.
 
 Calling fetch again may authorize another payment. Follow the [bounded retry behavior](/docs/x402/#keep-retries-bounded), and confirm [facilitator compatibility](/docs/x402/#configure-a-compatible-facilitator) before using an external paid API.
+
+For a [pay.sh catalog endpoint](/docs/x402/#use-paysh-endpoints), pass the provider's URL to the same `brimFetch` function.

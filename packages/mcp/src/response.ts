@@ -54,7 +54,8 @@ export function readResourceResponse(
   network: string,
 ) {
   return Effect.gen(function* () {
-    const header = response.headers.get('PAYMENT-RESPONSE');
+    const header =
+      response.headers.get('PAYMENT-RESPONSE') ?? response.headers.get('X-PAYMENT-RESPONSE');
     const receipt = header === null ? undefined : yield* readSettlementReceipt(header, network);
     const body = yield* boundedBody(response).pipe(
       Effect.mapError((error) =>

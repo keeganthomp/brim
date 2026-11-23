@@ -45,6 +45,14 @@ Default `exact` verification expects a top-level token transfer. Brim transfers 
 
 The recipient's USDC token account must already exist. Facilitator account creation and rent spending are outside this payment path.
 
+## Use pay.sh endpoints
+
+Find an API and pass its endpoint URL to `brimFetch` or `brim_fetch`. Ask the operator whether its Solana USDC x402 v2 `exact` endpoint accepts Brim. [pay.sh catalog](https://pay.sh/services)
+
+If you run the endpoint with Pay Kit, use an x402 fixed-price gate with `stablecoins: ['USDC']`. Enable `x402.enableSmartWalletVerification` and include the deployed Brim program in `x402.smartWalletAllowedPrograms`. Use a separate signer to sponsor fees and pin its public address in your vault config's `facilitatorFeePayers`. [Pay Kit](https://github.com/solana-foundation/pay-kit)
+
+We verified a $0.04 payment through the `@solana/pay-kit` 0.13.1 x402 gate on Surfpool. Brim MCP accepts its `X-PAYMENT-RESPONSE` receipt format. This integration uses the Brim SDK or MCP for x402 payments.
+
 ## Keep retries bounded
 
 The SDK adds a default $1 local cap per payment; the on-chain policy may impose a lower cap. It accepts one compatible offer and makes one paid retry. It rejects redirects and preexisting payment authorization headers rather than forwarding authorization elsewhere.

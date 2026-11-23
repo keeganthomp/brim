@@ -18,6 +18,33 @@ describe('MCP resource response boundaries', () => {
     ).resolves.toEqual({ network, signature: transaction });
   });
 
+  it('reads the receipt returned by Pay Kit x402', async () => {
+    const response = new Response('report', {
+      headers: { 'X-PAYMENT-RESPONSE': encoded(receipt) },
+    });
+    await expect(
+      Effect.runPromise(readResourceResponse(response, config, network)),
+    ).resolves.toEqual({
+      status: 200,
+      body: 'report',
+      receipt: { network, signature: transaction },
+    });
+  });
+
+  it('does not replace an invalid standard receipt with a legacy receipt', async () => {
+    const response = new Response('report', {
+      headers: {
+        'PAYMENT-RESPONSE': encoded({ ...receipt, network: 'solana:another-network' }),
+        'X-PAYMENT-RESPONSE': encoded(receipt),
+      },
+    });
+    await expect(
+      Effect.runPromise(readResourceResponse(response, config, network)),
+    ).rejects.toMatchObject({
+      code: 'PAYMENT_OUTCOME_UNKNOWN',
+    });
+  });
+
   it.each([
     { ...receipt, success: 'true' },
     { ...receipt, network: 'solana:another-network' },
