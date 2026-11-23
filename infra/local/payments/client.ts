@@ -161,7 +161,7 @@ if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) 
           console.error(
             error instanceof LocalPaymentError
               ? error.message
-              : 'Local payment demo failed. Check npm run local:status and the payment server logs before retrying.',
+              : 'Local payment demo failed. Check the paid API at http://127.0.0.1:4020/health and its logs before retrying.',
           );
           process.exitCode = 1;
         }),

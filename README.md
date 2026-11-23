@@ -46,6 +46,8 @@ See the [SDK quickstart](packages/sdk/README.md) for examples and the local RPC 
 
 Run `npm run dev:site` and open `http://localhost:3200`. The landing page is at `/` and the Fumadocs guides are at `/docs/`. `npm run build:site` exports both to `apps/site/out/` for static hosting.
 
+For agents, start with `/llms.txt` at the site root. Use `/llms-full.txt` to load every guide together, or choose a Markdown page from the index. The [agent quickstart](apps/site/content/docs/agents.mdx) covers the local payment, SDK, and MCP paths.
+
 ## Useful commands
 
 | Command               | What it does                                                                 |

@@ -1,0 +1,26 @@
+import { Brand } from '@/components/brand';
+
+export function SiteHeader() {
+  return (
+    <header className="site-header">
+      <div className="site-shell nav-inner">
+        <a className="site-brand" href="/" aria-label="Brim home">
+          <Brand />
+        </a>
+        <nav className="site-nav" aria-label="Main navigation">
+          <a href="/why-brim/">Why Brim</a>
+          <a className="desktop-nav" href="/#how-it-works">
+            How it works
+          </a>
+          <a className="desktop-nav" href="/#developers">
+            Developers
+          </a>
+          <a href="/docs/">Docs</a>
+        </nav>
+        <a className="site-button nav-cta" href="/docs/quickstart/">
+          Quickstart
+        </a>
+      </div>
+    </header>
+  );
+}

@@ -77,10 +77,20 @@ body:has(.brim-docs),
 .brim-doc-description {
   max-width: 39rem;
   margin-top: 4px;
-  margin-bottom: 24px;
+  margin-bottom: 4px;
   color: #687465;
   font-size: 1.075rem;
   line-height: 1.75;
+}
+.brim-doc-text-link {
+  width: fit-content;
+  min-height: 36px;
+  margin-bottom: 16px;
+  align-content: center;
+  color: var(--color-fd-primary);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .brim-doc-prose {
   color: #526054;

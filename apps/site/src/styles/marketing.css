@@ -21,14 +21,14 @@
   position: fixed;
   inset: 12px auto auto 12px;
   z-index: 10;
-  transform: translateY(-150%);
+  clip-path: inset(50%);
   background: white;
   border: 1px solid var(--brim-border);
   border-radius: 8px;
   padding: 10px 14px;
 }
 .skip-link:focus {
-  transform: translateY(0);
+  clip-path: none;
 }
 .site-header {
   background: var(--brim-paper);
@@ -296,5 +296,15 @@
 @media (prefers-reduced-motion: reduce) {
   .marketing * {
     transition: none !important;
+  }
+}
+
+/* Keep both public destinations in reach on narrow screens. */
+@media (max-width: 520px) {
+  .nav-cta {
+    display: none;
+  }
+  .site-nav {
+    gap: 20px;
   }
 }

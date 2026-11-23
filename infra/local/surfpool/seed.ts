@@ -34,7 +34,7 @@ export function seedSurfpoolEffect({
       });
     const binary = yield* fromPromise(
       () => readFile(programPath),
-      'Missing SBF artifact. Run npm run build:chain first.',
+      'Missing SBF artifact. Run npm run chain:build first.',
     );
     const json = yield* fromPromise(
       () =>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page';
+import { markdownPath } from '@/lib/agent-docs';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 
@@ -21,6 +22,9 @@ export default async function DocumentationPage({ params }: PageProps) {
     >
       <DocsTitle className="brim-doc-title">{page.data.title}</DocsTitle>
       <DocsDescription className="brim-doc-description">{page.data.description}</DocsDescription>
+      <a className="brim-doc-text-link" href={markdownPath(page)}>
+        View Markdown
+      </a>
       <DocsBody className="brim-doc-prose">
         <Body components={getMDXComponents()} />
       </DocsBody>
@@ -36,5 +40,9 @@ export const dynamicParams = false;
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const page = source.getPage((await params).slug);
   if (!page) notFound();
-  return { title: page.data.title, description: page.data.description };
+  return {
+    title: page.data.title,
+    description: page.data.description,
+    alternates: { types: { 'text/markdown': markdownPath(page) } },
+  };
 }

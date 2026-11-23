@@ -1,0 +1,68 @@
+---
+title: Agent quickstart
+description: Choose a task, make a local test payment, and connect through the SDK or MCP.
+---
+
+Brim lets an agent spend USDC from a Solana vault within an on-chain policy. Start with the offline local stack and fake funds.
+
+## Choose a task
+
+- **Make the first payment:** follow the local steps below.
+- **Add Brim to application code:** use the [TypeScript SDK](/docs/sdk/).
+- **Connect an existing assistant:** use [MCP](/docs/mcp/).
+- **Prepare a live environment:** review [production readiness](/docs/production/) first.
+
+## Make a local payment
+
+From the repository root, with Node 24 and Docker Compose v2, run:
+
+```bash
+npm ci
+npm run dev
+```
+
+Keep it running. In a second terminal at the repository root:
+
+```bash
+npm run demo:payment
+```
+
+The runner uses the generated local configuration automatically. The final JSON record looks like this, with a different signature each time:
+
+```json
+{ "status": "settled", "amount": "$0.04", "signature": "...", "ledgerRows": 1 }
+```
+
+It verifies the vault debit, matching merchant credit, finalized program event, and one deduplicated ledger row. If the payment server is still starting, check `http://127.0.0.1:4020/health` for `status: "ok"` and `mode: "local-only"`.
+
+Open `http://localhost:3000` in **Local workspace** to check the payment and balance. The separate Demo workspace simulates controls. See the [quickstart](/docs/quickstart/) for setup and shutdown.
+
+## Connect your runtime
+
+Use the SDK when you control application code. `createBrimFetch({ vaultConfig, agentKey })` provides a Promise-based fetch function. Effect applications can use `createBrimFetchEffect`. For a custom local integration, set `rpcUrl` to the `rpcUrl` field in `.brim/local.json`. It defaults to `http://127.0.0.1:8899`.
+
+Use MCP when the assistant already supports tools. Follow the [local MCP setup](/docs/mcp/#connect-to-the-local-stack), then call `brim_balance` and `brim_policy` before `brim_fetch`. Local mode permits the test report at `http://127.0.0.1:4020/report`.
+
+Both paths use the same [operator handoff](/docs/sdk/#who-hands-over-what):
+
+- `BRIM_VAULT_CONFIG` is the public `brim:v1:` connection string. For local testing, choose **Local workspace → Copy vault config** in the dashboard.
+- `BRIM_AGENT_KEY` is the scoped keypair's 64-number JSON string. Keep it in the runtime's private configuration, outside prompts, logs, and source control. Share only the public key with the operator for policy registration. The generated local file also contains private test keys; avoid displaying the file.
+
+The agent uses its scoped key; the owner keeps treasury authority. Configuration formats and optional RPC settings are in the [SDK guide](/docs/sdk/).
+
+## Check payment outcomes
+
+A merchant needs a [compatible facilitator](/docs/x402/#configure-a-compatible-facilitator) that explicitly supports the deployed Brim program. Advertising x402 support alone is insufficient.
+
+A receipt or successful HTTP response is not independent proof of settlement. The verified ledger checks the finalized transaction and expected program event. If the result is `PAYMENT_OUTCOME_UNKNOWN` or a timeout leaves settlement unclear, reconcile the original payment before authorizing another paid request. See [retry behavior](/docs/x402/#keep-retries-bounded).
+
+## Know the current scope
+
+The current payment path supports Solana USDC. Local owner writes are disabled; demo policy and funding controls are simulated. Live owner-wallet flows, external devnet settlement, authentication, security review, and deployment remain [production gates](/docs/production/). Local success proves the local integration.
+
+## Read documentation as text
+
+- [Documentation index](/llms.txt)
+- [Complete documentation](/llms-full.txt)
+- [This guide as Markdown](/docs/markdown/agents.md)
+- [Overview as Markdown](/docs/markdown/index.md)

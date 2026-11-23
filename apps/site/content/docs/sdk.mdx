@@ -54,12 +54,8 @@ Agents using the same vault, program, network, and trusted fee-payer list can re
 
 Operators can also build the public string after preparing the [vault and policy](/docs/vaults-and-policies/). For local Surfpool, replace these placeholders with the vault address and trusted facilitator fee payer address from your local setup:
 
-{/* prettier-ignore */}
 ```ts title="local-operator.ts"
-import {
-  createBrimVaultConfig,
-  BRIM_DEVELOPMENT_PROGRAM_ADDRESS,
-} from '@brim/sdk';
+import { createBrimVaultConfig, BRIM_DEVELOPMENT_PROGRAM_ADDRESS } from '@brim/sdk';
 
 const vaultConfig = createBrimVaultConfig({
   vaultAddress: 'YOUR_LOCAL_VAULT_ADDRESS',
@@ -83,10 +79,30 @@ Add `rpcUrl: process.env.SOLANA_RPC_URL` for a dedicated provider or local Surfp
 
 The default SDK safety cap is **$1 USDC per payment**. Add `maxPaymentAmount: 5_000_000n` for a $5 local cap. The on-chain policy still applies.
 
-## Errors and compatibility
+## API reference
 
-`createBrimFetch` returns ordinary Promises. Effect applications can use `createBrimFetchEffect` with the same inputs.
+| API                     | Input                                                                                       | Return and purpose                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `createBrimFetch`       | `BrimVaultConfig`                                                                           | A standard fetch function: `(input, init?) => Promise<Response>`. Use it in ordinary application code.                         |
+| `createBrimFetchEffect` | `BrimVaultConfig`                                                                           | `BrimEffectFetch`: the same request inputs produce `Effect<Response, BrimPolicyViolationError>`. Use it in an Effect workflow. |
+| `createBrimVaultConfig` | Public vault settings, including `network: 'devnet'`, `'mainnet'`, or a supported CAIP-2 ID | A `brim:v1:...` string. Operator setup only; it does not attach a policy.                                                      |
+| `readBrimVaultConfig`   | An encoded config string                                                                    | `BrimVaultConfigDetails`: public settings with a canonical CAIP-2 `network`. No network request or signing occurs.             |
 
-Failures use `BrimPolicyViolationError` with a stable `code`. For `AGENT_FROZEN` or `WINDOW_LIMIT_EXCEEDED`, ask the operator to review the policy. For `PAYMENT_OUTCOME_UNKNOWN`, reconcile the original payment before trying another paid request.
+Both fetch variants accept standard `RequestInfo | URL` and optional `RequestInit`, preserve the request body, and reject redirects and existing payment authorization headers. A non-402 resource response is returned using normal fetch semantics; inspect `response.ok` or `response.status` separately.
 
-External APIs need a facilitator that supports and allowlists the Brim program. [Check x402 compatibility](/docs/x402/).
+## Typed errors and outcome checks
+
+Failures use `BrimPolicyViolationError`, whose `_tag` is `"BrimPolicyViolationError"` and whose `code` is a `BrimErrorCode`. Promise callers can use `instanceof`; Effect callers can handle the tag. The code is the stable field to branch on. Common codes:
+
+| Code                                                                             | Agent action                                                                                                                           |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `INVALID_CARD`, `UNSUPPORTED_CARD_VERSION`, `INVALID_CONFIG`, `INVALID_ACCOUNT`  | Check the vault config, scoped key, and registered policy with the operator. These existing code names are retained for compatibility. |
+| `AGENT_FROZEN`, `VAULT_PAUSED`, `RECIPIENT_NOT_ALLOWED`                          | Stop the paid task and ask the operator to review permission.                                                                          |
+| `PER_TRANSACTION_LIMIT_EXCEEDED`, `WINDOW_LIMIT_EXCEEDED`, `RATE_LIMIT_EXCEEDED` | Respect the configured cap, budget, or spacing. Do not raise limits automatically.                                                     |
+| `UNSUPPORTED_PAYMENT`, `UNTRUSTED_FEE_PAYER`, `INVALID_PAYMENT_REQUIREMENTS`     | Ask the merchant or facilitator operator for a compatible payment offer.                                                               |
+| `RPC_UNAVAILABLE`, `REQUEST_FAILED`, `SIGNING_FAILED`                            | Check the connection or scoped key configuration. These failures occur before payment handoff.                                         |
+| `PAYMENT_OUTCOME_UNKNOWN`, `PAYMENT_REJECTED`                                    | Reconcile the original payment before another paid request. A rejected paid HTTP retry does not prove that funds stayed in the vault.  |
+
+A successful HTTP response, receipt, or `onEvent` callback is not independent proof of settlement. Verify the finalized transaction and expected `PaymentExecuted` program event before marking a payment settled. The [quickstart](/docs/quickstart/) demonstrates that verification and a deduplicated ledger record.
+
+Calling fetch again may authorize another payment. Follow the [bounded retry behavior](/docs/x402/#keep-retries-bounded), and confirm [facilitator compatibility](/docs/x402/#configure-a-compatible-facilitator) before using an external paid API.

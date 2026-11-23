@@ -40,6 +40,53 @@ Use Node 24. If your desktop client cannot find `node`, set `command` to its abs
 
 The report costs **$0.04 fake USDC**. Explicit local mode permits only this local report endpoint and uses the generated fake-funds setup.
 
+## Tool reference
+
+Call `tools/list` after the MCP initialization handshake to discover these tools. Unknown arguments are rejected; vault config, keys, RPC endpoints, and spending limits cannot be supplied through a tool call.
+
+| Tool           | Arguments                                                                                                                | Decoded JSON result                                                                                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `brim_balance` | `{}`                                                                                                                     | `balance` as a six-decimal USDC string, `currency: "USDC"`, and `paused`.                                                                                                                                            |
+| `brim_policy`  | `{}`                                                                                                                     | `frozen`, `vaultPaused`, `currency`, `maxPerPayment`, `windowBudget`, `recordedWindowSpend`, `windowSeconds`, `windowStartedAt`, `minimumSecondsBetweenPayments`, `strictVendorAllowlist`, and `approvedRecipients`. |
+| `brim_fetch`   | Required `url`; optional `method` (`GET` or `POST`) and string `body`. Method defaults to `GET`; a body requires `POST`. | HTTP `status`, a text `body`, and optional `receipt: { network, signature }`.                                                                                                                                        |
+
+Policy amounts are six-decimal USDC strings. Policy times are decimal integer strings; `windowStartedAt` is a Unix timestamp. `approvedRecipients` contains recipient public keys, not domains. `recordedWindowSpend` is stored window usage, not a calculated remaining balance or permission to spend.
+
+With the local stack and `--local` server running, send this request object through your initialized MCP client:
+
+```json title="Local tools/call request"
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "brim_fetch",
+    "arguments": {
+      "url": "http://127.0.0.1:4020/report"
+    }
+  }
+}
+```
+
+On stdio, each JSON-RPC message uses one line. Brim returns **JSON inside a single text block**. Here is an example balance reply.
+
+```json title="Illustrative brim_balance response"
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"balance\":\"12.450000\",\"currency\":\"USDC\",\"paused\":false}"
+      }
+    ]
+  }
+}
+```
+
+Parse `result.content[0].text` as JSON, or `content[0].text` if your client unwraps the result. A tool failure sets `isError: true` and returns a redacted `{ "code": "...", "message": "..." }` in the text block. Check the decoded `status` for HTTP errors from `brim_fetch`.
+
 ## Configure an operator-provided vault config
 
 For a separately prepared environment, run `npm run build:packages` from this repository and configure the same built CLI with your vault config and scoped agent key:
@@ -67,8 +114,10 @@ Use the complete `brim:v1:...` string supplied by your operator for `BRIM_VAULT_
 
 The [SDK handoff guide](/docs/sdk/#who-hands-over-what) explains who generates each value, what it looks like, and why multiple agents can share the public config while retaining separate keys and policies.
 
-## Request behavior
+## Protection and outcome boundaries
 
-`brim_fetch` supports `GET` and `POST`; a POST body is a string. Normal configuration requires HTTPS. Responses are bounded to 64 KiB, errors are redacted, and cancellation interrupts the workflow. The SDK's default local $1 per-payment cap also applies.
+Normal configuration requires HTTPS and refuses credentials embedded in the URL. Local mode permits the loopback report on port `4020`. POST bodies are limited to 16 KiB and sent as `application/json`; response bodies are limited to 64 KiB. Requests time out after 15 seconds, and MCP cancellation interrupts the Effect workflow. The SDK's default $1 per-payment cap and the on-chain policy both apply.
 
-A timeout can leave payment settlement uncertain. Reconcile the original payment before another paid call; the MCP server does not promise invoice idempotency.
+The server retains only the configured scoped agent authority. It offers no owner-write tools, arbitrary request headers, or tool arguments for swapping keys, vaults, RPC providers, or limits. The policy is checked again when the payment executes.
+
+A receipt is merchant-reported metadata, not independent proof of finalized settlement. `PAYMENT_OUTCOME_UNKNOWN`, a paid retry rejection, timeout, or response-size failure requires checking the original payment before authorizing another. Use finalized transaction and program-event verification as demonstrated by the [local payment flow](/docs/quickstart/); the MCP server does not promise invoice idempotency.
