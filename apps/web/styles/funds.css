@@ -17,8 +17,12 @@
   box-shadow:
     0 24px 90px #11111126,
     0 2px 8px #1111110a;
-  animation: modalIn 0.36s var(--spring);
+  animation: modal-in var(--motion-sheet) var(--spring);
   outline: none;
+}
+.funds-modal[data-state='closed'] {
+  animation: modal-out var(--motion-exit) var(--spring) forwards;
+  pointer-events: none;
 }
 .modal-close {
   position: absolute;
@@ -60,9 +64,9 @@
   font-size: 52px;
   letter-spacing: -2.6px;
   transition:
-    background 0.2s,
-    border-color 0.2s,
-    box-shadow 0.2s;
+    background-color var(--motion-base) ease,
+    border-color var(--motion-base) ease,
+    box-shadow var(--motion-base) ease;
 }
 .amount-input:focus-within {
   background: #fafafa;
@@ -127,15 +131,18 @@
   font-size: 21px;
   font-weight: 450;
   transition:
-    background 0.18s,
-    transform 0.2s var(--spring);
+    background-color var(--motion-hover) ease,
+    transform 240ms var(--spring);
 }
-.keypad button:hover {
-  background: #ededf0;
+@media (hover: hover) {
+  .keypad button:hover {
+    background: #efeff2;
+  }
 }
 .keypad button:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
   background: #e7e7eb;
+  transition-duration: 60ms, var(--motion-press);
 }
 .keypad-delete {
   font-size: 23px;
@@ -188,14 +195,16 @@
   font-size: 11px;
   line-height: 1.5;
 }
-@keyframes modalIn {
+@keyframes modal-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -46%) scale(0.97);
+    transform: translate(-50%, -47%) scale(0.96);
   }
+}
+@keyframes modal-out {
   to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+    transform: translate(-50%, -49%) scale(0.97);
   }
 }
 @media (max-width: 480px) {

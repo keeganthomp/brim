@@ -2,14 +2,20 @@ import { useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { LoaderCircle, Snowflake, X } from 'lucide-react';
 import type { AgentPolicyController } from '../../hooks/use-agent-policy';
+import { useRetained } from '../../hooks/use-exit-state';
 import { AgentPolicyFields } from './agent-policy-fields';
+import { FrozenStatus } from '../agents/frozen-status';
 import { useDialogFocus } from '../ui/use-dialog-focus';
 
 export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyController }) {
   const { draft, creating, mode, canEdit, canFreeze, busy, setDraft, saveAgent, freezeAgent } =
     controller;
+  const open = draft !== null;
+  // The closing sheet keeps showing the last policy while it slides away.
+  const shown = useRetained(draft);
+  const view = open ? controller : { ...controller, draft: shown };
   const firstField = useRef<HTMLInputElement>(null);
-  const focus = useDialogFocus(firstField);
+  const focus = useDialogFocus(open, firstField);
   const content = useRef<HTMLDivElement>(null);
   function focusFirstControl(event: Event) {
     event.preventDefault();
@@ -36,9 +42,9 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
   const pendingLabel = mode === 'live' ? 'Check your wallet…' : 'Applying policy…';
   return (
     <Dialog.Root
-      open={draft !== null}
-      onOpenChange={(open) => {
-        if (!open) setDraft(null);
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setDraft(null);
       }}
     >
       <Dialog.Portal>
@@ -47,14 +53,18 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
           ref={content}
           className="policy-drawer"
           aria-describedby="policy-description"
+          inert={!open}
           {...focus}
           onOpenAutoFocus={focusFirstControl}
         >
           <div className="drawer-header">
             <div>
-              <Dialog.Title>
-                {creating ? 'Add spending policy' : draft?.name || 'Spending policy'}
-              </Dialog.Title>
+              <div className="drawer-title">
+                <Dialog.Title>
+                  {creating ? 'Add spending policy' : shown?.name || 'Spending policy'}
+                </Dialog.Title>
+                {!creating && shown?.frozen && <FrozenStatus />}
+              </div>
               <Dialog.Description id="policy-description">
                 {mode === 'demo'
                   ? 'Sample limits, saved in this browser.'
@@ -67,9 +77,9 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
               <X size={20} />
             </Dialog.Close>
           </div>
-          {draft && (
+          {shown && (
             <form onSubmit={saveAgent} className="policy-form" aria-busy={busy}>
-              <AgentPolicyFields controller={controller} firstField={firstField} />
+              <AgentPolicyFields controller={view} firstField={firstField} />
               <div className="drawer-bottom">
                 {canEdit ? (
                   <button className="button primary full" type="submit" disabled={busy}>
@@ -82,12 +92,12 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
                 {!creating && canFreeze && (
                   <button
                     type="button"
-                    className={`button freeze-button ${draft.frozen ? 'resume-button' : ''}`}
+                    className={`button freeze-button ${shown.frozen ? 'resume-button' : ''}`}
                     disabled={busy}
-                    onClick={() => freezeAgent(draft, !draft.frozen)}
+                    onClick={() => freezeAgent(shown, !shown.frozen)}
                   >
                     <Snowflake size={15} aria-hidden="true" />
-                    {draft.frozen ? 'Resume agent' : 'Freeze agent'}
+                    {shown.frozen ? 'Resume agent' : 'Freeze agent'}
                   </button>
                 )}
                 {mode === 'local' && canEdit && (

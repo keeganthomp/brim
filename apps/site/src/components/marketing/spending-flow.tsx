@@ -5,7 +5,7 @@ export function SpendingFlow() {
       id="how-it-works"
       aria-labelledby="spending-title"
     >
-      <div className="section-intro">
+      <div className="section-intro" data-reveal="">
         <h2 id="spending-title">
           One vault.
           <br />A policy for each agent.
@@ -18,7 +18,7 @@ export function SpendingFlow() {
           Explore vaults and policies
         </a>
       </div>
-      <div className="policy-example">
+      <div className="policy-example" data-reveal="">
         <div className="policy-example-head">
           <div>
             <span className="policy-caption">Example policy</span>
@@ -60,17 +60,17 @@ export function SpendingFlow() {
         </div>
       </div>
       <ol className="spending-steps">
-        <li>
+        <li data-reveal="">
           <h3>Fund a vault</h3>
           <p>Your wallet authorizes the vault and its USDC deposits.</p>
         </li>
-        <li>
+        <li data-reveal="">
           <h3>Set a policy</h3>
           <p>
             Register the bot’s public key, then set caps, payment spacing, and approved recipients.
           </p>
         </li>
-        <li>
+        <li data-reveal="">
           <h3>Make a payment</h3>
           <p>The bot signs a paid request. Solana applies its policy before transferring USDC.</p>
         </li>

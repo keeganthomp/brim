@@ -1,6 +1,7 @@
 'use client';
 
 import { useDashboard } from '../hooks/use-dashboard';
+import { useLatch } from '../hooks/use-exit-state';
 import { ActivityFeed } from './activity/activity-feed';
 import { AgentList } from './agents/agent-list';
 import {
@@ -19,6 +20,9 @@ export function Dashboard() {
   const dashboard = useDashboard();
   const { mode, ready, balance, policy, funds, notification } = dashboard;
   const editable = dashboard.demo && dashboard.demoReady;
+  // Sheets stay mounted after their first open so Radix can animate them closed.
+  const policyMounted = useLatch(policy.draft !== null);
+  const fundsMounted = useLatch(funds.mode !== null);
 
   return (
     <>
@@ -37,7 +41,11 @@ export function Dashboard() {
           onExploreDemo={() => dashboard.changeMode('demo')}
           onCopyVaultConfig={dashboard.canCopyVaultConfig ? dashboard.copyVaultConfig : undefined}
         />
-        <div className={`dashboard-grid${mode === 'live' ? ' dashboard-grid-live' : ''}`}>
+        {/* Keyed by workspace so switching modes replays the card entrance. */}
+        <div
+          key={mode}
+          className={`dashboard-grid${mode === 'live' ? ' dashboard-grid-live' : ''}`}
+        >
           <BalanceOverview
             mode={mode}
             balance={balance}
@@ -49,10 +57,8 @@ export function Dashboard() {
             mode={mode}
             ready={ready}
             canEdit={ready && (editable || mode !== 'demo')}
-            canFreeze={editable}
             agents={dashboard.agents}
             onEdit={policy.openAgent}
-            onFreeze={policy.freezeAgent}
             onPolicyIntent={preloadPolicyDrawer}
           />
           {mode !== 'live' && (
@@ -70,9 +76,15 @@ export function Dashboard() {
           )}
         </div>
       </main>
-      {policy.draft && <DeferredPolicyDrawer controller={policy} />}
-      {funds.mode && <DeferredFundsDialog controller={funds} balance={balance ?? 0} />}
-      <NotificationToast toast={notification.toast} onDismiss={notification.dismiss} />
+      {policyMounted && <DeferredPolicyDrawer controller={policy} />}
+      {fundsMounted && <DeferredFundsDialog controller={funds} balance={balance ?? 0} />}
+      <NotificationToast
+        toast={notification.toast}
+        overSheet={policy.draft !== null}
+        onDismiss={notification.dismiss}
+        onPause={notification.pause}
+        onResume={notification.resume}
+      />
     </>
   );
 }

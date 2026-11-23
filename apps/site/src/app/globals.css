@@ -3,7 +3,13 @@
   --brim-muted: #666;
   --brim-border: #e8e8e8;
   --brim-paper: #fff;
-  --brim-mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --brim-mono:
+    var(--brim-mono-font), ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  /* Same motion vocabulary as the dashboard. */
+  --spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-press: 90ms;
+  --motion-hover: 160ms;
+  --motion-base: 220ms;
   color-scheme: light;
   font-family: var(--brim-sans), Arial, sans-serif;
   color: var(--brim-ink);
@@ -11,8 +17,16 @@
   -webkit-font-smoothing: antialiased;
 }
 
+html {
+  scroll-behavior: smooth;
+}
 body {
   margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 * {
   box-sizing: border-box;

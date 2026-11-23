@@ -1,6 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import type { Agent } from '../../lib/demo';
 import type { WorkspaceMode } from '../../lib/workspace';
+import { Disclosure } from '../ui/disclosure';
 import { PolicySwitch } from '../ui/policy-switch';
 import { PolicyNumberField } from './policy-number-field';
 
@@ -18,11 +19,15 @@ export function PolicyAdvanced({
   busy: boolean;
 }) {
   return (
-    <details className="policy-details">
-      <summary>
-        Advanced settings
-        <ChevronDown size={16} aria-hidden="true" />
-      </summary>
+    <Disclosure
+      className="policy-details"
+      summary={
+        <>
+          Advanced settings
+          <ChevronDown size={16} aria-hidden="true" />
+        </>
+      }
+    >
       <div className="policy-details-content">
         {mode === 'demo' ? (
           <PolicyNumberField
@@ -58,26 +63,32 @@ export function PolicyAdvanced({
             disabled={!canEdit || busy}
           />
         </div>
-        {draft.allowlistEnabled && (
-          <div className="allowlist-field">
-            <label htmlFor="recipients">Recipient wallet addresses</label>
-            <textarea
-              id="recipients"
-              className="text-input policy-key-input"
-              value={draft.recipients}
-              onChange={(event) => setDraft({ ...draft, recipients: event.currentTarget.value })}
-              placeholder="One address per line"
-              rows={3}
-              spellCheck={false}
-              autoCapitalize="none"
-              readOnly={!canEdit}
-              disabled={busy}
-              aria-describedby="recipient-help"
-            />
-            <p id="recipient-help">Up to 16 Solana wallet addresses.</p>
+        <div
+          className="allowlist-reveal"
+          data-open={draft.allowlistEnabled}
+          inert={!draft.allowlistEnabled}
+        >
+          <div>
+            <div className="allowlist-field">
+              <label htmlFor="recipients">Recipient wallet addresses</label>
+              <textarea
+                id="recipients"
+                className="text-input policy-key-input"
+                value={draft.recipients}
+                onChange={(event) => setDraft({ ...draft, recipients: event.currentTarget.value })}
+                placeholder="One address per line"
+                rows={3}
+                spellCheck={false}
+                autoCapitalize="none"
+                readOnly={!canEdit}
+                disabled={busy}
+                aria-describedby="recipient-help"
+              />
+              <p id="recipient-help">Up to 16 Solana wallet addresses.</p>
+            </div>
           </div>
-        )}
+        </div>
       </div>
-    </details>
+    </Disclosure>
   );
 }

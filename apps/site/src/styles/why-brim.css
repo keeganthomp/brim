@@ -1,6 +1,12 @@
 .why-hero {
   padding-block: clamp(80px, 8vw, 112px) 80px;
 }
+.why-hero > * {
+  animation: hero-in 760ms var(--spring) backwards;
+}
+.why-hero > :nth-child(2) {
+  animation-delay: 90ms;
+}
 .why-hero h1 {
   max-width: 22ch;
   font-size: clamp(2.6rem, 5vw, 4.5rem);

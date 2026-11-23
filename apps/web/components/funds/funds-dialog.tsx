@@ -3,17 +3,22 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { FlaskConical, LockKeyhole, Wallet, X } from 'lucide-react';
 import { dollars } from '../../lib/currency';
 import type { FundsController } from '../../hooks/use-funds';
+import { useHeldWhileClosed, useRetained } from '../../hooks/use-exit-state';
 import { useDialogFocus } from '../ui/use-dialog-focus';
 export function FundsDialog({
   controller,
-  balance,
+  balance: liveBalance,
 }: {
   controller: FundsController;
   balance: number;
 }) {
-  const { mode, amount, error, close, submit, editAmount, addKey } = controller;
+  const { mode: openMode, amount, error, close, submit, editAmount, addKey } = controller;
+  const open = openMode !== null;
+  // Keep the copy and the numbers steady while the dialog fades out after a submit.
+  const mode = useRetained(openMode);
+  const balance = useHeldWhileClosed(liveBalance, open);
   const amountField = useRef<HTMLInputElement>(null);
-  const focus = useDialogFocus(amountField, true);
+  const focus = useDialogFocus(open, amountField, true);
   const value = Number(amount);
   const validAmount = /^\d+(\.\d{1,2})?$/.test(amount) && value > 0 && value <= 1_000_000;
   const preview =
@@ -22,14 +27,19 @@ export function FundsDialog({
       : null;
   return (
     <Dialog.Root
-      open={mode !== null}
-      onOpenChange={(open) => {
-        if (!open) close();
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) close();
       }}
     >
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="funds-modal" aria-describedby="funds-description" {...focus}>
+        <Dialog.Content
+          className="funds-modal"
+          aria-describedby="funds-description"
+          inert={!open}
+          {...focus}
+        >
           <Dialog.Close className="icon-button modal-close" aria-label="Close funds dialog">
             <X size={20} />
           </Dialog.Close>

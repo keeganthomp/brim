@@ -45,17 +45,21 @@ export function ActivityFeed({
       </div>
       {ready && mode === 'demo' && (
         <div className="feed-filter" role="group" aria-label="Filter activity">
-          {filters.map(({ value, label }) => (
-            <button
-              key={value}
-              aria-label={label}
-              aria-pressed={filter === value}
-              className={filter === value ? 'selected' : ''}
-              onClick={() => onFilterChange(value)}
-            >
-              {value === 'all' ? 'All' : label}
-            </button>
-          ))}
+          {filters.map(({ value, label }) => {
+            const text = value === 'all' ? 'All' : label;
+            return (
+              <button
+                key={value}
+                aria-label={label}
+                aria-pressed={filter === value}
+                className={filter === value ? 'selected' : ''}
+                data-label={text}
+                onClick={() => onFilterChange(value)}
+              >
+                {text}
+              </button>
+            );
+          })}
         </div>
       )}
       <div

@@ -1,56 +1,67 @@
-/* Names, budget usage, and a single independent payment control. */
+/* Names, budget usage, and a frozen status only when it matters. */
 .agent-count {
   color: var(--secondary);
   font-size: 12px;
   line-height: 1.5;
 }
-.agent-row {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 20px;
-  padding: 10px 12px;
-}
 .agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin-inline: -12px;
 }
-.agent-row:has(button.agent-main):hover,
-.agent-row:has(button.agent-main:focus-visible) {
-  background: var(--surface);
-}
-.agent-main {
-  display: block;
-  min-width: 0;
-  padding: 0;
+.agent-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'title chevron' 'budget chevron';
+  align-items: center;
+  column-gap: 14px;
+  width: 100%;
+  padding: 11px 12px 12px;
+  border-radius: 12px;
   text-align: left;
+  animation: rise-in 360ms var(--spring) backwards;
+  transition:
+    background-color var(--motion-hover) ease,
+    transform 260ms var(--spring);
 }
-button.agent-main::after {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  content: '';
+.agent-row:nth-child(2) {
+  animation-delay: 35ms;
 }
-.agent-main:focus-visible {
-  outline: none;
+.agent-row:nth-child(3) {
+  animation-delay: 70ms;
 }
-.agent-main:focus-visible::after {
+.agent-row:nth-child(n + 4) {
+  animation-delay: 105ms;
+}
+@media (hover: hover) {
+  button.agent-row:hover {
+    background: var(--surface);
+  }
+  button.agent-row:hover .agent-chevron {
+    color: #59636e;
+    transform: translateX(2px);
+  }
+}
+button.agent-row:active {
+  background: #eceff2;
+  transform: scale(0.995);
+  transition-duration: var(--motion-hover), var(--motion-press);
+}
+button.agent-row:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: -2px;
 }
 .agent-title {
+  grid-area: title;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 9px;
+  min-width: 0;
   color: var(--ink);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
-}
-.agent-title svg {
-  flex-shrink: 0;
-  color: #9aa3ad;
 }
 .agent-name {
   min-width: 0;
@@ -58,28 +69,32 @@ button.agent-main::after {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.agent-toggle {
-  display: flex;
+.agent-chevron {
+  grid-area: chevron;
+  color: #a3abb4;
+  transition:
+    color var(--motion-hover) ease,
+    transform 260ms var(--spring);
+}
+.frozen-status {
+  display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  min-width: 12px;
-  color: var(--secondary);
-  font-size: 12px;
-}
-.agent-toggle .switch {
-  z-index: 2;
-}
-.agent-toggle > .status-dot {
-  color: var(--green);
-}
-.frozen-label {
+  gap: 4px;
+  padding: 2px 8px 2px 7px;
+  border-radius: 999px;
+  background: #af352f12;
   color: var(--red);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: status-in 300ms var(--spring) backwards;
 }
 .agent-budget {
+  grid-area: budget;
   display: block;
   min-width: 0;
-  margin-top: 3px;
+  margin-top: 4px;
 }
 .budget-line {
   display: flex;
@@ -97,22 +112,31 @@ button.agent-main::after {
 .budget-line strong {
   color: #414d5b;
   font-weight: 450;
+  transition: color var(--motion-base) ease;
+}
+.is-frozen .budget-line strong {
+  color: var(--secondary);
 }
 .progress-track {
   display: block;
   height: 2px;
-  margin-top: 5px;
+  margin-top: 6px;
   overflow: hidden;
   border-radius: 3px;
   background: #eff2f5;
 }
+/* Usage is a scale, not a width, so budget changes glide on the compositor. */
 .progress-track > span {
   display: block;
   height: 100%;
-  border-radius: inherit;
   background: #778392;
+  transform-origin: left center;
+  animation: bar-grow 700ms var(--spring) 120ms backwards;
+  transition:
+    transform 520ms var(--spring),
+    background-color var(--motion-base) ease;
 }
-.frozen .progress-track > span {
+.is-frozen .progress-track > span {
   background: #b6bec8;
 }
 .agents-section .empty-state {
@@ -128,11 +152,19 @@ button.agent-main::after {
   font-size: 12px;
   line-height: 1.7;
 }
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes status-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
 @media (max-width: 480px) {
   .agent-row {
-    column-gap: 16px;
-  }
-  .agent-toggle {
-    gap: 8px;
+    column-gap: 10px;
   }
 }
