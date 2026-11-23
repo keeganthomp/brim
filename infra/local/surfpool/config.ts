@@ -1,11 +1,12 @@
 /** Deterministic, offline-only Surfpool settings shared by local tools. */
+import { BRIM_DEVELOPMENT_PROGRAM_ADDRESS } from '@brim/sdk';
 import { address } from '@solana/kit';
 import { Effect, Schema } from 'effect';
 import { attempt, decode, fromPromise, LocalSurfpoolError, run } from './effects.ts';
 
 export const SURFPOOL_VERSION = '1.7.0';
 export const DEVNET_GENESIS = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG';
-export const PROGRAM = address('AekkJRGenJd9bgXoYo88xnAGpen9DMqSjkBRZZMMskpo');
+export const PROGRAM = address(BRIM_DEVELOPMENT_PROGRAM_ADDRESS);
 export const MINT = address('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU');
 export const TOKEN = address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 export function assertLocalRpc(rpcUrl: string): void {

@@ -24,15 +24,13 @@ npm run demo:payment
 
 Look for `status: "settled"` and a transaction signature. Open the [dashboard](http://localhost:3000) in **Local workspace** to see the verified $0.04 payment and updated test balance.
 
-## See the public config
+## Copy your vault config
 
-The local setup saves its connection values in the ignored `.brim/local.json` file. If you have `jq`, this optional command shows the public vault config:
+1. Open the [dashboard](http://localhost:3000) and choose **Local workspace**.
+2. Select **Copy vault config**.
+3. Paste the copied `brim:v1:` string into `BRIM_VAULT_CONFIG` to use it in your app.
 
-```bash
-jq -r '.vaultConfig' .brim/local.json
-```
-
-It prints one complete string beginning with `brim:v1:`. The payment runner already reads the local config and scoped test key directly; this command is only for inspecting the public value.
+The payment runner loads its test values automatically. For your own app, the [SDK guide](/docs/sdk/#get-your-local-config) shows how to supply the test key and local RPC.
 
 ## Connect your agent
 

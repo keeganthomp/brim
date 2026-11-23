@@ -1,11 +1,18 @@
+/** Local Surfpool fixture identity only. Public networks require an explicit deployed program address. */
 export const BRIM_DEVELOPMENT_PROGRAM_ADDRESS = 'AekkJRGenJd9bgXoYo88xnAGpen9DMqSjkBRZZMMskpo';
+export const BRIM_NETWORK_IDS = Object.freeze({
+  devnet: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
+  mainnet: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+} as const);
+export type BrimNetworkName = keyof typeof BRIM_NETWORK_IDS;
+
 export const NETWORKS = {
-  'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': {
+  [BRIM_NETWORK_IDS.mainnet]: {
     rpcUrl: 'https://api.mainnet-beta.solana.com',
     mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     genesisHash: '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
   },
-  'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1': {
+  [BRIM_NETWORK_IDS.devnet]: {
     rpcUrl: 'https://api.devnet.solana.com',
     mint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
     genesisHash: 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1',

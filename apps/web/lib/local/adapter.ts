@@ -1,5 +1,6 @@
+import * as Schema from 'effect/Schema';
 import type { Agent, Activity } from '../demo-model';
-import type { LocalWorkspaceResponse } from './schema';
+import { PublicVaultConfigSchema, type LocalWorkspaceResponse } from './schema';
 
 export interface LocalWorkspaceSnapshot {
   balance: number;
@@ -7,6 +8,7 @@ export interface LocalWorkspaceSnapshot {
   activity: Activity[];
   indexedSpend: number;
   isPaused: boolean;
+  vaultConfig?: string;
 }
 
 const usdc = (baseUnits: string) => Number(baseUnits) / 1_000_000;
@@ -49,7 +51,9 @@ export function adaptLocalWorkspace(data: LocalWorkspaceResponse): LocalWorkspac
     signature: payment.signature,
     time: relativeTime(payment.settledAt),
   }));
+  const vaultConfig = Schema.decodeUnknownResult(PublicVaultConfigSchema)(data.vaultConfig);
   return {
+    ...(vaultConfig._tag === 'Success' ? { vaultConfig: vaultConfig.success } : {}),
     balance: usdc(data.balanceBaseUnits),
     agents,
     activity,

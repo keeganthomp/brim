@@ -14,8 +14,15 @@ const Timestamp = Schema.String.check(
   ),
 );
 
+// The same-origin endpoint projects public metadata; no signer or RPC fields are accepted here.
+export const PublicVaultConfigSchema = Schema.String.check(
+  Schema.isMaxLength(4096),
+  Schema.isPattern(/^brim:v1:[A-Za-z0-9_-]+$/),
+);
+
 export const LocalWorkspaceSchema = Schema.Struct({
   status: Schema.Literal('ready'),
+  vaultConfig: Schema.optionalKey(Schema.Unknown),
   balanceBaseUnits: DisplayAmount,
   isPaused: Schema.optionalKey(Schema.Boolean),
   chainTimestamp: Schema.optionalKey(IntegerText),

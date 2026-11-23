@@ -20,6 +20,20 @@ const response = await brimFetch('https://merchant.example/paid-resource');
 
 The URL is illustrative. The [quickstart](/docs/quickstart/) makes a real local payment with fake funds. `@brim/sdk` is a private workspace package, not a published npm package.
 
+## Get your local config
+
+Run `npm run dev`, open the dashboard's **Local workspace**, and choose **Copy vault config**. The stack creates this config for you, along with a funded test vault and an authorized agent key.
+
+The ignored `.brim/local.json` file stores the public string as `vaultConfig` and the test keypair separately. The payment runner and [MCP local mode](/docs/mcp/#connect-to-the-local-stack) load them directly. For your own application, supply the key privately and set `rpcUrl` to `http://127.0.0.1:8899`.
+
+To print the public config in a terminal, use `jq`:
+
+```bash
+jq -r '.vaultConfig' .brim/local.json
+```
+
+Follow the [quickstart](/docs/quickstart/) for the complete local flow.
+
 ## What the values look like
 
 - **`BRIM_VAULT_CONFIG` is one string beginning with `brim:v1:`**, such as `brim:v1:eyJ2ZXJzaW9uIjoxLC...`. It contains the vault address, program address, network, and trusted facilitator fee payers. Your operator supplies the complete string.
@@ -38,36 +52,28 @@ Agents using the same vault, program, network, and trusted fee-payer list can re
 
 ## Create and share the public config
 
-The operator runs this after preparing the [vault and policy](/docs/vaults-and-policies/), using the trusted fee payer addresses supplied by the [facilitator operator](/docs/x402/):
+Operators can also build the public string after preparing the [vault and policy](/docs/vaults-and-policies/). For local Surfpool, replace these placeholders with the vault address and trusted facilitator fee payer address from your local setup:
 
-```ts title="operator-setup.ts"
-import { createBrimVaultConfig } from '@brim/sdk';
+{/* prettier-ignore */}
+```ts title="local-operator.ts"
+import {
+  createBrimVaultConfig,
+  BRIM_DEVELOPMENT_PROGRAM_ADDRESS,
+} from '@brim/sdk';
 
 const vaultConfig = createBrimVaultConfig({
-  vaultAddress: process.env.BRIM_VAULT_ADDRESS!,
-  programAddress: process.env.BRIM_PROGRAM_ADDRESS!,
-  network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1', // devnet
-  facilitatorFeePayers: [process.env.BRIM_FACILITATOR_FEE_PAYER!],
+  vaultAddress: 'YOUR_LOCAL_VAULT_ADDRESS',
+  programAddress: BRIM_DEVELOPMENT_PROGRAM_ADDRESS,
+  network: 'devnet',
+  facilitatorFeePayers: ['YOUR_LOCAL_FEE_PAYER'],
 });
-
-console.log(vaultConfig); // Public configuration to share with the integrator.
 ```
 
-Once the vault and policy exist, `createBrimVaultConfig` packages their connection settings into the public string. Use `readBrimVaultConfig(vaultConfig)` to read those public settings back.
+The development program address is for local Surfpool only. For a public deployment, set `programAddress` to its actual deployed address and choose `'devnet'` or `'mainnet'`. Confirm the trusted fee payers with the [facilitator operator](/docs/x402/). The SDK translates the network name to its x402 identifier.
 
-The current dashboard's **Copy SDK template** button copies code only. The actual config and key values still come from the operator–integrator handoff above.
+Share the returned `vaultConfig` string with the integrator. Use `readBrimVaultConfig(vaultConfig)` to inspect its public settings.
 
-## Get the local test values
-
-`npm run dev` creates a funded Surfpool vault, an authorized test key, and the ignored `.brim/local.json` file. Its `vaultConfig` field holds the public string. If you have `jq`, this optional command displays only the public config:
-
-```bash
-jq -r '.vaultConfig' .brim/local.json
-```
-
-The file also contains the generated local test keypair. The included payment runner and MCP local mode load it directly without displaying it. Use [the quickstart](/docs/quickstart/) or [MCP local setup](/docs/mcp/#connect-to-the-local-stack) to try that path.
-
-For your own application against Surfpool, supply its local test key privately and set `rpcUrl` to `http://127.0.0.1:8899`. The public vault config uses the devnet network identifier; the local RPC override keeps requests on your offline chain.
+In the Demo workspace, **Copy SDK template** copies the example code. In the Local workspace, **Copy vault config** copies the public test value.
 
 ## Optional connection and cap
 

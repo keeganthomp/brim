@@ -29,6 +29,7 @@ export function Dashboard() {
           localStatus={dashboard.localStatus}
           localPaused={dashboard.localPaused}
           onExploreDemo={() => dashboard.changeMode('demo')}
+          onCopyVaultConfig={dashboard.canCopyVaultConfig ? dashboard.copyVaultConfig : undefined}
         />
         <div className="dashboard-grid">
           <BalanceOverview

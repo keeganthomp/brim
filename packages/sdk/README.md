@@ -22,13 +22,15 @@ const response = await brimFetch('https://merchant.example/paid-resource');
 
 Send the operator your agent's **public key** so they can register it on the spending policy. The SDK reads the keypair JSON in your agent process to sign payments. The treasury owner's key stays in their wallet.
 
-The vault config contains the vault, program, network, and trusted fee payers. Agents using the same settings can share a vault config. Each agent's registered public key selects its spending policy. See the [operator handoff](../../docs/x402.md#operator-handoff) to generate a vault config with `createBrimVaultConfig`; `readBrimVaultConfig` reads its public settings back.
+The vault config contains the vault, program, network, and trusted fee payers. Agents using the same settings can share a vault config. Each agent's registered public key selects its spending policy. See the [operator handoff](../../docs/x402.md#operator-handoff) to generate a vault config with `createBrimVaultConfig`; `readBrimVaultConfig` reads its public settings back. Operators can use the network names `'devnet'` and `'mainnet'`; the SDK encodes the x402 network ID. Always supply the actual `programAddress`: `BRIM_DEVELOPMENT_PROGRAM_ADDRESS` is for local Surfpool only.
 
 Existing integrations remain compatible: `BRIM_CARD`, `{ card }`, `createBrimCard`, `readBrimCard`, and local `.card` values are accepted as legacy names. New setup uses the vault config names above with the same `brim:v1:` format.
 
 ## Try the SDK locally
 
-Start the [local stack](../../README.md#start-everything-locally), then run this from the repository root in another terminal with `jq` installed:
+Start the [local stack](../../README.md#start-everything-locally) with `npm run dev`. It generates the config for you: open the dashboard's **Local workspace** and choose **Copy vault config**. The scoped test key stays in the ignored local file.
+
+To run the standalone SDK example, use another terminal at the repository root with `jq` installed:
 
 ```sh
 export BRIM_VAULT_CONFIG="$(jq -r '.vaultConfig' .brim/local.json)"

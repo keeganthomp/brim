@@ -13,6 +13,7 @@ interface WorkspaceHeadingProps {
   localStatus: LocalWorkspaceStatus;
   localPaused: boolean;
   onExploreDemo: () => void;
+  onCopyVaultConfig?: (() => void) | undefined;
 }
 
 export function WorkspaceHeading({
@@ -20,6 +21,7 @@ export function WorkspaceHeading({
   localStatus,
   localPaused,
   onExploreDemo,
+  onCopyVaultConfig,
 }: WorkspaceHeadingProps) {
   return (
     <>
@@ -52,7 +54,13 @@ export function WorkspaceHeading({
               </p>
             )}
           </div>
-          <button onClick={onExploreDemo}>Open demo</button>
+          {localStatus === 'ready' && onCopyVaultConfig ? (
+            <button type="button" onClick={onCopyVaultConfig}>
+              Copy vault config
+            </button>
+          ) : (
+            <button onClick={onExploreDemo}>Open demo</button>
+          )}
         </div>
       )}
       {mode === 'live' && (

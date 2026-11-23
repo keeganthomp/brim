@@ -38,7 +38,7 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://api.example.com/paid-resource');
 ```
 
-The treasury operator sends you a public `BRIM_VAULT_CONFIG` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`.
+The treasury operator sends you a public `BRIM_VAULT_CONFIG` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`. Open **Local workspace** in the dashboard and select **Copy vault config** to get the public value.
 
 See the [SDK quickstart](packages/sdk/README.md) for examples and the local RPC override, or [MCP setup](packages/mcp/README.md) for an existing agent client.
 

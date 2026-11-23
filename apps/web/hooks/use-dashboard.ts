@@ -63,6 +63,16 @@ export function useDashboard() {
     notification.notify(message);
   }
 
+  async function copyVaultConfig() {
+    if (mode !== 'local' || !local.snapshot?.vaultConfig) return;
+    const copied = await copyText(local.snapshot.vaultConfig, 'copy-vault-config');
+    notification.notify(
+      copied
+        ? 'Public vault config copied. Use it as BRIM_VAULT_CONFIG in your agent runtime.'
+        : 'Clipboard access is unavailable in this browser.',
+    );
+  }
+
   return {
     mode,
     demo,
@@ -81,6 +91,8 @@ export function useDashboard() {
     funds,
     notification,
     selectActivity,
+    copyVaultConfig,
+    canCopyVaultConfig: mode === 'local' && Boolean(local.snapshot?.vaultConfig),
     activeCount: agents.filter((agent) => !agent.frozen).length,
     spent: agents.reduce((total, agent) => total + agent.spent, 0),
     budget: agents.reduce((total, agent) => total + agent.budget, 0),

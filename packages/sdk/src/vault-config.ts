@@ -2,6 +2,7 @@ import { Schema } from 'effect';
 import { VaultConfigDetailsSchema, VaultConfigPayloadSchema } from './schemas.js';
 import { fail } from './errors.js';
 import { resolveBrimRpcUrl } from './rpc.js';
+import { BRIM_NETWORK_IDS, type BrimNetwork, type BrimNetworkName } from './constants.js';
 import type {
   BrimVaultConfigDetails,
   BrimConfig,
@@ -30,9 +31,18 @@ function readDetails(value: unknown, encoded = false): BrimVaultConfigDetails {
   };
 }
 
-/** Public routing metadata. Contains no agent key, RPC credential, or spending authority. */
-export function createBrimVaultConfig(details: BrimVaultConfigDetails): string {
-  const safe = readDetails(details);
+type VaultConfigInput = Omit<BrimVaultConfigDetails, 'network'> & {
+  network: BrimNetwork | BrimNetworkName;
+};
+
+/** Public routing metadata. Simple network names serialize to canonical CAIP-2 IDs. */
+export function createBrimVaultConfig(details: VaultConfigInput): string {
+  const network = details?.network;
+  const normalized =
+    typeof network === 'string' && Object.hasOwn(BRIM_NETWORK_IDS, network)
+      ? { ...details, network: BRIM_NETWORK_IDS[network as BrimNetworkName] }
+      : details;
+  const safe = readDetails(normalized);
   const payload = JSON.stringify({ version: 1, ...safe });
   return PREFIX + btoa(payload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

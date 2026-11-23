@@ -8,11 +8,11 @@ import {
   getAddressEncoder,
 } from '@solana/kit';
 import { Effect, Schema } from 'effect';
-import { createBrimVaultConfig } from '@brim/sdk';
+import { BRIM_NETWORK_IDS, createBrimVaultConfig } from '@brim/sdk';
 import { PROGRAM } from './config.ts';
 import { attempt, decode, fromPromise, LocalSurfpoolError } from './effects.ts';
 
-export const NETWORK = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1' as const;
+export const NETWORK = BRIM_NETWORK_IDS.devnet;
 const KeyBytes = Schema.Array(
   Schema.Number.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 255 })),
 ).check(Schema.isBetweenLength(64, 64));
@@ -87,6 +87,6 @@ export const localVaultConfig = (vaultAddress: string, facilitatorAddress: strin
   createBrimVaultConfig({
     vaultAddress,
     programAddress: PROGRAM,
-    network: NETWORK,
+    network: 'devnet',
     facilitatorFeePayers: [facilitatorAddress],
   });

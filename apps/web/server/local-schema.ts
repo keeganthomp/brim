@@ -17,12 +17,13 @@ export const BaseUnits = Schema.String.check(
       /^(0|[1-9]\d{0,19})$/.test(value) && BigInt(value) <= 18_446_744_073_709_551_615n,
   ),
 );
-/** Project exactly four public fields. Local fake credentials in the source are discarded. */
+/** Project public connection fields from the local setup file. */
 export const PublicLocalMetadata = Schema.Struct({
   rpcUrl: Schema.String,
   programAddress: Address,
   vaultAddress: Address,
   agentAddress: Address,
+  facilitatorAddress: Schema.optionalKey(Schema.Unknown),
 });
 export const PaymentRows = Schema.Array(
   Schema.Struct({

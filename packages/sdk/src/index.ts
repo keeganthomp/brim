@@ -19,8 +19,8 @@ export type {
 } from './types.js';
 
 /** Lower-level helpers for operator integrations. */
-export { NETWORKS, BRIM_DEVELOPMENT_PROGRAM_ADDRESS } from './constants.js';
-export type { BrimNetwork } from './constants.js';
+export { NETWORKS, BRIM_NETWORK_IDS, BRIM_DEVELOPMENT_PROGRAM_ADDRESS } from './constants.js';
+export type { BrimNetwork, BrimNetworkName } from './constants.js';
 export { checkPolicy, parseAtomicAmount } from './policy.js';
 export type { AgentPolicySnapshot } from './policy.js';
 export { decodeAgentPolicy, findBrimPolicyAddress, findTokenAccount } from './solana.js';

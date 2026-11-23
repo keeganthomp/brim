@@ -1,5 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
+import { createBrimVaultConfig } from '@brim/sdk';
 import { Effect, Schema } from 'effect';
 import { Pool } from 'pg';
 import { localDatabaseUrl } from '../../../infra/local/database';
@@ -57,6 +58,18 @@ export const localWorkspace = (request: Request) =>
     yield* localRequest(request);
     const metadata = yield* readMetadata;
     const chain = yield* readLocalChain(metadata);
+    const { facilitatorAddress, programAddress, vaultAddress } = metadata;
+    const vaultConfig =
+      typeof facilitatorAddress === 'string'
+        ? yield* attempt(() =>
+            createBrimVaultConfig({
+              programAddress,
+              vaultAddress,
+              network: 'devnet',
+              facilitatorFeePayers: [facilitatorAddress],
+            }),
+          ).pipe(Effect.catch(() => Effect.succeed(undefined)))
+        : undefined;
     const pool = yield* databasePool;
     const result = yield* io(() =>
       pool.query(
@@ -89,6 +102,7 @@ export const localWorkspace = (request: Request) =>
         chainTimestamp: chain.chainTimestamp,
         isPaused: chain.isPaused,
         ownerActionsEnabled: false,
+        ...(vaultConfig ? { vaultConfig } : {}),
         agents: [
           {
             id: metadata.agentAddress,
