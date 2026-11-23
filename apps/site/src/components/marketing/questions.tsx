@@ -11,10 +11,10 @@ export function Questions() {
           </p>
         </details>
         <details>
-          <summary>What is a Brim card?</summary>
+          <summary>What is a vault config?</summary>
           <p>
-            It’s a public configuration string that identifies the vault, network, program, and
-            trusted fee payers. The bot’s key and its on-chain policy authorize spending.
+            Your vault config contains public connection details: the vault, network, program, and
+            trusted fee payers. Your agent’s key and on-chain policy authorize spending.
           </p>
         </details>
         <details>

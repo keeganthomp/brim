@@ -8,30 +8,33 @@ import {
   getAddressEncoder,
 } from '@solana/kit';
 import { Effect, Schema } from 'effect';
-import { createBrimCard } from '@brim/sdk';
+import { createBrimVaultConfig } from '@brim/sdk';
 import { PROGRAM } from './config.ts';
-import { attempt, decode, fromPromise } from './effects.ts';
+import { attempt, decode, fromPromise, LocalSurfpoolError } from './effects.ts';
 
 export const NETWORK = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1' as const;
 const KeyBytes = Schema.Array(
   Schema.Number.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 255 })),
 ).check(Schema.isBetweenLength(64, 64));
-export const LocalConfigSchema = Schema.Struct({
-  kind: Schema.Literal('brim-local-only-v1'),
-  rpcUrl: Schema.String,
-  network: Schema.Literal(NETWORK),
-  programAddress: Schema.Literal(PROGRAM),
-  vaultAddress: Schema.String,
-  merchantAddress: Schema.String,
-  ownerKey: Schema.String,
-  agentKey: Schema.String,
-  facilitatorKey: Schema.String,
-  ownerAddress: Schema.String,
-  agentAddress: Schema.String,
-  facilitatorAddress: Schema.String,
-  card: Schema.String,
-});
-export type LocalConfig = typeof LocalConfigSchema.Type;
+const LocalConfigFile = Schema.fromJsonString(
+  Schema.Struct({
+    kind: Schema.Literal('brim-local-only-v1'),
+    rpcUrl: Schema.String,
+    network: Schema.Literal(NETWORK),
+    programAddress: Schema.Literal(PROGRAM),
+    vaultAddress: Schema.String,
+    merchantAddress: Schema.String,
+    ownerKey: Schema.String,
+    agentKey: Schema.String,
+    facilitatorKey: Schema.String,
+    ownerAddress: Schema.String,
+    agentAddress: Schema.String,
+    facilitatorAddress: Schema.String,
+    vaultConfig: Schema.optionalKey(Schema.String),
+    card: Schema.optionalKey(Schema.String), // Existing local fixtures and shell commands.
+  }),
+);
+export type LocalConfig = typeof LocalConfigFile.Type & { vaultConfig: string };
 export function localSignerEffect(key: string) {
   return Effect.gen(function* () {
     const bytes = yield* decode(Schema.fromJsonString(KeyBytes), key);
@@ -62,7 +65,13 @@ export function readCredentialsEffect(filename: string) {
         throw error;
       }
     }, 'Cannot read local credentials.');
-    return text === null ? null : yield* decode(Schema.fromJsonString(LocalConfigSchema), text);
+    if (text === null) return null;
+    const config = yield* decode(LocalConfigFile, text);
+    const vaultConfig = config.vaultConfig ?? config.card;
+    if (vaultConfig === undefined) {
+      return yield* new LocalSurfpoolError({ message: 'Local vault config is missing.' });
+    }
+    return { ...config, vaultConfig };
   });
 }
 export function saveCredentialsEffect(filename: string, config: LocalConfig) {
@@ -74,8 +83,8 @@ export function saveCredentialsEffect(filename: string, config: LocalConfig) {
     await chmod(filename, 0o600);
   }, 'Could not persist local credentials.');
 }
-export const publicCard = (vaultAddress: string, facilitatorAddress: string) =>
-  createBrimCard({
+export const localVaultConfig = (vaultAddress: string, facilitatorAddress: string) =>
+  createBrimVaultConfig({
     vaultAddress,
     programAddress: PROGRAM,
     network: NETWORK,

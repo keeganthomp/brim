@@ -1,10 +1,13 @@
 /** Shared local-only configuration. Fake keys never leave the offline Surfpool stack. */
 import path from 'node:path';
 import { Effect } from 'effect';
-import { createBrimCard } from '@brim/sdk';
 import { configuration, LocalSetupError } from '../../../scripts/local/config.ts';
 import { DEVNET_GENESIS, localRpcEffect } from '../surfpool/config.ts';
-import { localSignerEffect, readCredentialsEffect } from '../surfpool/credentials.ts';
+import {
+  localSignerEffect,
+  localVaultConfig,
+  readCredentialsEffect,
+} from '../surfpool/credentials.ts';
 
 export const RESOURCE_URL = 'http://127.0.0.1:4020/report';
 export const PAYMENT_AMOUNT = 40_000n;
@@ -36,16 +39,10 @@ export const loadLocalContext = Effect.gen(function* () {
   const facilitatorSigner = yield* localSignerEffect(config.facilitatorKey);
   if (
     facilitatorSigner.address !== config.facilitatorAddress ||
-    config.card !==
-      createBrimCard({
-        programAddress: config.programAddress,
-        vaultAddress: config.vaultAddress,
-        network: config.network,
-        facilitatorFeePayers: [facilitatorSigner.address],
-      })
+    config.vaultConfig !== localVaultConfig(config.vaultAddress, facilitatorSigner.address)
   ) {
     return yield* new LocalSetupError({
-      message: 'Local card configuration is inconsistent. Recreate the local stack.',
+      message: 'Local vault config is inconsistent. Check the local stack configuration.',
     });
   }
   return { ...config, rpcUrl, facilitatorSigner };

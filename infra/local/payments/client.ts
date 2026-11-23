@@ -65,7 +65,7 @@ export function localBalancesEffect(context: LocalContext) {
           findTokenAccount(context.vaultAddress, mint),
           findTokenAccount(context.merchantAddress, mint),
         ]),
-      'Local card addresses are invalid. Rerun npm run local:reset.',
+      'Local vault addresses are invalid. Check .brim/local.json.',
     );
     return yield* Effect.gen(function* () {
       const [vault, merchant] = yield* io(
@@ -78,7 +78,7 @@ export function localBalancesEffect(context: LocalContext) {
               .getTokenAccountBalance(address(merchantAta), { commitment: 'confirmed' })
               .send({ abortSignal: signal }),
           ]),
-        'Local USDC accounts are unavailable. Start the local stack and bootstrap the card.',
+        'Local USDC accounts are unavailable. Start the local stack with npm run dev.',
       );
       return { vault: BigInt(vault.value.amount), merchant: BigInt(merchant.value.amount) };
     });
@@ -114,7 +114,7 @@ export const localPaymentDemo = Effect.gen(function* () {
   const balances = localBalancesEffect(context);
   const before = yield* balances;
   const brimFetch = createBrimFetchEffect({
-    card: context.card,
+    vaultConfig: context.vaultConfig,
     agentKey: context.agentKey,
     rpcUrl: context.rpcUrl,
   });

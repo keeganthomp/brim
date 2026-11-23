@@ -12,11 +12,11 @@ import {
 import type { BrimMcpService } from './types.js';
 
 const descriptions = {
-  brim_balance: 'Read the USDC balance in this agent card’s vault.',
+  brim_balance: 'Read the USDC balance in the configured vault.',
   brim_policy:
     'Read this agent’s on-chain spending limits, freeze status, and approved recipients.',
   brim_fetch:
-    'Fetch a paid API using this agent’s scoped card. On-chain policy limits every payment. HTTPS required.',
+    'Fetch a paid API using this agent’s vault policy. On-chain policy limits every payment. HTTPS required.',
 };
 
 export function createBrimMcpServer(service: BrimMcpService) {
@@ -25,7 +25,7 @@ export function createBrimMcpServer(service: BrimMcpService) {
     {
       capabilities: { tools: {} },
       instructions:
-        'Use brim_policy and brim_balance to inspect the configured agent card. brim_fetch pays only through its scoped on-chain policy. Never supply wallet keys or RPC credentials as tool arguments.',
+        'Use brim_policy and brim_balance to inspect the configured vault and agent policy. brim_fetch pays only through its scoped on-chain policy. Never supply wallet keys or RPC credentials as tool arguments.',
     },
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

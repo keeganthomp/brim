@@ -9,7 +9,7 @@ Brim pays compatible Solana x402 v2 resources from a vault. The facilitator must
 import { createBrimFetch } from '@brim/sdk';
 
 const brimFetch = createBrimFetch({
-  card: process.env.BRIM_CARD!,
+  vaultConfig: process.env.BRIM_VAULT_CONFIG!,
   agentKey: process.env.BRIM_AGENT_KEY!,
 });
 
@@ -41,7 +41,7 @@ In the facilitator's `ExactSvmScheme` configuration, require:
 | `transactionVersions`           | `[0]`                                       |
 | `maxRequiredSignatures`         | `2`                                         |
 
-Default `exact` verification expects a top-level token transfer. Brim transfers through a program invocation, so a merchant advertising x402 or `exact` support alone does not establish compatibility. Confirm support with its facilitator operator and pin that operator's fee payer addresses in the card.
+Default `exact` verification expects a top-level token transfer. Brim transfers through a program invocation, so a merchant advertising x402 or `exact` support alone does not establish compatibility. Confirm support with its facilitator operator and pin that operator's fee payer addresses in the vault config.
 
 The recipient's USDC token account must already exist. Facilitator account creation and rent spending are outside this payment path.
 

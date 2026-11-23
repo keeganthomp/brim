@@ -24,11 +24,11 @@ const RoutingFields = {
   programAddress: AddressSchema,
   network: NetworkSchema,
 };
-export const CardDetailsSchema = Schema.Struct({
+export const VaultConfigDetailsSchema = Schema.Struct({
   ...RoutingFields,
   facilitatorFeePayers: FeePayersSchema,
 });
-export const CardPayloadSchema = Schema.Struct({
+export const VaultConfigPayloadSchema = Schema.Struct({
   version: Schema.Literal(1),
   ...RoutingFields,
   facilitatorFeePayers: FeePayersSchema,

@@ -5,7 +5,7 @@ Brim is Solana-native, non-custodial spend management for agents. The product is
 ## Deliverable now
 
 - One contract controls official USDC vaults and scoped agent policies; agents never hold treasury keys.
-- One payment engine powers the SDK and the MCP entry point. Both take a public card and the agent's scoped signing key, with an optional RPC override.
+- One payment engine powers the SDK and the MCP entry point. Both take a public vault config and the agent's scoped signing key, with an optional RPC override.
 - One local command prepares Surfpool, Postgres, migrations, test credentials, the dashboard, and the real x402 example.
 - The dashboard has three surfaces: overview, policy drawer, and funds modal. Local mode reads actual test balances and verified payments; demo mode is explicitly simulated.
 - The core is Apache-2.0 licensed. Transfers include no Brim protocol fee. Network fees and any external facilitator terms are separate.

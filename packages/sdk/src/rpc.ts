@@ -4,7 +4,7 @@ import { fail } from './errors.js';
 /** Choose the trusted network's public RPC, or validate an explicit endpoint. No I/O. */
 export function resolveBrimRpcUrl(network: BrimNetwork, explicit?: string): string {
   if (!Object.hasOwn(NETWORKS, network))
-    fail('INVALID_CONFIG', 'The card uses an unsupported Solana network.');
+    fail('INVALID_CONFIG', 'The vault config uses an unsupported Solana network.');
   const value = explicit === undefined ? NETWORKS[network].rpcUrl : explicit;
   if (typeof value !== 'string')
     fail(

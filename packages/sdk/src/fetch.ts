@@ -4,20 +4,21 @@ import type { SchemeNetworkClient } from '@x402/core/types';
 import { wrapFetchWithPayment, ResponseBodyTooLargeError } from '@x402/fetch';
 import { BrimPolicyViolationError, fail } from './errors.js';
 import { attempt, fromPromise, run } from './effects.js';
-import { resolveBrimConfig } from './card.js';
+import { resolveBrimConfig } from './vault-config.js';
 import { validatePaymentRequired } from './payment-required.js';
 import { paymentTransport } from './transport.js';
 import { createSolanaPaymentAdapter } from './solana.js';
 import { validateConfig, validatePaymentRequirements } from './validation.js';
 import type {
   BrimConfig,
+  BrimVaultConfig,
   BrimCardConfig,
   BrimEffectFetch,
   BrimEvent,
   ResolvedBrimConfig,
 } from './types.js';
 
-function snapshot(input: BrimConfig | BrimCardConfig): ResolvedBrimConfig {
+function snapshot(input: BrimConfig | BrimVaultConfig | BrimCardConfig): ResolvedBrimConfig {
   const config = resolveBrimConfig(input);
   validateConfig(config);
   return {
@@ -31,15 +32,20 @@ function snapshot(input: BrimConfig | BrimCardConfig): ResolvedBrimConfig {
 }
 
 /** Same API as fetch. Configuration errors are immediate; payments use the Effect runtime. */
+export function createBrimFetch(config: BrimVaultConfig): typeof globalThis.fetch;
 export function createBrimFetch(config: BrimCardConfig): typeof globalThis.fetch;
 export function createBrimFetch(config: BrimConfig): typeof globalThis.fetch;
-export function createBrimFetch(input: BrimConfig | BrimCardConfig): typeof globalThis.fetch {
+export function createBrimFetch(
+  input: BrimConfig | BrimVaultConfig | BrimCardConfig,
+): typeof globalThis.fetch {
   const perform = makeFetchEffect(snapshot(input));
   return (resource, init) => run(perform(resource, init));
 }
 
 /** Lazy, typed, interruptible API for applications already using Effect. */
-export function createBrimFetchEffect(input: BrimCardConfig | BrimConfig): BrimEffectFetch {
+export function createBrimFetchEffect(
+  input: BrimVaultConfig | BrimCardConfig | BrimConfig,
+): BrimEffectFetch {
   // Capture mutable key/trust arrays now; validation and all I/O remain lazy.
   const captured = { ...input };
   if ('agentKey' in captured && captured.agentKey instanceof Uint8Array)
@@ -60,7 +66,7 @@ export function createBrimFetchEffect(input: BrimCardConfig | BrimConfig): BrimE
       const config = yield* attempt(
         () => snapshot(captured),
         'INVALID_CONFIG',
-        'Provide your public vault config (Brim card) and scoped agent key.',
+        'Provide your public vault config and scoped agent key.',
       );
       return yield* makeFetchEffect(config)(resource, init);
     });

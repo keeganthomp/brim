@@ -1,11 +1,17 @@
-/** Everyday API: createBrimFetch({ card, agentKey }). */
+/** Everyday API: createBrimFetch({ vaultConfig, agentKey }). */
 export { createBrimFetch, createBrimFetchEffect } from './fetch.js';
-export { createBrimCard } from './card.js';
-export { decodeBrimCard as readBrimCard } from './card.js';
+export {
+  createBrimVaultConfig,
+  readBrimVaultConfig,
+  createBrimVaultConfig as createBrimCard,
+  readBrimVaultConfig as readBrimCard,
+} from './vault-config.js';
 export { BrimPolicyViolationError } from './errors.js';
 export type { BrimErrorCode } from './errors.js';
 export type {
   BrimConfig,
+  BrimVaultConfig,
+  BrimVaultConfigDetails,
   BrimCardConfig,
   BrimCardDetails,
   BrimEvent,

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { Effect, Schema } from 'effect';
 import { command } from './chain/process.ts';
-import { configuration, LocalCard, LocalSetupError, root } from './local/config.ts';
+import { configuration, LocalVaultMetadata, LocalSetupError, root } from './local/config.ts';
 import { testLocalPayment } from './local/payment-test.ts';
 
 const args = new Set(process.argv.slice(2));
@@ -120,20 +120,21 @@ const program = Effect.gen(function* () {
   const text = yield* Effect.tryPromise({
     try: () => readFile(config.file, 'utf8'),
     catch: () =>
-      new LocalSetupError({ message: 'Local card config is missing. Run npm run local:up again.' }),
+      new LocalSetupError({
+        message: 'Local vault config is missing. Run npm run local:up again.',
+      }),
   });
-  const card = yield* Effect.try({
-    try: () => Schema.decodeUnknownSync(LocalCard)(JSON.parse(text)),
+  const vault = yield* Effect.try({
+    try: () => Schema.decodeUnknownSync(LocalVaultMetadata)(JSON.parse(text)),
     catch: () =>
       new LocalSetupError({
-        message:
-          'Local card config is invalid. Check .brim/local.json; never copy production keys into it.',
+        message: 'Local vault config is invalid. Check the test values in .brim/local.json.',
       }),
   });
   const serverEnv = {
     ...env,
-    BRIM_PROGRAM_ADDRESS: card.programAddress,
-    BRIM_TRACKED_VAULTS: card.vaultAddress,
+    BRIM_PROGRAM_ADDRESS: vault.programAddress,
+    BRIM_TRACKED_VAULTS: vault.vaultAddress,
     SOLANA_RPC_URL: config.rpcUrl,
     HELIUS_WEBHOOK_AUTHORIZATION: 'Bearer brim-local-only-webhook-not-a-production-secret',
     NEXT_PUBLIC_BRIM_MODE: 'local',

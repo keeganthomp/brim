@@ -1,6 +1,6 @@
 ---
 title: MCP
-description: Connect an MCP client to a scoped Brim card without writing application code.
+description: Connect an MCP client to a Brim vault without writing application code.
 ---
 
 Brim's stdio MCP server gives Claude Desktop, Cursor, and other MCP clients three tools:
@@ -40,9 +40,9 @@ Use Node 24. If your desktop client cannot find `node`, set `command` to its abs
 
 The report costs **$0.04 fake USDC**. Explicit local mode permits only this local report endpoint and uses the generated fake-funds setup.
 
-## Configure an operator-provided card
+## Configure an operator-provided vault config
 
-For a separately prepared environment, run `npm run build:packages` from this repository and configure the same built CLI with your card and scoped agent key:
+For a separately prepared environment, run `npm run build:packages` from this repository and configure the same built CLI with your vault config and scoped agent key:
 
 ```json title="MCP client configuration"
 {
@@ -51,7 +51,7 @@ For a separately prepared environment, run `npm run build:packages` from this re
       "command": "node",
       "args": ["/absolute/path/to/brim/packages/mcp/dist/cli.js"],
       "env": {
-        "BRIM_CARD": "YOUR_PUBLIC_CARD_CONFIGURATION",
+        "BRIM_VAULT_CONFIG": "YOUR_PUBLIC_VAULT_CONFIGURATION",
         "BRIM_AGENT_KEY": "YOUR_SCOPED_KEYPAIR_JSON_ARRAY"
       }
     }
@@ -59,11 +59,11 @@ For a separately prepared environment, run `npm run build:packages` from this re
 }
 ```
 
-Brim chooses the public Solana RPC for the card's network. To use your own provider, optionally add `SOLANA_RPC_URL`; balance reads and payments use the same connection. An invalid explicit URL fails setup.
+Brim chooses the public Solana RPC for the vault config's network. To use your own provider, optionally add `SOLANA_RPC_URL`; balance reads and payments use the same connection. An invalid explicit URL fails setup.
 
 The operator must supply a funded vault, an authorized agent policy, and a [compatible facilitator](/docs/x402/). The package is not published to npm; use the built file from your checkout.
 
-Use the complete `brim:v1:...` string supplied by your operator for `BRIM_CARD`. `BRIM_AGENT_KEY` comes from the integrator's private runtime configuration as a 64-number JSON keypair string. In this setup, that private runtime is the MCP server process launched by your client. Keep the key out of prompts and tool arguments.
+Use the complete `brim:v1:...` string supplied by your operator for `BRIM_VAULT_CONFIG`. `BRIM_AGENT_KEY` comes from the integrator's private runtime configuration as a 64-number JSON keypair string. In this setup, that private runtime is the MCP server process launched by your client. Keep the key out of prompts and tool arguments.
 
 The [SDK handoff guide](/docs/sdk/#who-hands-over-what) explains who generates each value, what it looks like, and why multiple agents can share the public config while retaining separate keys and policies.
 

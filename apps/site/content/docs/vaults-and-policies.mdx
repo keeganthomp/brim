@@ -56,10 +56,10 @@ The owner can freeze one agent or pause the vault. Owner withdrawals remain avai
 
 ## Hand over the connection values
 
-The integrator generates a scoped keypair and gives the operator its public key. The operator registers that public key with a policy, then shares a public `BRIM_CARD` string. The integrator keeps the matching private keypair in its agent runtime as `BRIM_AGENT_KEY`.
+The integrator generates a scoped keypair and gives the operator its public key. The operator registers that public key with a policy, then shares a public `BRIM_VAULT_CONFIG` string. The integrator keeps the matching private keypair in its agent runtime as `BRIM_AGENT_KEY`.
 
-Several agents can share the same public card when they use the same vault, program, network, and trusted fee payers. Their distinct keys select their individual policies.
+Several agents can share the same public vault config when they use the same vault, program, network, and trusted fee payers. Their distinct keys select their individual policies.
 
-Follow the [SDK handoff guide](/docs/sdk/#who-hands-over-what) for exact value formats, the operator's `createBrimCard` step, and the current dashboard template behavior. The same values also connect through [MCP](/docs/mcp/).
+Follow the [SDK handoff guide](/docs/sdk/#who-hands-over-what) for exact value formats, the operator's `createBrimVaultConfig` step, and the current dashboard template behavior. The same values also connect through [MCP](/docs/mcp/).
 
 The local workspace reads real Surfpool balances and verified payment rows. Its owner actions are disabled; the separate demo simulates those controls. See [production readiness](/docs/production/) before connecting real funds.

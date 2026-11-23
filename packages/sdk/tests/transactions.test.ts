@@ -7,7 +7,11 @@ import {
 } from '@solana/kit';
 import { ExactSvmScheme as FacilitatorScheme } from '@x402/svm/exact/facilitator';
 import { toFacilitatorSvmSigner } from '@x402/svm';
-import { createBrimCard, createBrimFetch, validatePaymentRequirements } from '../src/index.js';
+import {
+  createBrimVaultConfig,
+  createBrimFetch,
+  validatePaymentRequirements,
+} from '../src/index.js';
 import { createSolanaPaymentAdapter, findTokenAccount } from '../src/solana.js';
 import {
   config,
@@ -112,10 +116,10 @@ describe('real kit transaction construction with RPC fixtures', () => {
     expect(requests[1].headers.has('PAYMENT-SIGNATURE')).toBe(true);
     expect(requests[1].redirect).toBe('error');
   });
-  it('uses card setup with an explicit RPC override and snapshots its scoped key before caller mutation', async () => {
+  it('uses vault config setup with an explicit RPC override and snapshots its scoped key before caller mutation', async () => {
     const f = await fixture();
     const scopedKey = f.config.agentSecretKey as Uint8Array;
-    const card = createBrimCard({
+    const vaultConfig = createBrimVaultConfig({
       vaultAddress: f.config.vaultAddress,
       programAddress: f.config.programAddress,
       network: f.config.network,
@@ -124,10 +128,10 @@ describe('real kit transaction construction with RPC fixtures', () => {
     const requests: Request[] = [];
     const transport = vi.fn(async (input) => {
       requests.push((input as Request).clone());
-      return requests.length === 1 ? paymentRequired() : new Response('paid with card');
+      return requests.length === 1 ? paymentRequired() : new Response('paid with vault config');
     });
     const fetchWithCard = createBrimFetch({
-      card,
+      vaultConfig,
       agentKey: scopedKey,
       rpcUrl: f.config.rpcUrl,
       fetch: transport,
@@ -137,7 +141,7 @@ describe('real kit transaction construction with RPC fixtures', () => {
       method: 'POST',
       body: 'original bytes',
     });
-    expect(await response.text()).toBe('paid with card');
+    expect(await response.text()).toBe('paid with vault config');
     expect(await requests[0].text()).toBe(await requests[1].text());
     const payload = JSON.parse(atob(requests[1].headers.get('PAYMENT-SIGNATURE')!));
     const transaction = getTransactionDecoder().decode(

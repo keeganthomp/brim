@@ -24,7 +24,7 @@ function resultValue(input: unknown) {
     );
     if (result.isError)
       return yield* failure(
-        'A local MCP tool failed. Check the local card policy and service status.',
+        'A local MCP tool failed. Check the spending policy and local service status.',
       );
     const text = result.content
       .filter((item) => item.type === 'text')

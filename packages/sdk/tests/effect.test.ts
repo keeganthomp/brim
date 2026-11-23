@@ -1,20 +1,20 @@
 import { Effect, Exit, Result } from 'effect';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  createBrimCard,
+  createBrimVaultConfig,
   createBrimFetch,
   createBrimFetchEffect,
   BrimPolicyViolationError,
   validatePaymentRequirements,
 } from '../src/index.js';
 import { createSolanaPaymentAdapter } from '../src/solana.js';
-import { config, req, cardDetails, fixture, paymentRequired } from './sharedfixtures.js';
+import { config, req, vaultConfigDetails, fixture, paymentRequired } from './sharedfixtures.js';
 
 describe('Effect runtime boundaries', () => {
   it('is lazy and exposes tagged failures through the typed error channel', async () => {
     const transport = vi.fn(async () => new Response('free'));
     const perform = createBrimFetchEffect({
-      card: createBrimCard(cardDetails),
+      vaultConfig: createBrimVaultConfig(vaultConfigDetails),
       agentKey: '[]',
       rpcUrl: config.rpcUrl,
       fetch: transport,
@@ -23,7 +23,7 @@ describe('Effect runtime boundaries', () => {
     expect(transport).not.toHaveBeenCalled();
     expect(await (await Effect.runPromise(effect)).text()).toBe('free');
     const invalid = createBrimFetchEffect({
-      card: 'invalid-card',
+      vaultConfig: 'invalid-vaultConfig',
       agentKey: '[]',
       rpcUrl: config.rpcUrl,
     });

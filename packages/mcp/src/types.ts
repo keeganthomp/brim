@@ -13,7 +13,7 @@ export interface BrimMcpService {
   fetch(input: FetchArgs, signal: AbortSignal): Effect.Effect<unknown, McpFailure>;
 }
 export interface McpConfig {
-  card: string;
+  vaultConfig: string;
   agentKey: string;
   rpcUrl: string;
   local: boolean;

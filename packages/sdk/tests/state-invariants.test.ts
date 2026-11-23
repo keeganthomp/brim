@@ -20,7 +20,7 @@ describe('payment state invariants', () => {
     expect(f.rpc).toHaveBeenCalledTimes(5);
   });
 
-  it('checks RPC network identity before reading or authorizing card state', async () => {
+  it('checks RPC network identity before reading or authorizing vault state', async () => {
     const f = await fixture();
     f.rpc.mockImplementationOnce(
       async (_input, init) =>

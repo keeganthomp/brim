@@ -15,7 +15,7 @@ export function PolicySetup({ onCopy }: { onCopy: () => void }) {
         <div>
           <dt>Public vault config</dt>
           <dd>
-            <code>card</code>
+            <code>vaultConfig</code>
           </dd>
         </div>
         <div>

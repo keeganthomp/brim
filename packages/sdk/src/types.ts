@@ -11,7 +11,7 @@ export interface BrimEvent {
   code?: BrimErrorCode;
 }
 /** Setup metadata your operator creates once. Safe to share; conveys no authority. */
-export interface BrimCardDetails {
+export interface BrimVaultConfigDetails {
   vaultAddress: string;
   programAddress: string;
   network: BrimNetwork;
@@ -19,11 +19,10 @@ export interface BrimCardDetails {
   facilitatorFeePayers: readonly string[];
 }
 
-/** The everyday agent setup. Keep the scoped agent key private. */
-export interface BrimCardConfig {
-  card: string;
+/** Shared agent settings. Keep the scoped agent key private. */
+interface BrimAgentOptions {
   agentKey: string | Uint8Array;
-  /** Optional provider override. Defaults to the card network's public Solana RPC. */
+  /** Optional provider override. Defaults to the vault config network's public Solana RPC. */
   rpcUrl?: string | undefined;
   /** Optional extra local cap; defaults to $1 USDC per request. */
   maxPaymentAmount?: bigint;
@@ -31,12 +30,27 @@ export interface BrimCardConfig {
   onEvent?: (event: BrimEvent) => void | Promise<void>;
 }
 
+/** The everyday agent setup. Vault config is public; the scoped agent key is private. */
+export interface BrimVaultConfig extends BrimAgentOptions {
+  vaultConfig: string;
+  card?: never;
+}
+
+/** @deprecated Use BrimVaultConfigDetails. Metadata and wire format are unchanged. */
+export interface BrimCardDetails extends BrimVaultConfigDetails {}
+
+/** @deprecated Use BrimVaultConfig with the vaultConfig property. */
+export interface BrimCardConfig extends BrimAgentOptions {
+  card: string;
+  vaultConfig?: never;
+}
+
 /** Advanced setup for integrations managing routing fields directly. */
 export interface BrimConfig {
   vaultAddress: string;
   programAddress: string;
   agentSecretKey: string | Uint8Array;
-  /** Optional provider override. Defaults to the card network's public Solana RPC. */
+  /** Optional provider override. Defaults to the vault config network's public Solana RPC. */
   rpcUrl?: string | undefined;
   network: BrimNetwork;
   /** Operator affirmation: this facilitator enables smart wallet simulation AND allowlists this program. */

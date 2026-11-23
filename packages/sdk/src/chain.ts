@@ -49,7 +49,7 @@ export function loadPaymentState(
     const policyAddress = yield* fromPromise(
       () => findBrimPolicyAddress(config.programAddress, config.vaultAddress, signer.address),
       'INVALID_CONFIG',
-      'Card addresses are invalid. Ask your operator for a new card.',
+      'Vault config addresses are invalid. Ask your operator for a new config.',
     );
     const { value: accounts } = yield* fromPromise(
       (signal) =>
@@ -85,7 +85,7 @@ export function loadPaymentState(
         )
           fail(
             'INVALID_ACCOUNT',
-            'Vault or policy is missing. Ask your operator to finish card setup.',
+            'Vault or policy is missing. Ask your operator to finish vault setup.',
           );
         const vaultData = decodeData(vaultAccount.data);
         const policyData = decodeData(policyAccount.data);
@@ -96,12 +96,12 @@ export function loadPaymentState(
           !sameBytes(vaultData.slice(0, 8), discs[0]) ||
           !sameBytes(policyData.slice(0, 8), discs[1])
         )
-          fail('INVALID_ACCOUNT', 'Card accounts have an unexpected format.');
+          fail('INVALID_ACCOUNT', 'Vault accounts have an unexpected format.');
         const policy = decodeAgentPolicy(policyData);
         if (policy.vault !== config.vaultAddress || policy.agentKey !== signer.address)
           fail(
             'INVALID_ACCOUNT',
-            'This agent key is not assigned to the card. Ask your operator to issue a policy.',
+            'This agent key is not assigned to the vault config. Ask your operator to issue a policy.',
           );
         return {
           vaultData,
@@ -113,7 +113,7 @@ export function loadPaymentState(
         };
       },
       'INVALID_ACCOUNT',
-      'Card account data is invalid.',
+      'Vault account data is invalid.',
     );
     const encoder = getAddressEncoder();
     const [expectedVault, vaultBump] = yield* fromPromise(
@@ -143,7 +143,7 @@ export function loadPaymentState(
           decoded.vaultTokenAccount !== expectedAta ||
           decoded.vaultData[108] > 1
         )
-          fail('INVALID_ACCOUNT', 'Vault does not match the configured card or USDC account.');
+          fail('INVALID_ACCOUNT', 'Vault does not match the configured vault or USDC account.');
         checkPolicy(
           decoded.policy,
           payment.amount,
@@ -153,7 +153,7 @@ export function loadPaymentState(
         );
       },
       'INVALID_ACCOUNT',
-      'Card policy validation failed.',
+      'Vault policy validation failed.',
     );
     return { policyAddress, vaultTokenAccount: decoded.vaultTokenAccount };
   });

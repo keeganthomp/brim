@@ -3,7 +3,7 @@ title: TypeScript SDK
 description: Get the public vault config from your operator. Keep the scoped key in your agent runtime.
 ---
 
-Brim needs two values: the public vault config (`BRIM_CARD`) and your agent's scoped keypair (`BRIM_AGENT_KEY`). The config tells Brim where to connect. The key selects the on-chain spending policy that your operator registered for this agent.
+Brim needs two values: the public vault config (`BRIM_VAULT_CONFIG`) and your agent's scoped keypair (`BRIM_AGENT_KEY`). The config tells Brim where to connect. The key selects the on-chain spending policy that your operator registered for this agent.
 
 ## Use two inputs
 
@@ -11,7 +11,7 @@ Brim needs two values: the public vault config (`BRIM_CARD`) and your agent's sc
 import { createBrimFetch } from '@brim/sdk';
 
 const brimFetch = createBrimFetch({
-  card: process.env.BRIM_CARD!,
+  vaultConfig: process.env.BRIM_VAULT_CONFIG!,
   agentKey: process.env.BRIM_AGENT_KEY!,
 });
 
@@ -22,7 +22,7 @@ The URL is illustrative. The [quickstart](/docs/quickstart/) makes a real local 
 
 ## What the values look like
 
-- **`BRIM_CARD` is one string beginning with `brim:v1:`**, such as `brim:v1:eyJ2ZXJzaW9uIjoxLC...`. It contains the vault address, program address, network, and trusted facilitator fee payers. Your operator supplies the complete string.
+- **`BRIM_VAULT_CONFIG` is one string beginning with `brim:v1:`**, such as `brim:v1:eyJ2ZXJzaW9uIjoxLC...`. It contains the vault address, program address, network, and trusted facilitator fee payers. Your operator supplies the complete string.
 - **`BRIM_AGENT_KEY` is a JSON array of exactly 64 numbers**, each from 0 to 255, such as `[12,34,56,...]`. Use the full standard Solana Ed25519 keypair export as a string in your private runtime configuration; the SDK decodes it.
 
 The examples are abbreviated; copy the complete values into your runtime. The private keypair stays in the integrator's runtime or secret store. The operator needs only its corresponding **public key** to authorize spending. Use a separate scoped keypair for the agent.
@@ -31,43 +31,43 @@ The examples are abbreviated; copy the complete values into your runtime. The pr
 
 1. **The agent integrator generates a scoped keypair.** Keep its private 64-byte keypair export with the application and send its public key to the treasury operator.
 2. **The operator registers that public key and its limits on the vault.** The operator also prepares the vault, funding, and a compatible facilitator.
-3. **The operator creates and shares the public vault config.** The returned `brim:v1:...` string becomes `BRIM_CARD`.
-4. **The integrator supplies both values to the application.** Load the public config as `BRIM_CARD` and the matching private keypair as `BRIM_AGENT_KEY` through the runtime's configuration.
+3. **The operator creates and shares the public vault config.** The returned `brim:v1:...` string becomes `BRIM_VAULT_CONFIG`.
+4. **The integrator supplies both values to the application.** Load the public config as `BRIM_VAULT_CONFIG` and the matching private keypair as `BRIM_AGENT_KEY` through the runtime's configuration.
 
-Agents using the same vault, program, network, and trusted fee-payer list can reuse the same card string. Each agent keeps its own keypair and has its own policy. Sharing the public config grants no spending authority.
+Agents using the same vault, program, network, and trusted fee-payer list can reuse the same vault config string. Each agent keeps its own keypair and has its own policy. Sharing the public config grants no spending authority.
 
 ## Create and share the public config
 
 The operator runs this after preparing the [vault and policy](/docs/vaults-and-policies/), using the trusted fee payer addresses supplied by the [facilitator operator](/docs/x402/):
 
 ```ts title="operator-setup.ts"
-import { createBrimCard } from '@brim/sdk';
+import { createBrimVaultConfig } from '@brim/sdk';
 
-const card = createBrimCard({
+const vaultConfig = createBrimVaultConfig({
   vaultAddress: process.env.BRIM_VAULT_ADDRESS!,
   programAddress: process.env.BRIM_PROGRAM_ADDRESS!,
   network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1', // devnet
   facilitatorFeePayers: [process.env.BRIM_FACILITATOR_FEE_PAYER!],
 });
 
-console.log(card); // Public configuration to share with the integrator.
+console.log(vaultConfig); // Public configuration to share with the integrator.
 ```
 
-Once the vault and policy exist, `createBrimCard` packages their connection settings into the public string.
+Once the vault and policy exist, `createBrimVaultConfig` packages their connection settings into the public string. Use `readBrimVaultConfig(vaultConfig)` to read those public settings back.
 
 The current dashboard's **Copy SDK template** button copies code only. The actual config and key values still come from the operator–integrator handoff above.
 
 ## Get the local test values
 
-`npm run dev` creates a funded Surfpool vault, an authorized test key, and the ignored `.brim/local.json` file. If you have `jq`, this optional command displays only the public config:
+`npm run dev` creates a funded Surfpool vault, an authorized test key, and the ignored `.brim/local.json` file. Its `vaultConfig` field holds the public string. If you have `jq`, this optional command displays only the public config:
 
 ```bash
-jq -r '.card' .brim/local.json
+jq -r '.vaultConfig' .brim/local.json
 ```
 
 The file also contains the generated local test keypair. The included payment runner and MCP local mode load it directly without displaying it. Use [the quickstart](/docs/quickstart/) or [MCP local setup](/docs/mcp/#connect-to-the-local-stack) to try that path.
 
-For your own application against Surfpool, supply its local test key privately and set `rpcUrl` to `http://127.0.0.1:8899`. The public card uses the devnet network identifier; the local RPC override keeps requests on your offline chain.
+For your own application against Surfpool, supply its local test key privately and set `rpcUrl` to `http://127.0.0.1:8899`. The public vault config uses the devnet network identifier; the local RPC override keeps requests on your offline chain.
 
 ## Optional connection and cap
 

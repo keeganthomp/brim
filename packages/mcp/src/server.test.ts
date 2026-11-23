@@ -101,6 +101,8 @@ describe('Brim MCP protocol', () => {
     { url: 'https://merchant.example', body: 42 },
     { url: 'https://merchant.example', amount: '999999999' },
     { url: 'https://merchant.example', ownerKey: 'NEVER_ACCEPT_TREASURY_KEYS' },
+    { url: 'https://merchant.example', vaultConfig: 'UNEXPECTED_VAULT_CONFIG' },
+    { url: 'https://merchant.example', card: 'UNEXPECTED_LEGACY_CONFIG' },
   ])('rejects invalid or authority-changing input before service invocation: %j', async (input) => {
     const service = fixture();
     const client = await connect(service);

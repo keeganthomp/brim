@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createBrimCard, createBrimFetch, resolveBrimRpcUrl } from '../src/index.js';
-import { resolveBrimConfig } from '../src/card.js';
-import { cardDetails, config, fixture, paymentRequired } from './sharedfixtures.js';
+import { createBrimVaultConfig, createBrimFetch, resolveBrimRpcUrl } from '../src/index.js';
+import { resolveBrimConfig } from '../src/vault-config.js';
+import { vaultConfigDetails, config, fixture, paymentRequired } from './sharedfixtures.js';
 
 const endpoints = [
   ['solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', 'https://api.mainnet-beta.solana.com'],
@@ -10,11 +10,11 @@ const endpoints = [
 
 describe('optional RPC configuration', () => {
   it.each(endpoints)(
-    'defaults omitted RPC for %s from the trusted card network',
+    'defaults omitted RPC for %s from the trusted vault config network',
     (network, expected) => {
-      const card = createBrimCard({ ...cardDetails, network });
+      const vaultConfig = createBrimVaultConfig({ ...vaultConfigDetails, network });
       expect(resolveBrimRpcUrl(network)).toBe(expected);
-      expect(resolveBrimConfig({ card, agentKey: '[]' }).rpcUrl).toBe(expected);
+      expect(resolveBrimConfig({ vaultConfig, agentKey: '[]' }).rpcUrl).toBe(expected);
       expect(resolveBrimConfig({ ...config, network, rpcUrl: undefined }).rpcUrl).toBe(expected);
     },
   );
@@ -22,9 +22,13 @@ describe('optional RPC configuration', () => {
   it.each(['https://provider.example/rpc?token=private', 'http://127.0.0.1:8899'])(
     'preserves explicit override %s',
     (rpcUrl) => {
-      expect(resolveBrimRpcUrl(cardDetails.network, rpcUrl)).toBe(rpcUrl);
+      expect(resolveBrimRpcUrl(vaultConfigDetails.network, rpcUrl)).toBe(rpcUrl);
       expect(
-        resolveBrimConfig({ card: createBrimCard(cardDetails), agentKey: '[]', rpcUrl }).rpcUrl,
+        resolveBrimConfig({
+          vaultConfig: createBrimVaultConfig(vaultConfigDetails),
+          agentKey: '[]',
+          rpcUrl,
+        }).rpcUrl,
       ).toBe(rpcUrl);
     },
   );
@@ -34,7 +38,7 @@ describe('optional RPC configuration', () => {
     (rpcUrl) => {
       expect(() =>
         createBrimFetch({
-          card: createBrimCard(cardDetails),
+          vaultConfig: createBrimVaultConfig(vaultConfigDetails),
           agentKey: '[]',
           rpcUrl: rpcUrl as string,
         }),
@@ -45,7 +49,10 @@ describe('optional RPC configuration', () => {
   it('performs no network work on setup and does not read RPC for a free request', async () => {
     const transport = vi.fn(async () => new Response('free'));
     vi.stubGlobal('fetch', transport);
-    const paidFetch = createBrimFetch({ card: createBrimCard(cardDetails), agentKey: '[]' });
+    const paidFetch = createBrimFetch({
+      vaultConfig: createBrimVaultConfig(vaultConfigDetails),
+      agentKey: '[]',
+    });
     expect(transport).not.toHaveBeenCalled();
     expect(await (await paidFetch('https://merchant.test/free')).text()).toBe('free');
     expect(transport).toHaveBeenCalledTimes(1);
@@ -54,12 +61,15 @@ describe('optional RPC configuration', () => {
 
   it('signs the same scoped payment with the default RPC when a paid response requires it', async () => {
     const f = await fixture();
-    const card = createBrimCard({ ...cardDetails, vaultAddress: f.config.vaultAddress });
+    const vaultConfig = createBrimVaultConfig({
+      ...vaultConfigDetails,
+      vaultAddress: f.config.vaultAddress,
+    });
     const transport = vi.fn(async () =>
       transport.mock.calls.length === 1 ? paymentRequired() : new Response('paid'),
     );
     const paidFetch = createBrimFetch({
-      card,
+      vaultConfig,
       agentKey: f.config.agentSecretKey,
       fetch: transport,
     });

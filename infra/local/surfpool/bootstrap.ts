@@ -9,7 +9,7 @@ import {
   NETWORK,
   localSignerEffect,
   newIdentityEffect,
-  publicCard,
+  localVaultConfig,
   readCredentialsEffect,
   saveCredentialsEffect,
   type LocalConfig,
@@ -82,7 +82,7 @@ export function bootstrapLocalEffect({
           ownerKey: ownerIdentity!.key,
           agentKey: agentIdentity!.key,
           facilitatorKey: facilitatorIdentity!.key,
-          card: publicCard(vault, facilitator.address),
+          vaultConfig: localVaultConfig(vault, facilitator.address),
         };
     // Persist before sending so a partial startup can resume using the same keys.
     yield* saveCredentialsEffect(credentialsPath, config);

@@ -29,7 +29,7 @@ Look for `status: "settled"` and a transaction signature. Open the [dashboard](h
 The local setup saves its connection values in the ignored `.brim/local.json` file. If you have `jq`, this optional command shows the public vault config:
 
 ```bash
-jq -r '.card' .brim/local.json
+jq -r '.vaultConfig' .brim/local.json
 ```
 
 It prints one complete string beginning with `brim:v1:`. The payment runner already reads the local config and scoped test key directly; this command is only for inspecting the public value.

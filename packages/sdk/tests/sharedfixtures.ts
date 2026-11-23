@@ -7,7 +7,7 @@ import {
 } from '@solana/kit';
 import { NETWORKS, BRIM_DEVELOPMENT_PROGRAM_ADDRESS } from '../src/index.js';
 import { findBrimPolicyAddress, findTokenAccount } from '../src/solana.js';
-import type { BrimCardDetails, BrimConfig } from '../src/types.js';
+import type { BrimVaultConfigDetails, BrimConfig } from '../src/types.js';
 import type { AgentPolicySnapshot } from '../src/policy.js';
 import type { PaymentRequirements } from '@x402/core/types';
 
@@ -69,13 +69,13 @@ export function paymentRequired(offers = [req]) {
 }
 afterEach(() => vi.unstubAllGlobals());
 
-export const cardDetails: BrimCardDetails = {
+export const vaultConfigDetails: BrimVaultConfigDetails = {
   vaultAddress: config.vaultAddress,
   programAddress: config.programAddress,
   network: config.network,
   facilitatorFeePayers: config.facilitator.feePayers,
 };
-export function encodedCard(value: unknown) {
+export function encodedVaultConfig(value: unknown) {
   return (
     'brim:v1:' +
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')

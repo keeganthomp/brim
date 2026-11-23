@@ -107,7 +107,7 @@ The runtime is configured with `--offline --genesis-hash EtWTRABZaYq6iMfeYKouRu1
 
 Shared local code lives under `infra/local/surfpool/`: `config.ts` validates local RPC boundaries, `seed.ts` loads code/mint, `transactions.ts` provides Effect transaction workflows, and `credentials.ts`/`bootstrap.ts` manage idempotent local setup. `seedSurfpoolEffect` and `bootstrapLocalEffect` expose typed Effect workflows; Promise facades serve CLI/test boundaries.
 
-`node infra/local/surfpool/bootstrap.ts` uses `BRIM_RPC_URL` (default loopback port 8899), `BRIM_LOCAL_CONFIG` (default `.brim/local.json`), and optional `BRIM_PROGRAM_PATH`. It creates a vault with 100 fake USDC, a strict merchant allowlist, a $1 payment cap and $50 fixed-window budget. It stores fake owner, agent and facilitator keys only in the ignored local JSON file with permissions `0600`; the public card contains no key. Existing credentials, policies, budgets and vault balances are retained on repeat startup. A new empty Surfpool instance recreates missing accounts using the same persisted local keys.
+`node infra/local/surfpool/bootstrap.ts` uses `BRIM_RPC_URL` (default loopback port 8899), `BRIM_LOCAL_CONFIG` (default `.brim/local.json`), and optional `BRIM_PROGRAM_PATH`. It creates a vault with 100 fake USDC, a strict merchant allowlist, a $1 payment cap and $50 fixed-window budget. It stores fake owner, agent and facilitator keys only in the ignored local JSON file with permissions `0600`; the public vault config contains no key. Existing credentials, policies, budgets and vault balances are retained on repeat startup. A new empty Surfpool instance recreates missing accounts using the same persisted local keys.
 
 ## Defensive review and remaining authority assurance
 

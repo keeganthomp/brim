@@ -9,7 +9,7 @@ import {
   findBrimPolicyAddress,
   findTokenAccount,
   NETWORKS,
-  readBrimCard,
+  readBrimVaultConfig,
 } from '@brim/sdk';
 import { Effect, Schema } from 'effect';
 import { attempt, fail, io, McpFailure } from './errors.js';
@@ -28,10 +28,10 @@ export const usdc = (amount: bigint) =>
 
 export function accountReader(config: McpConfig) {
   return Effect.gen(function* () {
-    const card = yield* attempt(
-      () => readBrimCard(config.card),
+    const details = yield* attempt(
+      () => readBrimVaultConfig(config.vaultConfig),
       'INVALID_CARD',
-      'Card setup is invalid.',
+      'Vault configuration is invalid.',
     );
     const url = yield* attempt(
       () => new URL(config.rpcUrl),
@@ -43,7 +43,7 @@ export function accountReader(config: McpConfig) {
       (config.local &&
         (url.protocol !== 'http:' ||
           !loopback(url) ||
-          card.network !== 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'))
+          details.network !== 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'))
     )
       return yield* fail('INVALID_CONFIG', 'RPC configuration is invalid.');
     const key = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(KeyBytes))(
@@ -59,14 +59,14 @@ export function accountReader(config: McpConfig) {
       'Scoped agent key is invalid.',
     );
     const rpc = createSolanaRpc(config.rpcUrl);
-    const mint = NETWORKS[card.network].mint;
+    const mint = NETWORKS[details.network].mint;
     const tokenAccount = yield* io(
-      () => findTokenAccount(card.vaultAddress, mint),
+      () => findTokenAccount(details.vaultAddress, mint),
       'INVALID_CARD',
       'Vault address is invalid.',
     );
     const policyAddress = yield* io(
-      () => findBrimPolicyAddress(card.programAddress, card.vaultAddress, signer.address),
+      () => findBrimPolicyAddress(details.programAddress, details.vaultAddress, signer.address),
       'INVALID_CARD',
       'Agent policy address is invalid.',
     );
@@ -76,12 +76,12 @@ export function accountReader(config: McpConfig) {
         'RPC_UNAVAILABLE',
         'RPC is unavailable.',
       );
-      if (genesis.slice(0, 32) !== NETWORKS[card.network].genesisHash)
-        return yield* fail('INVALID_CONFIG', 'RPC network does not match this card.');
+      if (genesis.slice(0, 32) !== NETWORKS[details.network].genesisHash)
+        return yield* fail('INVALID_CONFIG', 'RPC network does not match this details.');
       const account = (yield* io(
         (signal) =>
           rpc
-            .getAccountInfo(address(card.vaultAddress), {
+            .getAccountInfo(address(details.vaultAddress), {
               encoding: 'base64',
               commitment: 'confirmed',
             })
@@ -89,7 +89,7 @@ export function accountReader(config: McpConfig) {
         'RPC_UNAVAILABLE',
         'Vault cannot be read.',
       )).value;
-      if (!account || account.owner !== card.programAddress || account.executable)
+      if (!account || account.owner !== details.programAddress || account.executable)
         return yield* fail('INVALID_ACCOUNT', 'Vault is unavailable.');
       return yield* attempt(
         () => {
@@ -131,15 +131,15 @@ export function accountReader(config: McpConfig) {
         'RPC_UNAVAILABLE',
         'Agent policy cannot be read.',
       )).value;
-      if (!account || account.owner !== card.programAddress || account.executable)
+      if (!account || account.owner !== details.programAddress || account.executable)
         return yield* fail('INVALID_ACCOUNT', 'Agent policy is unavailable.');
       const value = yield* attempt(
         () => decodeAgentPolicy(decodeBytes(account.data)),
         'INVALID_ACCOUNT',
         'Agent policy is invalid.',
       );
-      if (value.vault !== card.vaultAddress || value.agentKey !== signer.address)
-        return yield* fail('INVALID_ACCOUNT', 'This agent key is not assigned to the card.');
+      if (value.vault !== details.vaultAddress || value.agentKey !== signer.address)
+        return yield* fail('INVALID_ACCOUNT', 'This agent key is not assigned to the details.');
       return {
         frozen: value.isFrozen,
         vaultPaused: state.paused,
@@ -154,6 +154,6 @@ export function accountReader(config: McpConfig) {
         approvedRecipients: value.allowlist,
       };
     });
-    return { balance, policy, network: card.network };
+    return { balance, policy, network: details.network };
   });
 }

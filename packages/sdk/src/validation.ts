@@ -10,7 +10,7 @@ export function validateConfig(config: ResolvedBrimConfig): void {
   try {
     Schema.decodeUnknownSync(AdvancedConfigSchema)(config);
   } catch {
-    fail('INVALID_CONFIG', 'Provide a valid public vault config (Brim card) and scoped agent key.');
+    fail('INVALID_CONFIG', 'Provide a valid public vault config and scoped agent key.');
   }
 }
 export function validatePaymentRequirements(

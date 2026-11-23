@@ -36,7 +36,7 @@ export function DeveloperExample() {
             {' brimFetch = '}
             <span className="code-function">createBrimFetch</span>
             {
-              '({\n  card: process.env.BRIM_CARD!,\n  agentKey: process.env.BRIM_AGENT_KEY!,\n});\n\n'
+              '({\n  vaultConfig: process.env.BRIM_VAULT_CONFIG!,\n  agentKey: process.env.BRIM_AGENT_KEY!,\n});\n\n'
             }
             <span className="code-keyword">const</span>
             {' response = '}

@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Effect } from 'effect';
-import { createBrimCard, resolveBrimRpcUrl, type BrimNetwork } from '@brim/sdk';
+import { createBrimVaultConfig, resolveBrimRpcUrl, type BrimNetwork } from '@brim/sdk';
 import { loadMcpConfig } from './config.js';
 
-const card = (network: BrimNetwork) =>
-  createBrimCard({
+const vaultConfig = (network: BrimNetwork) =>
+  createBrimVaultConfig({
     vaultAddress: '11111111111111111111111111111111',
     programAddress: 'AekkJRGenJd9bgXoYo88xnAGpen9DMqSjkBRZZMMskpo',
     network,
@@ -13,7 +13,7 @@ const card = (network: BrimNetwork) =>
 const agentKey = 'scoped-key-placeholder';
 afterEach(() => vi.restoreAllMocks());
 
-describe('MCP card connection setup', () => {
+describe('MCP vault connection setup', () => {
   it.each([
     ['solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1', 'https://api.devnet.solana.com'],
     ['solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', 'https://api.mainnet-beta.solana.com'],
@@ -22,7 +22,7 @@ describe('MCP card connection setup', () => {
     async (network, expected) => {
       const fetcher = vi.spyOn(globalThis, 'fetch');
       const config = await Effect.runPromise(
-        loadMcpConfig([], { BRIM_CARD: card(network), BRIM_AGENT_KEY: agentKey }),
+        loadMcpConfig([], { BRIM_VAULT_CONFIG: vaultConfig(network), BRIM_AGENT_KEY: agentKey }),
       );
       expect(config).toMatchObject({ rpcUrl: expected, local: false, agentKey });
       expect(config.rpcUrl).toBe(resolveBrimRpcUrl(network));
@@ -30,11 +30,54 @@ describe('MCP card connection setup', () => {
     },
   );
 
+  it('normalizes the legacy environment alias only when canonical configuration is unset', async () => {
+    const legacy = vaultConfig('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1');
+    const config = await Effect.runPromise(
+      loadMcpConfig([], { BRIM_CARD: legacy, BRIM_AGENT_KEY: agentKey }),
+    );
+    expect(config.vaultConfig).toBe(legacy);
+    expect(config).not.toHaveProperty('card');
+  });
+
+  it('prefers canonical environment configuration over a different legacy value', async () => {
+    const canonical = vaultConfig('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1');
+    const config = await Effect.runPromise(
+      loadMcpConfig([], {
+        BRIM_VAULT_CONFIG: canonical,
+        BRIM_CARD: vaultConfig('solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp'),
+        BRIM_AGENT_KEY: agentKey,
+      }),
+    );
+    expect(config.vaultConfig).toBe(canonical);
+    expect(config.rpcUrl).toBe('https://api.devnet.solana.com');
+  });
+
+  it.each(['', 'invalid-canonical-vault-config'])(
+    'does not fall back from an invalid canonical environment value: %s',
+    async (canonical) => {
+      const result = await Effect.runPromise(
+        Effect.result(
+          loadMcpConfig([], {
+            BRIM_VAULT_CONFIG: canonical,
+            BRIM_CARD: vaultConfig('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'),
+            BRIM_AGENT_KEY: agentKey,
+          }),
+        ),
+      );
+      expect(result._tag).toBe('Failure');
+      if (result._tag === 'Failure') {
+        expect(result.failure.code).toBe(canonical ? 'INVALID_CARD' : 'SETUP_REQUIRED');
+        expect(result.failure.message).not.toContain('invalid-canonical-vault-config');
+        expect(result.failure.message.toLowerCase()).not.toContain('card');
+      }
+    },
+  );
+
   it('keeps the explicit provider connection for the shared read/payment config', async () => {
     const rpcUrl = 'https://rpc.example/private-token';
     const config = await Effect.runPromise(
       loadMcpConfig([], {
-        BRIM_CARD: card('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'),
+        BRIM_VAULT_CONFIG: vaultConfig('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'),
         BRIM_AGENT_KEY: agentKey,
         SOLANA_RPC_URL: rpcUrl,
       }),
@@ -48,7 +91,7 @@ describe('MCP card connection setup', () => {
       await expect(
         Effect.runPromise(
           loadMcpConfig([], {
-            BRIM_CARD: card('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'),
+            BRIM_VAULT_CONFIG: vaultConfig('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'),
             BRIM_AGENT_KEY: agentKey,
             SOLANA_RPC_URL: rpcUrl,
           }),

@@ -34,7 +34,7 @@ export const configuration = Effect.try({
     }),
 });
 
-export const LocalCard = Schema.Struct({
+export const LocalVaultMetadata = Schema.Struct({
   programAddress: Schema.String,
   vaultAddress: Schema.String,
   rpcUrl: Schema.String,

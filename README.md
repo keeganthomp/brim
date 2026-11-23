@@ -31,14 +31,14 @@ This uses the actual SDK, x402 verifier/facilitator, compiled Brim program, and 
 import { createBrimFetch } from '@brim/sdk';
 
 const brimFetch = createBrimFetch({
-  card: process.env.BRIM_CARD!,
+  vaultConfig: process.env.BRIM_VAULT_CONFIG!,
   agentKey: process.env.BRIM_AGENT_KEY!,
 });
 
 const response = await brimFetch('https://api.example.com/paid-resource');
 ```
 
-The treasury operator sends you a public `BRIM_CARD` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`.
+The treasury operator sends you a public `BRIM_VAULT_CONFIG` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`.
 
 See the [SDK quickstart](packages/sdk/README.md) for examples and the local RPC override, or [MCP setup](packages/mcp/README.md) for an existing agent client.
 
@@ -69,7 +69,7 @@ Override local ports with `BRIM_WEB_PORT`, `BRIM_RPC_PORT`, `BRIM_WS_PORT`, and 
 - `apps/web`: focused UI components, React hooks, Effect domain commands, and server-only routes.
 - `apps/site`: public landing page and Fumadocs, with a static search index.
 - `programs/brim`: small Anchor modules for accounts, policies, instructions, errors, events, and checked CPI transfers.
-- `packages/sdk`: card config, schemas, policy checks, account codecs, signing, and HTTP/Effect boundaries.
+- `packages/sdk`: vault config, schemas, policy checks, account codecs, signing, and HTTP/Effect boundaries.
 - `packages/mcp`: stdio tools for balance, policy and safe paid requests; no treasury key or policy-editing tool.
 - `packages/indexer`: Effect services/workflows, authenticated intake, finalized RPC verification, idempotent Postgres writes, migrations, and reconciliation.
 - `infra/local` / `scripts`: shared local setup, Surfpool fixtures and payment example; no duplicated production payment implementation.

@@ -19,7 +19,7 @@ export function toolInput<S extends Schema.Constraint>(schema: S, value: unknown
         new McpFailure({
           code: 'INVALID_ARGUMENTS',
           message:
-            'Use only the documented tool arguments. Card, key, and RPC settings belong in server configuration.',
+            'Use only the documented tool arguments. Vault config, key, and RPC settings belong in server configuration.',
         }),
     ),
   );

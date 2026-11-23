@@ -11,7 +11,7 @@ export function createBrimMcpService(config: McpConfig) {
   return Effect.gen(function* () {
     const reader = yield* accountReader(config);
     const paidFetch = createBrimFetchEffect({
-      card: config.card,
+      vaultConfig: config.vaultConfig,
       agentKey: config.agentKey,
       rpcUrl: config.rpcUrl,
     });

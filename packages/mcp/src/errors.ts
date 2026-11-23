@@ -20,20 +20,20 @@ export const attempt = <A>(work: () => A, code: string, message: string) =>
 
 const PUBLIC_MESSAGES: Readonly<Record<string, string>> = {
   SETUP_REQUIRED:
-    'Set BRIM_CARD and BRIM_AGENT_KEY before starting Brim MCP. SOLANA_RPC_URL is optional.',
+    'Set BRIM_VAULT_CONFIG and BRIM_AGENT_KEY before starting Brim MCP. SOLANA_RPC_URL is optional.',
   INVALID_OPTIONS:
-    'Set BRIM_CARD and BRIM_AGENT_KEY, or use --local /absolute/path/.brim/local.json.',
+    'Set BRIM_VAULT_CONFIG and BRIM_AGENT_KEY, or use --local /absolute/path/.brim/local.json.',
   LOCAL_SETUP_REQUIRED: 'Start the local Brim stack before using --local.',
   INVALID_LOCAL_SETUP: 'Recreate the local Brim configuration and check its loopback RPC.',
-  INVALID_CARD: 'Ask your operator for a valid Brim card.',
-  UNSUPPORTED_CARD_VERSION: 'Ask your operator for a supported v1 Brim card.',
-  INVALID_CONFIG: 'Check your Brim card, scoped agent key, and Solana RPC configuration.',
+  INVALID_CARD: 'Ask your operator for valid Brim vault configuration.',
+  UNSUPPORTED_CARD_VERSION: 'Ask your operator for supported v1 Brim vault configuration.',
+  INVALID_CONFIG: 'Check your Brim vault config, scoped agent key, and Solana RPC configuration.',
   INVALID_ARGUMENTS:
-    'Use only the documented tool arguments. Card, key, and RPC settings belong in server configuration.',
+    'Use only the documented tool arguments. Vault config, key, and RPC settings belong in server configuration.',
   UNKNOWN_TOOL: 'Choose brim_balance, brim_policy, or brim_fetch.',
   RPC_UNAVAILABLE: 'Solana RPC is unavailable. Check the configured connection.',
   INVALID_ACCOUNT:
-    'The card account or agent policy is unavailable. Ask your operator to finish setup.',
+    'The vault account or agent policy is unavailable. Ask your operator to finish setup.',
   AGENT_FROZEN: 'This agent is frozen. Ask your operator to review its policy.',
   VAULT_PAUSED: 'The vault is paused. Ask your operator to review its status.',
   PER_TRANSACTION_LIMIT_EXCEEDED: 'Payment exceeds this agent’s per-request spending cap.',
@@ -43,7 +43,7 @@ const PUBLIC_MESSAGES: Readonly<Record<string, string>> = {
   UNSUPPORTED_PAYMENT: 'The merchant does not offer a compatible Brim payment.',
   INVALID_PAYMENT_REQUIREMENTS: 'The merchant sent invalid payment details.',
   UNTRUSTED_FEE_PAYER: 'The merchant advertised an untrusted facilitator.',
-  SIGNING_FAILED: 'Check the scoped agent key configured for this card.',
+  SIGNING_FAILED: 'Check the scoped agent key configured for this vault.',
   PAYMENT_REJECTED: 'Payment was rejected. Check settlement before attempting another payment.',
   PAYMENT_OUTCOME_UNKNOWN: 'Payment outcome is unknown. Reconcile settlement before any retry.',
   REQUEST_FAILED: 'The API request failed. Check connection and settlement before retrying.',

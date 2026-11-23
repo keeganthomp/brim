@@ -1,27 +1,31 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createBrimCard, createBrimFetch, validatePaymentRequirements } from '../src/index.js';
-import { decodeBrimCard } from '../src/card.js';
+import {
+  createBrimVaultConfig,
+  createBrimFetch,
+  validatePaymentRequirements,
+} from '../src/index.js';
+import { readBrimVaultConfig } from '../src/vault-config.js';
 import type { BrimConfig } from '../src/types.js';
 import type { PaymentRequirements } from '@x402/core/types';
 import {
   config,
   req,
-  cardDetails,
-  encodedCard,
+  vaultConfigDetails,
+  encodedVaultConfig,
   error,
   paymentRequired,
   OWNER,
   SPONSOR,
 } from './sharedfixtures.js';
 
-describe('simple public card setup', () => {
+describe('simple public vault config setup', () => {
   it('creates stable versioned public metadata and roundtrips all routing fields', () => {
-    const card = createBrimCard(cardDetails);
-    expect(card).toMatch(/^brim:v1:[A-Za-z0-9_-]+$/);
-    expect(createBrimCard(cardDetails)).toBe(card);
-    expect(decodeBrimCard(card)).toEqual(cardDetails);
+    const vaultConfig = createBrimVaultConfig(vaultConfigDetails);
+    expect(vaultConfig).toMatch(/^brim:v1:[A-Za-z0-9_-]+$/);
+    expect(createBrimVaultConfig(vaultConfigDetails)).toBe(vaultConfig);
+    expect(readBrimVaultConfig(vaultConfig)).toEqual(vaultConfigDetails);
     const metadata = JSON.parse(
-      atob(card.slice('brim:v1:'.length).replace(/-/g, '+').replace(/_/g, '/')),
+      atob(vaultConfig.slice('brim:v1:'.length).replace(/-/g, '+').replace(/_/g, '/')),
     );
     expect(Object.keys(metadata).sort()).toEqual(
       ['version', 'vaultAddress', 'programAddress', 'network', 'facilitatorFeePayers'].sort(),
@@ -36,31 +40,33 @@ describe('simple public card setup', () => {
       { agentSecretKey: 'secret' },
       { extra: true },
     ]) {
-      expect(() => createBrimCard({ ...cardDetails, ...extra })).toThrow(error('INVALID_CARD'));
+      expect(() => createBrimVaultConfig({ ...vaultConfigDetails, ...extra })).toThrow(
+        error('INVALID_CARD'),
+      );
     }
   });
   it('rejects malformed, oversized and unknown-version cards with fixed messages', () => {
-    const publicCard = createBrimCard(cardDetails);
+    const publicVaultConfig = createBrimVaultConfig(vaultConfigDetails);
     for (const bad of [
       '',
       'secret-input',
       'brim:v1:not+url/safe',
       'brim:v1:' + 'a'.repeat(4096),
-      encodedCard({ ...cardDetails, version: 1, unexpected: true }),
+      encodedVaultConfig({ ...vaultConfigDetails, version: 1, unexpected: true }),
     ]) {
-      expect(() => decodeBrimCard(bad)).toThrow(error('INVALID_CARD'));
+      expect(() => readBrimVaultConfig(bad)).toThrow(error('INVALID_CARD'));
       try {
-        decodeBrimCard(bad);
+        readBrimVaultConfig(bad);
       } catch (err) {
         expect((err as Error).message).not.toContain(bad || 'empty input');
       }
     }
-    expect(() => decodeBrimCard(publicCard.replace('brim:v1:', 'brim:v2:'))).toThrow(
+    expect(() => readBrimVaultConfig(publicVaultConfig.replace('brim:v1:', 'brim:v2:'))).toThrow(
       error('UNSUPPORTED_CARD_VERSION'),
     );
-    expect(() => decodeBrimCard(encodedCard({ ...cardDetails, version: 2 }))).toThrow(
-      error('UNSUPPORTED_CARD_VERSION'),
-    );
+    expect(() =>
+      readBrimVaultConfig(encodedVaultConfig({ ...vaultConfigDetails, version: 2 })),
+    ).toThrow(error('UNSUPPORTED_CARD_VERSION'));
   });
   it('rejects unsupported networks and invalid facilitator metadata', () => {
     for (const override of [
@@ -72,23 +78,26 @@ describe('simple public card setup', () => {
       { facilitatorFeePayers: new Array(17).fill(SPONSOR) },
     ]) {
       expect(() =>
-        decodeBrimCard(encodedCard({ version: 1, ...cardDetails, ...override })),
+        readBrimVaultConfig(encodedVaultConfig({ version: 1, ...vaultConfigDetails, ...override })),
       ).toThrow(error('INVALID_CARD'));
     }
   });
   it('captures public metadata without retaining the operator array', () => {
     const payers = [SPONSOR];
-    const card = createBrimCard({ ...cardDetails, facilitatorFeePayers: payers });
+    const vaultConfig = createBrimVaultConfig({
+      ...vaultConfigDetails,
+      facilitatorFeePayers: payers,
+    });
     payers[0] = OWNER;
-    const decoded = decodeBrimCard(card);
+    const decoded = readBrimVaultConfig(vaultConfig);
     expect(decoded.facilitatorFeePayers).toEqual([SPONSOR]);
   });
   it('reports missing agent keys and mixed setup styles clearly', () => {
-    const card = createBrimCard(cardDetails);
+    const vaultConfig = createBrimVaultConfig(vaultConfigDetails);
     expect(() =>
-      createBrimFetch({ card, agentKey: undefined, rpcUrl: config.rpcUrl } as never),
+      createBrimFetch({ vaultConfig, agentKey: undefined, rpcUrl: config.rpcUrl } as never),
     ).toThrow(error('INVALID_CONFIG'));
-    expect(() => createBrimFetch({ card, agentKey: '[]', ...config } as never)).toThrow(
+    expect(() => createBrimFetch({ vaultConfig, agentKey: '[]', ...config } as never)).toThrow(
       error('INVALID_CONFIG'),
     );
   });
