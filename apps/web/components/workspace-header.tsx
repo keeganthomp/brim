@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import type { WorkspaceMode } from '../lib/workspace';
 
 interface WorkspaceHeaderProps {
@@ -7,6 +7,11 @@ interface WorkspaceHeaderProps {
 }
 
 export function WorkspaceHeader({ mode, onModeChange }: WorkspaceHeaderProps) {
+  const sdkDocsUrl =
+    process.env.NEXT_PUBLIC_BRIM_SDK_DOCS_URL ||
+    (process.env.NODE_ENV === 'development'
+      ? '/docs/sdk/#use-two-inputs'
+      : 'https://github.com/keeganthomp/brim/blob/main/apps/site/content/docs/sdk.mdx#use-two-inputs');
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -19,18 +24,29 @@ export function WorkspaceHeader({ mode, onModeChange }: WorkspaceHeaderProps) {
           </span>
           <span className="brand-wordmark">brim</span>
         </a>
-        <div className="workspace-select">
-          <select
-            aria-label="Workspace mode"
-            value={mode}
-            onChange={(event) => onModeChange(event.target.value as WorkspaceMode)}
+        <nav className="header-actions" aria-label="Workspace">
+          <a
+            className="header-docs-link"
+            href={sdkDocsUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="SDK docs (opens in a new tab)"
           >
-            <option value="demo">Demo workspace</option>
-            <option value="local">Local workspace</option>
-            <option value="live">Live workspace</option>
-          </select>
-          <ChevronDown size={14} aria-hidden="true" />
-        </div>
+            SDK docs <ArrowUpRight size={13} aria-hidden="true" />
+          </a>
+          <div className="workspace-select">
+            <select
+              aria-label="Workspace mode"
+              value={mode}
+              onChange={(event) => onModeChange(event.target.value as WorkspaceMode)}
+            >
+              <option value="demo">Demo workspace</option>
+              <option value="local">Local workspace</option>
+              <option value="live">Live workspace</option>
+            </select>
+            <ChevronDown size={14} aria-hidden="true" />
+          </div>
+        </nav>
       </div>
     </header>
   );

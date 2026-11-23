@@ -3,6 +3,7 @@ import type { WorkspaceMode } from '../../lib/workspace';
 import type { Agent } from '../../lib/demo';
 import { dollars } from '../../lib/currency';
 import { PolicySwitch } from '../ui/policy-switch';
+import { StatusDot } from '../ui/status-dot';
 
 interface AgentListProps {
   mode: WorkspaceMode;
@@ -66,9 +67,11 @@ export function AgentList({
                 </span>
               </Row>
               <div className="agent-toggle">
-                <span className={agent.frozen ? 'frozen-label' : 'active-label'}>
-                  {agent.frozen ? 'Frozen' : 'Active'}
-                </span>
+                {agent.frozen ? (
+                  <span className="frozen-label">Frozen</span>
+                ) : (
+                  <StatusDot label="Active" pulsing />
+                )}
                 {canFreeze && (
                   <PolicySwitch
                     checked={!agent.frozen}

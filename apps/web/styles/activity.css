@@ -11,8 +11,8 @@
 .feed-filter {
   display: flex;
   gap: 22px;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--line);
+  padding: 0;
+  margin-bottom: 4px;
 }
 .feed-filter button {
   position: relative;
@@ -41,6 +41,7 @@
   content: '';
 }
 .activity-list {
+  margin-inline: -12px;
   max-height: 425px;
   overflow: auto;
   overscroll-behavior: contain;
@@ -57,16 +58,13 @@
   align-items: center;
   gap: 8px 20px;
   width: 100%;
-  min-height: 76px;
-  padding: 17px 24px;
-  border-bottom: 1px solid #f0f2f4;
+  min-height: 64px;
+  padding: 12px;
   text-align: left;
 }
-.activity-row:last-child {
-  border-bottom: 0;
-}
-button.activity-row:hover {
-  background: #fafbfd;
+.activity-row:hover,
+button.activity-row:focus-visible {
+  background: var(--surface);
 }
 .activity-row:focus-visible {
   outline-offset: -3px;
@@ -74,7 +72,7 @@ button.activity-row:hover {
 .activity-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   min-width: 0;
 }
 .merchant-name {
@@ -83,7 +81,6 @@ button.activity-row:hover {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: -0.15px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -111,7 +108,7 @@ button.activity-row:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 3px;
   min-width: 58px;
   text-align: right;
   white-space: nowrap;
@@ -121,7 +118,6 @@ button.activity-row:hover {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: -0.15px;
 }
 .activity-status {
   display: flex;
@@ -149,10 +145,6 @@ button.activity-row:hover {
 .activity-row:focus-visible .activity-copy {
   opacity: 1;
 }
-.activity-row.blocked {
-  background: #fffaf9;
-  border-color: #f7eeeb;
-}
 .blocked-reason {
   grid-column: 1/-1;
   color: var(--red);
@@ -166,9 +158,9 @@ button.activity-row:hover {
   text-decoration-color: #c1a79e;
 }
 .activity-section .empty-state {
-  min-height: 250px;
+  min-height: 150px;
   gap: 9px;
-  padding: 30px 24px;
+  padding: 24px 12px;
 }
 .activity-section .empty-state h3 {
   color: #57636f;
@@ -184,19 +176,7 @@ button.activity-row:hover {
     opacity: 1;
   }
 }
-@media (max-width: 1040px) {
-  .activity-row,
-  .feed-filter {
-    padding-inline: 22px;
-  }
-}
 @media (max-width: 800px) {
-  .activity-row {
-    padding: 17px 20px;
-  }
-  .feed-filter {
-    padding-inline: 20px;
-  }
   .activity-list {
     max-height: 450px;
     overscroll-behavior-y: auto;
@@ -204,11 +184,9 @@ button.activity-row:hover {
 }
 @media (max-width: 380px) {
   .activity-row {
-    padding-inline: 18px;
     column-gap: 12px;
   }
   .feed-filter {
-    padding-inline: 18px;
     gap: 20px;
   }
   .activity-context {

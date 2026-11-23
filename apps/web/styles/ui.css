@@ -1,4 +1,37 @@
 /* Shared controls; feature layouts live alongside their sheets and lists. */
+.status-dot {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: middle;
+}
+.status-dot.is-pulsing::after {
+  position: absolute;
+  inset: -3px;
+  border: 1px solid currentColor;
+  border-radius: inherit;
+  content: '';
+  animation: status-pulse 2.4s ease-out infinite;
+  animation-play-state: paused;
+}
+.status-dot.is-visible::after {
+  animation-play-state: running;
+}
+@keyframes status-pulse {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.6);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
 .button {
   display: inline-flex;
   align-items: center;

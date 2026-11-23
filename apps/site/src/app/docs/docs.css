@@ -5,30 +5,60 @@
 /* Fumadocs owns the layout and interactions; Brim supplies a quiet reading surface. */
 body:has(.brim-docs),
 .brim-docs {
-  --color-fd-background: #fdfdfb;
-  --color-fd-foreground: #24302a;
-  --color-fd-card: #f8f9f5;
-  --color-fd-card-foreground: #24302a;
-  --color-fd-primary: #286447;
+  --brim-ink: #171717;
+  --color-fd-background: #fff;
+  --color-fd-foreground: #171717;
+  --color-fd-card: #fafafa;
+  --color-fd-card-foreground: #171717;
+  --color-fd-primary: #262626;
   --color-fd-primary-foreground: #fff;
-  --color-fd-secondary: #f4f6f0;
-  --color-fd-secondary-foreground: #4a584f;
-  --color-fd-muted: #f0f3ec;
-  --color-fd-muted-foreground: #687465;
-  --color-fd-accent: #eef3e9;
-  --color-fd-accent-foreground: #224b35;
-  --color-fd-border: #e6e9e0;
-  --color-fd-ring: #8ba393;
+  --color-fd-secondary: #f5f5f5;
+  --color-fd-secondary-foreground: #525252;
+  --color-fd-muted: #f5f5f5;
+  --color-fd-muted-foreground: #6b6b6b;
+  --color-fd-accent: #ededed;
+  --color-fd-accent-foreground: #262626;
+  --color-fd-border: #e5e5e5;
+  --color-fd-ring: #737373;
   --color-fd-popover: #fff;
-  --color-fd-popover-foreground: #24302a;
-  --color-fd-overlay: #20312726;
+  --color-fd-popover-foreground: #171717;
+  --color-fd-overlay: #17171726;
+  --brim-doc-prose: #525252;
+  --brim-doc-link-decoration: #a3a3a3;
+  --brim-doc-code-background: #f7f7f7;
+  --brim-doc-shadow: #17171703;
   --fd-layout-width: 1440px;
   background: var(--color-fd-background);
   color: var(--color-fd-foreground);
   font-size: 15px;
 }
+.dark body:has(.brim-docs),
+.dark .brim-docs {
+  --brim-ink: #fafafa;
+  --color-fd-background: #171717;
+  --color-fd-foreground: #fafafa;
+  --color-fd-card: #1f1f1f;
+  --color-fd-card-foreground: #fafafa;
+  --color-fd-primary: #e5e5e5;
+  --color-fd-primary-foreground: #171717;
+  --color-fd-secondary: #262626;
+  --color-fd-secondary-foreground: #d4d4d4;
+  --color-fd-muted: #262626;
+  --color-fd-muted-foreground: #a3a3a3;
+  --color-fd-accent: #303030;
+  --color-fd-accent-foreground: #fafafa;
+  --color-fd-border: #3a3a3a;
+  --color-fd-ring: #a3a3a3;
+  --color-fd-popover: #1f1f1f;
+  --color-fd-popover-foreground: #fafafa;
+  --color-fd-overlay: #00000066;
+  --brim-doc-prose: #d4d4d4;
+  --brim-doc-link-decoration: #737373;
+  --brim-doc-code-background: #202020;
+  --brim-doc-shadow: #0000001a;
+}
 .brim-docs #nd-sidebar {
-  background: #fafbf7;
+  background: var(--color-fd-card);
   border-color: var(--color-fd-border);
 }
 .brim-docs #nd-sidebar a {
@@ -36,22 +66,22 @@ body:has(.brim-docs),
   line-height: 1.55;
 }
 .brim-docs #nd-sidebar a[href^='/docs/quickstart'] {
-  color: #344d3c;
+  color: var(--color-fd-primary);
   font-weight: 550;
 }
 .brim-docs #nd-sidebar a[data-active='true'] {
-  background: #eaf1e5;
-  color: #286447;
+  background: var(--color-fd-accent);
+  color: var(--color-fd-accent-foreground);
   font-weight: 550;
 }
 .brim-docs #nd-sidebar [data-search-full] {
   min-height: 40px;
   border-radius: 9px;
-  background: #fff;
+  background: var(--color-fd-background);
 }
 .brim-docs :is(#nd-header, #nd-subnav) {
   border-color: var(--color-fd-border);
-  background: #fdfdfbf2;
+  background: var(--color-fd-background);
   backdrop-filter: none;
 }
 .brim-doc-page {
@@ -62,13 +92,13 @@ body:has(.brim-docs),
 }
 .brim-doc-breadcrumb {
   margin-bottom: 10px;
-  color: #667262;
+  color: var(--color-fd-muted-foreground);
   font-size: 13px;
 }
 .brim-doc-title {
   max-width: 18ch;
   margin-top: 0;
-  color: #203127;
+  color: var(--color-fd-foreground);
   font-size: clamp(2.1rem, 3vw, 2.75rem);
   font-weight: 550;
   line-height: 1.15;
@@ -78,7 +108,7 @@ body:has(.brim-docs),
   max-width: 39rem;
   margin-top: 4px;
   margin-bottom: 4px;
-  color: #687465;
+  color: var(--color-fd-muted-foreground);
   font-size: 1.075rem;
   line-height: 1.75;
 }
@@ -93,12 +123,12 @@ body:has(.brim-docs),
   text-underline-offset: 4px;
 }
 .brim-doc-prose {
-  color: #526054;
+  color: var(--brim-doc-prose);
   font-size: 1rem;
   line-height: 1.9;
 }
 .brim-doc-prose :where(h2, h3, h4) {
-  color: #263d2e;
+  color: var(--color-fd-foreground);
   font-weight: 550;
   line-height: 1.35;
   letter-spacing: -0.025em;
@@ -121,39 +151,39 @@ body:has(.brim-docs),
   margin-block: 0.45rem;
 }
 .brim-doc-prose :where(strong) {
-  color: #344c3b;
+  color: var(--color-fd-foreground);
   font-weight: 550;
 }
 .brim-doc-prose :where(a:not(.not-prose)) {
-  color: #286447;
-  text-decoration-color: #28644750;
+  color: var(--color-fd-primary);
+  text-decoration-color: var(--brim-doc-link-decoration);
   text-underline-offset: 4px;
 }
 .brim-doc-prose a:hover {
-  text-decoration-color: #286447;
+  text-decoration-color: var(--color-fd-primary);
 }
 .brim-doc-prose :not(pre) > code {
   padding: 0.15em 0.35em;
-  border: 1px solid #e6eadf;
+  border: 1px solid var(--color-fd-border);
   border-radius: 5px;
-  background: #f1f4ec;
-  color: #38533f;
+  background: var(--brim-doc-code-background);
+  color: var(--color-fd-primary);
   font-size: 0.86em;
   font-weight: 450;
 }
 .brim-doc-prose figure.shiki {
   margin-block: 1.6rem;
-  border-color: #e2e7dc;
+  border-color: var(--color-fd-border);
   border-radius: 12px;
-  background: #f7f9f2;
-  box-shadow: 0 1px 2px #20312703;
+  background: var(--brim-doc-code-background);
+  box-shadow: 0 1px 2px var(--brim-doc-shadow);
 }
 .brim-doc-prose figure.shiki pre {
   font-size: 13px;
   line-height: 1.85;
 }
 .brim-doc-prose figure.shiki figcaption {
-  color: #63715f;
+  color: var(--color-fd-muted-foreground);
   font-size: 12px;
 }
 .brim-doc-prose figure.shiki button {
@@ -162,7 +192,7 @@ body:has(.brim-docs),
 }
 .brim-doc-prose figure.shiki [class*='backdrop-blur'] {
   backdrop-filter: none;
-  background: #f7f9f2;
+  background: var(--brim-doc-code-background);
 }
 .brim-doc-prose table {
   font-size: 0.875rem;
@@ -170,39 +200,39 @@ body:has(.brim-docs),
 }
 .brim-doc-prose :where(th, td) {
   padding: 0.8rem 1rem;
-  border-color: #e6eadf;
+  border-color: var(--color-fd-border);
 }
 .brim-doc-prose th {
-  color: #344c3b;
-  background: #f7f9f3;
+  color: var(--color-fd-foreground);
+  background: var(--color-fd-card);
   font-weight: 550;
 }
 .brim-doc-prose blockquote {
-  border-color: #9fb39a;
-  color: #667560;
+  border-color: var(--color-fd-ring);
+  color: var(--color-fd-muted-foreground);
   font-style: normal;
 }
 .brim-doc-pagination {
   margin-top: 3rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e5e9de;
+  border-top: 1px solid var(--color-fd-border);
 }
 .brim-doc-pagination a {
-  border-color: #e5e9de;
+  border-color: var(--color-fd-border);
   border-radius: 11px;
-  background: #fafbf6;
+  background: var(--color-fd-card);
   padding: 18px;
-  box-shadow: 0 1px 2px #20312703;
+  box-shadow: 0 1px 2px var(--brim-doc-shadow);
 }
 .brim-doc-pagination a:hover {
-  background: #f1f5eb;
+  background: var(--color-fd-muted);
 }
 .brim-doc-pagination a > div {
-  color: #34583e;
+  color: var(--color-fd-primary);
   font-size: 14px;
 }
 .brim-doc-pagination a > p {
-  color: #67765e;
+  color: var(--color-fd-muted-foreground);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -210,15 +240,15 @@ body:has(.brim-docs),
   font-size: 13px;
 }
 .brim-doc-toc #toc-title {
-  color: #67765e;
+  color: var(--color-fd-muted-foreground);
   font-size: 12px;
   font-weight: 450;
 }
 .brim-doc-toc a {
   line-height: 1.65;
 }
-.brim-docs :where(a, button, [tabindex]):focus-visible {
-  outline: 2px solid #628569;
+body:has(.brim-docs) :where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-fd-ring);
   outline-offset: 4px;
   border-radius: 4px;
 }
@@ -254,7 +284,7 @@ body:has(.brim-docs),
   }
 }
 
-/* Portalled mobile/search panels inherit the same light palette without an expensive blur. */
+/* Portalled mobile/search panels inherit the same palette without a blur. */
 body:has(.brim-docs) [class*='backdrop-blur'] {
   backdrop-filter: none;
 }

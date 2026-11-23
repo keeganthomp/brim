@@ -5,28 +5,39 @@
   line-height: 1.5;
 }
 .agent-row {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 24px;
-  padding: 22px 24px;
-  border-top: 1px solid var(--line);
+  column-gap: 20px;
+  padding: 10px 12px;
+}
+.agent-list {
+  margin-inline: -12px;
+}
+.agent-row:has(button.agent-main):hover,
+.agent-row:has(button.agent-main:focus-visible) {
+  background: var(--surface);
 }
 .agent-main {
   display: block;
   min-width: 0;
-  min-height: 58px;
-  padding: 4px;
-  margin: -4px;
-  border-radius: 7px;
+  padding: 0;
   text-align: left;
 }
-button.agent-main:hover {
-  background: var(--page);
+button.agent-main::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: '';
 }
 .agent-main:focus-visible {
+  outline: none;
+}
+.agent-main:focus-visible::after {
   outline: 2px solid var(--ink);
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 .agent-title {
   display: flex;
@@ -35,7 +46,7 @@ button.agent-main:hover {
   color: var(--ink);
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 .agent-title svg {
   flex-shrink: 0;
@@ -52,9 +63,15 @@ button.agent-main:hover {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  min-width: 73px;
+  min-width: 12px;
   color: var(--secondary);
   font-size: 12px;
+}
+.agent-toggle .switch {
+  z-index: 2;
+}
+.agent-toggle > .status-dot {
+  color: var(--green);
 }
 .frozen-label {
   color: var(--red);
@@ -62,7 +79,7 @@ button.agent-main:hover {
 .agent-budget {
   display: block;
   min-width: 0;
-  margin-top: 9px;
+  margin-top: 3px;
 }
 .budget-line {
   display: flex;
@@ -83,8 +100,8 @@ button.agent-main:hover {
 }
 .progress-track {
   display: block;
-  height: 3px;
-  margin-top: 8px;
+  height: 2px;
+  margin-top: 5px;
   overflow: hidden;
   border-radius: 3px;
   background: #eff2f5;
@@ -94,16 +111,14 @@ button.agent-main:hover {
   height: 100%;
   border-radius: inherit;
   background: #778392;
-  transition: width 180ms var(--spring);
 }
 .frozen .progress-track > span {
   background: #b6bec8;
 }
 .agents-section .empty-state {
-  min-height: 190px;
-  border-top: 1px solid var(--line);
+  min-height: 150px;
   gap: 9px;
-  padding: 30px 24px;
+  padding: 24px 12px;
 }
 .agents-section .empty-state h3 {
   font-size: 14px;
@@ -113,32 +128,11 @@ button.agent-main:hover {
   font-size: 12px;
   line-height: 1.7;
 }
-@media (max-width: 1040px) {
-  .agent-row {
-    padding-inline: 22px;
-    column-gap: 18px;
-  }
-}
-@media (max-width: 800px) {
-  .agent-row {
-    padding: 21px 20px;
-  }
-}
 @media (max-width: 480px) {
   .agent-row {
     column-gap: 16px;
   }
   .agent-toggle {
-    flex-direction: column-reverse;
-    gap: 5px;
-    min-width: 40px;
-  }
-  .agent-main {
-    min-height: 62px;
-  }
-}
-@media (max-width: 380px) {
-  .agent-row {
-    padding-inline: 18px;
+    gap: 8px;
   }
 }
