@@ -8,8 +8,18 @@ import { FrozenStatus } from '../agents/frozen-status';
 import { useDialogFocus } from '../ui/use-dialog-focus';
 
 export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyController }) {
-  const { draft, creating, mode, canEdit, canFreeze, busy, setDraft, saveAgent, freezeAgent } =
-    controller;
+  const {
+    draft,
+    creating,
+    mode,
+    canEdit,
+    canFreeze,
+    busy,
+    isFreezing,
+    setDraft,
+    saveAgent,
+    freezeAgent,
+  } = controller;
   const open = draft !== null;
   // The closing sheet keeps showing the last policy while it slides away.
   const shown = useRetained(draft);
@@ -83,8 +93,10 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
               <div className="drawer-bottom">
                 {canEdit ? (
                   <button className="button primary full" type="submit" disabled={busy}>
-                    {busy && <LoaderCircle size={16} className="policy-busy" aria-hidden="true" />}
-                    {busy ? pendingLabel : actionLabel}
+                    {busy && !isFreezing && (
+                      <LoaderCircle size={16} className="busy-indicator" aria-hidden="true" />
+                    )}
+                    {busy && !isFreezing ? pendingLabel : actionLabel}
                   </button>
                 ) : (
                   <Dialog.Close className="button secondary full">Done</Dialog.Close>
@@ -96,8 +108,18 @@ export function AgentPolicyDrawer({ controller }: { controller: AgentPolicyContr
                     disabled={busy}
                     onClick={() => freezeAgent(shown, !shown.frozen)}
                   >
-                    <Snowflake size={15} aria-hidden="true" />
-                    {shown.frozen ? 'Resume agent' : 'Freeze agent'}
+                    {isFreezing ? (
+                      <LoaderCircle size={15} className="busy-indicator" aria-hidden="true" />
+                    ) : (
+                      <Snowflake size={15} aria-hidden="true" />
+                    )}
+                    {isFreezing
+                      ? mode === 'live'
+                        ? 'Check your wallet…'
+                        : 'Applying…'
+                      : shown.frozen
+                        ? 'Resume agent'
+                        : 'Freeze agent'}
                   </button>
                 )}
                 {mode === 'local' && canEdit && (

@@ -22,7 +22,7 @@ The URL is illustrative. The [quickstart](/docs/quickstart/) makes a real local 
 
 ## Get your local config
 
-Start the [local stack](/docs/quickstart/) with `npm run dev`. It creates a funded test vault and a starter policy. In the dashboard's **Local workspace**, choose **Copy vault config**. Every agent on this local vault can reuse that public string.
+Start the [local stack](/docs/quickstart/) with `npm run dev`. It creates a funded test vault and a starter policy. Open a registered policy's **Code setup** and choose **Copy setup**. Every agent on this local vault can reuse its public vault config; each agent supplies its own private key.
 
 The private test values stay in ignored `.brim/` files. The built-in payment runner loads its starter key automatically. To attach your own agent, register its public key below and keep its private key in that agent's runtime.
 
@@ -38,7 +38,7 @@ The helper creates a new mode-`0600` keypair file and prints only `publicKey` an
 
 2. **Attach a policy.** Open **Local workspace → Add policy**, paste that public key, and set a **$1 per-payment cap** and **$50 24-hour budget**. Advanced settings hold payment spacing and recipient restrictions. Choose **Add policy** and wait for on-chain confirmation.
 
-3. **Inspect the registration.** Your agent appears in the list. Its detail sheet shows a copyable registered public key. Editing limits preserves consumed budget, frozen state, window timing, and any spacing you leave unchanged.
+3. **Inspect the registration.** Your agent appears in the list. Its detail sheet shows a copyable registered public key. Open **Code setup** to **Copy setup** or **Check connection**. Editing limits preserves consumed budget, frozen state, window timing, and any spacing you leave unchanged.
 
 4. **Run the agent.** With `jq` installed, run this in another terminal at the repository root:
 
@@ -54,9 +54,9 @@ These assignments load values without displaying the keypair. The report costs *
 
 The local RPC override is necessary: the public default devnet RPC cannot see your Surfpool vault. If you enable a recipient allowlist, include the report merchant's public key, available with `jq -r '.merchantAddress' .brim/local.json`.
 
-This standalone fetch does not insert a ledger row. The dashboard reads its balance and policy from the chain; finalized activity requires indexing. The [built-in payment test](/docs/quickstart/#pay-for-the-report) separately verifies settlement and writes a deduplicated ledger record.
+Every successful local `/report` settlement is queued for independent finalized verification and indexing, including your SDK and MCP calls. Activity may appear after `HTTP 200`; that response alone is not proof of finality. The [built-in payment test](/docs/quickstart/#pay-for-the-report) also checks both token balances and the ledger.
 
-For the same agent in a tool-based client, use [MCP with your local key file](/docs/mcp/#connect-your-own-local-agent). Funding, withdrawals, and freezes remain read-only in Local workspace. Policy writes use the generated test owner, not a production wallet.
+For the same agent in a tool-based client, use [MCP with your local key file](/docs/mcp/#connect-your-own-local-agent). Local funding, withdrawals, and freezes remain read-only; use the [configured owner-wallet flow](/docs/production/#follow-the-owner-wallet-flow) for those live actions.
 
 ## What the values look like
 
@@ -68,7 +68,7 @@ The examples are abbreviated; copy the complete values into your runtime. The pr
 ## Who hands over what
 
 1. **The agent integrator generates a scoped keypair.** Keep its private 64-byte keypair export with the application and send its public key to the treasury operator.
-2. **The operator registers that public key and its limits on the vault.** Use Local workspace for test funds, or the [configured owner-wallet path](/docs/production/#configure-owner-wallet-policy-writes) for an existing deployed vault. The operator also prepares funding and a compatible facilitator.
+2. **The operator registers that public key and its limits on the vault.** Use Local workspace for test funds, or the [configured owner-wallet path](/docs/production/#follow-the-owner-wallet-flow) for an existing deployed vault. The operator also prepares funding and a compatible facilitator.
 3. **The operator creates and shares the public vault config.** The returned `brim:v1:...` string becomes `BRIM_VAULT_CONFIG`.
 4. **The integrator supplies both values to the application.** Load the public config as `BRIM_VAULT_CONFIG` and the matching private keypair as `BRIM_AGENT_KEY` through the runtime's configuration.
 
@@ -93,7 +93,45 @@ The development program address is for local Surfpool only. For a public deploym
 
 Share the returned `vaultConfig` string with the integrator. Use `readBrimVaultConfig(vaultConfig)` to inspect its public settings.
 
-In the Demo workspace, **Copy SDK template** copies the example code. In the Local workspace, **Copy vault config** copies the public test value.
+The policy's **Code setup → Copy setup** copies public connection settings and a runtime template. It does not copy or generate an agent private key. **Check connection** checks policy and setup without sending payment. You may supply an optional merchant URL to inspect its public quote; browser CORS restrictions can prevent that lookup. A matching quote cannot establish that the facilitator will accept the program or that funds will settle.
+
+## Check a connection without paying
+
+The dashboard's **Check connection** uses a public-key-only check. Application code can use the same check:
+
+```ts
+import { checkBrimConnection } from '@brim/sdk';
+
+const report = await checkBrimConnection({
+  vaultConfig: process.env.BRIM_VAULT_CONFIG!,
+  agentPublicKey: 'YOUR_REGISTERED_AGENT_PUBLIC_KEY',
+  // Optional: use your provider, or the local Surfpool URL for local tests.
+  rpcUrl: 'http://127.0.0.1:8899',
+  // Optional public quote. Omit to check only the chain setup.
+  resourceUrl: 'http://127.0.0.1:4020/report',
+});
+
+console.log(report.ready, report.blockers);
+```
+
+This local example loads **no private signing key**, sends no payment authorization, and does not broadcast a transaction. Replace the local URLs with your configured connection and HTTPS merchant for a public environment. `checkBrimConnectionEffect(input)` is the lazy Effect alternative; the Promise API also accepts `{ signal }` as its second argument.
+
+`ready` means the requested checks passed at the current chain snapshot. Missing policy, freeze/pause, empty vault, consumed budget, and payment spacing appear in `blockers`; invalid account/RPC/quote data fails with a typed `BrimPolicyViolationError`. The JSON-safe report uses integer-string base units and includes the policy's remaining window budget. It is not a reservation or a promise that the agent holds the matching private key.
+
+An optional merchant check makes a GET for its public response/quote, refuses redirects, and does not read the resource body or attach authorization. Browser CORS can block it. `merchant.facilitatorAcceptance` remains **`"unverified"`**, even for a matching quote: facilitator acceptance and actual settlement require a real payment path.
+
+The bundled CLI checks the starter local agent without loading its signing key. With the local stack running and `jq` installed:
+
+```bash
+export BRIM_VAULT_CONFIG="$(jq -r '.vaultConfig' .brim/local.json)"
+export SOLANA_RPC_URL="$(jq -r '.rpcUrl' .brim/local.json)"
+
+npm run agent:check -- \
+  --agent-public-key "$(jq -r '.agentAddress' .brim/local.json)" \
+  --resource-url http://127.0.0.1:4020/report
+```
+
+For your own agent, replace the public-key argument with its registered public key. Omit `--resource-url` for chain checks only. The CLI prints a public JSON report: exit `0` means the requested checks passed, `2` means policy/setup blockers, and `1` means failure or cancellation. This read-only check never authorizes a payment.
 
 ## Optional connection and cap
 
@@ -105,14 +143,15 @@ The default SDK safety cap is **$1 USDC per payment**. Add `maxPaymentAmount: 5_
 
 ## API reference
 
-| API                     | Input                                                                                       | Return and purpose                                                                                                             |
-| ----------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `createBrimFetch`       | `BrimVaultConfig`                                                                           | A standard fetch function: `(input, init?) => Promise<Response>`. Use it in ordinary application code.                         |
-| `createBrimFetchEffect` | `BrimVaultConfig`                                                                           | `BrimEffectFetch`: the same request inputs produce `Effect<Response, BrimPolicyViolationError>`. Use it in an Effect workflow. |
-| `createBrimVaultConfig` | Public vault settings, including `network: 'devnet'`, `'mainnet'`, or a supported CAIP-2 ID | A `brim:v1:...` string. Operator setup only; it does not attach a policy.                                                      |
-| `readBrimVaultConfig`   | An encoded config string                                                                    | `BrimVaultConfigDetails`: public settings with a canonical CAIP-2 `network`. No network request or signing occurs.             |
+| API                                                 | Input                                                                                       | Return and purpose                                                                                                             |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `createBrimFetch`                                   | `BrimVaultConfig`                                                                           | A standard fetch function: `(input, init?) => Promise<Response>`. Use it in ordinary application code.                         |
+| `createBrimFetchEffect`                             | `BrimVaultConfig`                                                                           | `BrimEffectFetch`: the same request inputs produce `Effect<Response, BrimPolicyViolationError>`. Use it in an Effect workflow. |
+| `createBrimVaultConfig`                             | Public vault settings, including `network: 'devnet'`, `'mainnet'`, or a supported CAIP-2 ID | A `brim:v1:...` string. Operator setup only; it does not attach a policy.                                                      |
+| `readBrimVaultConfig`                               | An encoded config string                                                                    | `BrimVaultConfigDetails`: public settings with a canonical CAIP-2 `network`. No network request or signing occurs.             |
+| `checkBrimConnection` / `checkBrimConnectionEffect` | Public vault config, agent public key, optional RPC and resource URL                        | Advisory setup report without private keys, signing, or settlement.                                                            |
 
-Both fetch variants accept standard `RequestInfo | URL` and optional `RequestInit`, preserve the request body, and reject redirects and existing payment authorization headers. A non-402 resource response is returned using normal fetch semantics; inspect `response.ok` or `response.status` separately.
+Both fetch variants accept standard `RequestInfo | URL` and optional `RequestInit`, preserve the request body, and reject redirects and existing payment authorization headers. A non-402 resource response is returned using normal fetch semantics; inspect `response.ok` or `response.status` separately. A paid error response, including HTTP `503`, does not establish that funds stayed in the vault.
 
 ## Typed errors and outcome checks
 
@@ -126,6 +165,8 @@ Failures use `BrimPolicyViolationError`, whose `_tag` is `"BrimPolicyViolationEr
 | `UNSUPPORTED_PAYMENT`, `UNTRUSTED_FEE_PAYER`, `INVALID_PAYMENT_REQUIREMENTS`     | Ask the merchant or facilitator operator for a compatible payment offer.                                                               |
 | `RPC_UNAVAILABLE`, `REQUEST_FAILED`, `SIGNING_FAILED`                            | Check the connection or scoped key configuration. These failures occur before payment handoff.                                         |
 | `PAYMENT_OUTCOME_UNKNOWN`, `PAYMENT_REJECTED`                                    | Reconcile the original payment before another paid request. A rejected paid HTTP retry does not prove that funds stayed in the vault.  |
+
+Effect cancellation remains an interruption, not a promise of a typed payment result. A canceled paid request may have settled even if no receipt or diagnostic reaches the caller. Reconcile before authorizing another.
 
 A successful HTTP response, receipt, or `onEvent` callback is not independent proof of settlement. Verify the finalized transaction and expected `PaymentExecuted` program event before marking a payment settled. The [quickstart](/docs/quickstart/) demonstrates that verification and a deduplicated ledger record.
 

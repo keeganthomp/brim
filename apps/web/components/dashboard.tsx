@@ -20,6 +20,7 @@ export function Dashboard() {
   const dashboard = useDashboard();
   const { mode, ready, balance, policy, funds, notification } = dashboard;
   const editable = dashboard.demo && dashboard.demoReady;
+  const showActivity = mode !== 'live' || dashboard.activityAvailable;
   // Sheets stay mounted after their first open so Radix can animate them closed.
   const policyMounted = useLatch(policy.draft !== null);
   const fundsMounted = useLatch(funds.mode !== null);
@@ -36,6 +37,14 @@ export function Dashboard() {
           connectedOwner={dashboard.connectedOwner}
           ownerWallet={dashboard.ownerWallet}
           canWritePolicy={dashboard.canWritePolicy}
+          vaultInitialized={dashboard.vaultInitialized}
+          canCreateVault={dashboard.canCreateVault}
+          creatingVault={dashboard.creatingVault}
+          canFundVault={dashboard.canFundVault}
+          balance={balance}
+          createVault={dashboard.createVault}
+          onDeposit={() => funds.open('deposit')}
+          onFundsIntent={preloadFundsDialog}
           onAddPolicy={() => policy.openAgent()}
           onPolicyIntent={preloadPolicyDrawer}
           onExploreDemo={() => dashboard.changeMode('demo')}
@@ -44,12 +53,15 @@ export function Dashboard() {
         {/* Keyed by workspace so switching modes replays the card entrance. */}
         <div
           key={mode}
-          className={`dashboard-grid${mode === 'live' ? ' dashboard-grid-live' : ''}`}
+          className={`dashboard-grid${mode === 'live' && !showActivity ? ' dashboard-grid-live' : ''}`}
         >
           <BalanceOverview
             mode={mode}
             balance={balance}
             editable={editable}
+            canCreateVault={dashboard.canCreateVault}
+            canFundVault={dashboard.canFundVault}
+            localPayment={dashboard.localPayment}
             onFunds={funds.open}
             onFundsIntent={preloadFundsDialog}
           />
@@ -57,11 +69,12 @@ export function Dashboard() {
             mode={mode}
             ready={ready}
             canEdit={ready && (editable || mode !== 'demo')}
+            vaultInitialized={dashboard.vaultInitialized}
             agents={dashboard.agents}
             onEdit={policy.openAgent}
             onPolicyIntent={preloadPolicyDrawer}
           />
-          {mode !== 'live' && (
+          {showActivity && (
             <>
               <ActivityFeed
                 mode={mode}

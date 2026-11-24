@@ -7,12 +7,8 @@ import { localDatabaseUrl } from '../../../infra/local/database';
 import { readLocalChain } from './local-chain';
 import { toWorkspaceAgents, workspaceAgentName } from '../lib/chain/workspace-agents';
 import { localRequest } from './local-request';
-import {
-  LocalWorkspaceError,
-  localFailure,
-  PaymentRows,
-  PublicLocalMetadata,
-} from './local-schema';
+import { readVerifiedPayments } from './verified-feed';
+import { LocalWorkspaceError, localFailure, PublicLocalMetadata } from './local-schema';
 
 const attempt = <A>(read: () => A) => Effect.try({ try: read, catch: localFailure });
 const io = <A>(read: () => Promise<A>) => Effect.tryPromise({ try: read, catch: localFailure });
@@ -31,7 +27,7 @@ const readMetadata = Effect.gen(function* () {
   );
 });
 
-const databasePool = Effect.gen(function* () {
+export const localLedgerPool = Effect.gen(function* () {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString || !localDatabaseUrl(connectionString)) return yield* localFailure();
   if (cachedPool?.url === connectionString) return cachedPool.pool;
@@ -71,35 +67,20 @@ export const localWorkspace = (request: Request) =>
             }),
           ).pipe(Effect.catch(() => Effect.succeed(undefined)))
         : undefined;
-    const pool = yield* databasePool;
-    const result = yield* io(() =>
-      pool.query(
-        `SELECT payment.signature, payment.event_index, payment.agent_key,
-    payment.amount_base_units::TEXT AS amount_base_units, payment.chain_timestamp::TEXT AS chain_timestamp
-    FROM brim_payments AS payment JOIN brim_chain_notifications AS notification USING (signature)
-    WHERE payment.vault = $1 AND notification.status = 'settled'
-    ORDER BY payment.chain_timestamp DESC, payment.signature DESC, payment.event_index DESC LIMIT 50`,
-        [metadata.vaultAddress],
-      ),
-    );
-    const rows = yield* Schema.decodeUnknownEffect(PaymentRows)(result.rows).pipe(
+    const pool = yield* localLedgerPool;
+    const rows = yield* readVerifiedPayments(pool, metadata.vaultAddress).pipe(
       Effect.mapError(localFailure),
     );
     const agents = toWorkspaceAgents(chain.policies, metadata.agentAddress);
-    const payments = yield* attempt(() =>
-      rows.map((row) => ({
-        id: `${row.signature}:${row.event_index}`,
-        merchant: 'Local paid API',
-        agentName: workspaceAgentName(row.agent_key, metadata.agentAddress),
-        agentKey: row.agent_key,
-        amountBaseUnits: row.amount_base_units,
-        signature: row.signature,
-        settledAt: new Date(Number(BigInt(row.chain_timestamp)) * 1000).toISOString(),
-      })),
-    );
+    const payments = rows.map((row) => ({
+      ...row,
+      merchant: 'Local paid API',
+      agentName: workspaceAgentName(row.agentKey, metadata.agentAddress),
+    }));
     return Response.json(
       {
         status: 'ready',
+        rpcUrl: metadata.rpcUrl,
         balanceBaseUnits: chain.balanceBaseUnits,
         chainTimestamp: chain.chainTimestamp,
         isPaused: chain.isPaused,

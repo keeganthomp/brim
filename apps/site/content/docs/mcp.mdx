@@ -63,7 +63,7 @@ The report costs **$0.04 fake USDC**. Explicit local mode permits only this loca
 
 The override is accepted **only with `--local`**. It requires an absolute path to a mode-`0600` file containing a valid 64-byte JSON keypair. It changes only the agent key: the vault config, loopback RPC, and local report restriction stay in place. The key is loaded by the MCP process, never supplied to a tool.
 
-Refresh the MCP connection, call `brim_policy` to inspect your new limits, then call `brim_fetch` with `http://127.0.0.1:4020/report`. It costs $0.04 fake USDC. A tool response or receipt alone is not finalized proof, and this call does not insert a ledger row. [The built-in local payment test](/docs/quickstart/#pay-for-the-report) verifies and indexes its own payment separately.
+Refresh the MCP connection, call `brim_policy` to inspect your new limits, then call `brim_fetch` with `http://127.0.0.1:4020/report`. It costs $0.04 fake USDC. A tool response or receipt alone is not finalized proof. Successful local `/report` payments queue automatically for independent finalized verification and indexing; Activity can lag the tool response. [The built-in local payment test](/docs/quickstart/#pay-for-the-report) also checks both balances and the deduplicated ledger.
 
 ## Tool reference
 
@@ -143,8 +143,8 @@ The [SDK handoff guide](/docs/sdk/#who-hands-over-what) explains who generates e
 
 ## Protection and outcome boundaries
 
-Normal configuration requires HTTPS and refuses credentials embedded in the URL. Local mode permits the loopback report on port `4020`. POST bodies are limited to 16 KiB and sent as `application/json`; response bodies are limited to 64 KiB. Requests time out after 15 seconds, and MCP cancellation interrupts the Effect workflow. The SDK's default $1 per-payment cap and the on-chain policy both apply.
+Normal configuration requires HTTPS and refuses credentials embedded in the URL. Local mode permits the loopback report on port `4020`. POST bodies are limited to 16 KiB and sent as `application/json`; response bodies are limited to 64 KiB. Requests time out after 15 seconds, and MCP cancellation interrupts local work. Canceling `brim_fetch` cannot reverse an authorization already sent; the payment may settle even if your client receives no final tool reply. The SDK's default $1 per-payment cap and the on-chain policy both apply.
 
 The server retains only the configured scoped agent authority. It offers no owner-write tools, arbitrary request headers, or tool arguments for swapping keys, vaults, RPC providers, or limits. The policy is checked again when the payment executes.
 
-A receipt is merchant-reported metadata, not independent proof of finalized settlement. `PAYMENT_OUTCOME_UNKNOWN`, a paid retry rejection, timeout, or response-size failure requires checking the original payment before authorizing another. Use finalized transaction and program-event verification as demonstrated by the [local payment flow](/docs/quickstart/); the MCP server does not promise invoice idempotency.
+A receipt is merchant-reported metadata, not independent proof of finalized settlement. `PAYMENT_OUTCOME_UNKNOWN`, a canceled paid call, a paid retry rejection, timeout, or response-size failure requires checking the original payment before authorizing another. The server classifies interrupted paid calls conservatively; a client that canceled may discard that diagnostic, so cancellation itself is never proof of non-payment. Use finalized transaction and program-event verification as demonstrated by the [local payment flow](/docs/quickstart/); the MCP server does not promise invoice idempotency.

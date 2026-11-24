@@ -2,9 +2,11 @@
 import { createServer } from 'node:http';
 import { Effect } from 'effect';
 import { LocalSetupError } from '../../../scripts/local/config.ts';
-import { loadLocalContext, RESOURCE_URL } from './context.ts';
+import { RESOURCE_URL } from './context.ts';
+import { loadLocalContext } from './context-cli.ts';
 import { createLocalResource } from './resource.ts';
 import { handleLocalRequest } from './http.ts';
+import { createLocalSettlementLedger } from './ledger.ts';
 
 const controller = new AbortController();
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => controller.abort());
@@ -12,6 +14,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => 
 const program = Effect.scoped(
   Effect.gen(function* () {
     const context = yield* loadLocalContext;
+    const ledger = yield* createLocalSettlementLedger(context);
     const resource = yield* createLocalResource(context);
     yield* Effect.acquireRelease(
       Effect.tryPromise({
@@ -20,13 +23,13 @@ const program = Effect.scoped(
             const server = createServer(
               { maxHeaderSize: 16 * 1024, requestTimeout: 90_000, headersTimeout: 10_000 },
               (request, response) => {
-                void Effect.runPromise(handleLocalRequest(resource, request, response)).catch(
-                  () => {
-                    if (!response.headersSent)
-                      response.writeHead(503, { 'content-type': 'application/json' });
-                    response.end('{"code":"LOCAL_PAYMENT_UNAVAILABLE"}');
-                  },
-                );
+                void Effect.runPromise(
+                  handleLocalRequest(resource, request, response, ledger.recordSettlement),
+                ).catch(() => {
+                  if (!response.headersSent)
+                    response.writeHead(503, { 'content-type': 'application/json' });
+                  response.end('{"code":"LOCAL_PAYMENT_UNAVAILABLE"}');
+                });
               },
             );
             server.maxConnections = 32;

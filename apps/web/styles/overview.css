@@ -176,3 +176,50 @@
     padding-inline: 12px;
   }
 }
+
+.vault-start {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  min-height: 135px;
+  padding-block: 19px 12px;
+}
+.vault-start h3 {
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+}
+.vault-start p {
+  max-width: 35ch;
+  color: #b3bdca;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.local-test-payment {
+  margin-top: auto;
+}
+.local-test-payment .button {
+  min-height: 42px;
+  font-size: 12px;
+}
+.local-test-payment .vault-primary {
+  color: #181d24;
+  background: #f8f9fb;
+}
+.local-test-payment .button:focus-visible {
+  outline-color: #e1e5f0;
+}
+.local-payment-status {
+  margin-top: 11px;
+  color: #b5bfcc;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.local-payment-status .local-payment-settled {
+  color: #c8ead4;
+}
+.local-payment-status .local-payment-error {
+  color: #ffbdb3;
+}

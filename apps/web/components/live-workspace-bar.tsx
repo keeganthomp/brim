@@ -7,6 +7,7 @@ interface LiveWorkspaceBarProps {
   status: LocalWorkspaceStatus;
   paused: boolean;
   connected: boolean;
+  uninitialized: boolean;
   wallet: OwnerWalletController;
   onCopyVaultConfig?: (() => void) | undefined;
   onExploreDemo: () => void;
@@ -17,14 +18,16 @@ export function LiveWorkspaceBar({
   status,
   paused,
   connected,
+  uninitialized,
   wallet,
   onCopyVaultConfig,
   onExploreDemo,
 }: LiveWorkspaceBarProps) {
   let message = 'Connecting to your vault…';
-  if (!configured) message = 'Live workspace needs a deployed vault';
+  if (!configured) message = 'Live workspace needs setup';
+  else if (uninitialized) message = 'Owner wallet connected';
   else if (status === 'unavailable')
-    message = 'Could not load the vault. Check the RPC and vault config.';
+    message = 'Could not load chain state. Check the connection and config.';
   else if (status === 'ready')
     message = paused
       ? 'Treasury paused'
@@ -38,7 +41,7 @@ export function LiveWorkspaceBar({
       <div>
         <strong role="status">{message}</strong>
         {wallet.error && <p role="alert">{wallet.error}</p>}
-        {!connected && status === 'ready' && wallet.choices.length > 0 && (
+        {!connected && configured && wallet.choices.length > 0 && (
           <div className="live-wallet-choices" role="group" aria-label="Choose an owner wallet">
             {wallet.choices.map((choice) => (
               <button

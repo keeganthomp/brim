@@ -32,14 +32,16 @@ export function ActivityFeed({
       ? 'Sample data'
       : mode === 'local' && ready
         ? 'Verified local'
-        : 'Not connected';
+        : mode === 'live' && ready
+          ? 'Verified'
+          : 'Not connected';
   return (
     <section className="activity-section" aria-labelledby="activity-heading">
       <div className="section-heading">
         <h2 id="activity-heading">Activity</h2>
         {ready && (
-          <span className={`live-indicator ${mode === 'local' ? 'verified-indicator' : ''}`}>
-            {mode === 'local' ? <StatusDot label={label} pulsing /> : label}
+          <span className={`live-indicator ${mode !== 'demo' ? 'verified-indicator' : ''}`}>
+            {mode !== 'demo' ? <StatusDot label={label} pulsing /> : label}
           </span>
         )}
       </div>
@@ -72,7 +74,7 @@ export function ActivityFeed({
           <ActivityRow
             key={item.id}
             item={item}
-            onClick={mode === 'local' && item.signature ? () => onSelect(item) : undefined}
+            onClick={mode !== 'demo' && item.signature ? () => onSelect(item) : undefined}
           />
         ))}
         {activities.length === 0 && (

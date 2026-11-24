@@ -1,22 +1,33 @@
 import { Data, Effect } from 'effect';
 import type { Wallet, WalletAccount } from '@wallet-standard/base';
-import type { OwnerPolicyLimits } from '@brim/sdk';
+import type { BrimNetwork, BrimNetworkName, OwnerPolicyLimits } from '@brim/sdk';
 
-export interface OwnerWalletConfig {
+export interface ExistingOwnerWalletConfig {
   vaultConfig: string;
   rpcUrl?: string | undefined;
 }
+export interface OwnerDeploymentConfig {
+  programAddress: string;
+  network: BrimNetwork | BrimNetworkName;
+  facilitatorFeePayers: readonly string[];
+  rpcUrl?: string | undefined;
+}
+export type OwnerWalletConfig = ExistingOwnerWalletConfig | OwnerDeploymentConfig;
 export interface WalletChoice {
   id: string;
   name: string;
   connected: boolean;
   wallet: Wallet;
+  ownerAddress?: string;
 }
 export interface OwnerWalletConnection {
   choiceId: string;
   wallet: Wallet;
   account: WalletAccount;
   ownerAddress: string;
+  vaultConfig: string;
+  vaultAddress: string;
+  initialized: boolean;
 }
 export interface OwnerPolicyInput {
   agentKey: string;

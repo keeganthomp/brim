@@ -8,6 +8,7 @@ import type {
   x402HTTPResourceServer,
 } from '@x402/core/server';
 import { LocalSetupError } from '../../../scripts/local/config.ts';
+import type { SettlementObserver } from './ledger.ts';
 
 const failure = () =>
   new LocalSetupError({ message: 'Local x402 request could not be completed.' });
@@ -50,6 +51,7 @@ export function handleLocalRequest(
   resource: x402HTTPResourceServer,
   request: IncomingMessage,
   response: ServerResponse,
+  recordSettlement?: SettlementObserver,
 ) {
   return Effect.gen(function* () {
     const context = requestContext(request);
@@ -86,9 +88,21 @@ export function handleLocalRequest(
         ),
       catch: failure,
     });
-    return settlement.success
-      ? send(response, { status: 200, headers: settlement.headers, body })
-      : send(response, settlement.response);
+    if (!settlement.success) return send(response, settlement.response);
+    if (recordSettlement) {
+      const captured = yield* recordSettlement(settlement).pipe(Effect.result);
+      // The chain may already be settled. Preserve its receipt even if local durable capture fails.
+      if (captured._tag === 'Failure')
+        return send(response, {
+          status: 503,
+          headers: settlement.headers,
+          body: {
+            code: 'SETTLED_INDEXING_UNAVAILABLE',
+            message: 'Payment may be settled. Reconcile its receipt before retrying.',
+          },
+        });
+    }
+    return send(response, { status: 200, headers: settlement.headers, body });
   }).pipe(
     Effect.catch(() =>
       Effect.sync(() => {

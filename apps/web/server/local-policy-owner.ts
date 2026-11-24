@@ -62,7 +62,7 @@ const readOwnerFile = Effect.gen(function* () {
 const readKey = (bytes: Uint8Array, offset: number) =>
   getAddressDecoder().decode(bytes.subarray(offset, offset + 32));
 
-export const localPolicyOwner = Effect.gen(function* () {
+export const localFixtureVault = Effect.gen(function* () {
   if (process.env.NODE_ENV !== 'development') return yield* policyFailure();
   const config = yield* readOwnerFile;
   yield* policyAttempt(() => {
@@ -141,7 +141,12 @@ export const localPolicyOwner = Effect.gen(function* () {
     readKey(bytes, 72) !== tokenAccount
   )
     return yield* policyFailure();
+  return { config, client };
+}).pipe(Effect.timeout(10_000), Effect.mapError(policyFailure));
+
+export const localPolicyOwner = Effect.gen(function* () {
+  const { config, client } = yield* localFixtureVault;
   const owner = yield* localSignerEffect(config.ownerKey).pipe(Effect.mapError(policyFailure));
   if (owner.address !== config.ownerAddress) return yield* policyFailure();
   return { config, client, owner };
-}).pipe(Effect.timeout(10_000), Effect.mapError(policyFailure));
+});

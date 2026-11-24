@@ -1,4 +1,4 @@
-import { SDK_TEMPLATE } from './sdk-template';
+import { sdkSetupTemplate } from './sdk-template';
 
 export type ClipboardOperation =
   'copy-template' | 'copy-signature' | 'copy-vault-config' | 'copy-agent-key';
@@ -22,4 +22,5 @@ export function copyText(text: string, operation: ClipboardOperation): Promise<b
   );
 }
 
-export const copySdkTemplate = () => copyText(SDK_TEMPLATE, 'copy-template');
+export const copySdkTemplate = (vaultConfig?: string, rpcUrl?: string, resourceUrl?: string) =>
+  copyText(sdkSetupTemplate(vaultConfig, rpcUrl, resourceUrl), 'copy-template');

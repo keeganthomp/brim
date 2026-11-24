@@ -19,6 +19,6 @@ Creating the config does not attach a policy. [See how that attachment works](/d
 
 The local stack runs the compiled Solana program, real SDK and MCP payments, and a verified PostgreSQL ledger. The program enforces spending caps, budgets, recipient restrictions, and freeze state.
 
-In **Local workspace**, add an existing agent's public key, set its limits, and confirm an actual policy on the offline chain. Registered keys and policies appear in the dashboard. Funding and freeze controls remain read-only there; **Demo workspace** simulates those controls.
+In **Local workspace**, add an existing agent's public key, set its limits, and confirm an actual policy on the offline chain. Registered keys and policies appear in the dashboard. Use **Make test payment** to see a verified starter payment; successful local SDK/MCP report payments also index automatically. Funding and freeze controls remain read-only there; **Demo workspace** simulates them.
 
-Start with the [quickstart](/docs/quickstart/). A configured Live workspace can request owner-wallet policy signatures for an existing vault. External deployment and settlement validation, tenant authentication, and security review remain [production work](/docs/production/).
+Start with the [quickstart](/docs/quickstart/). A configured Live workspace can connect an ordinary owner wallet, create and fund its vault, register policies, and freeze agents against an already deployed program. External deployment and settlement validation, tenant authentication, and security review remain [production work](/docs/production/).

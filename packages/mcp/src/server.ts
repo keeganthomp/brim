@@ -1,7 +1,7 @@
 import { Effect, Exit } from 'effect';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { McpFailure, fail, failureDiagnostic } from './errors.js';
+import { McpFailure, fail, toolFailureDiagnostic } from './errors.js';
 import {
   EmptyInput,
   FetchInput,
@@ -16,7 +16,7 @@ const descriptions = {
   brim_policy:
     'Read this agent’s on-chain spending limits, freeze status, and approved recipients.',
   brim_fetch:
-    'Fetch a paid API using this agent’s vault policy. On-chain policy limits every payment. HTTPS required.',
+    'Fetch a paid API using this agent’s vault policy. A canceled request may already be paid; check settlement before another paid call. HTTPS required.',
 };
 
 export function createBrimMcpServer(service: BrimMcpService) {
@@ -25,7 +25,7 @@ export function createBrimMcpServer(service: BrimMcpService) {
     {
       capabilities: { tools: {} },
       instructions:
-        'Use brim_policy and brim_balance to inspect the configured vault and agent policy. brim_fetch pays only through its scoped on-chain policy. Never supply wallet keys or RPC credentials as tool arguments.',
+        'Use brim_policy and brim_balance to inspect the configured vault and agent policy. brim_fetch pays only through its scoped on-chain policy. Never supply wallet keys or RPC credentials as tool arguments. Canceling brim_fetch cannot undo a payment already sent; check settlement before another paid call.',
     },
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -94,7 +94,7 @@ export function createBrimMcpServer(service: BrimMcpService) {
     // Defects, cancellations and unexpected errors never disclose credential-bearing causes.
     const exit = await Effect.runPromiseExit(program, { signal: extra.signal });
     if (Exit.isSuccess(exit)) return exit.value;
-    const diagnostic = failureDiagnostic(exit.cause);
+    const diagnostic = toolFailureDiagnostic(exit.cause, request.params.name, extra.signal.aborted);
     return {
       isError: true,
       content: [{ type: 'text' as const, text: JSON.stringify(diagnostic) }],

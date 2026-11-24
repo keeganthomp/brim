@@ -14,7 +14,7 @@ export function validateConfig(config: ResolvedBrimConfig): void {
   }
 }
 export function validatePaymentRequirements(
-  config: BrimConfig,
+  config: Pick<BrimConfig, 'network' | 'facilitator' | 'maxPaymentAmount'>,
   req: PaymentRequirements,
 ): ValidatedPayment {
   try {

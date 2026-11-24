@@ -36,7 +36,7 @@ The runner uses the generated local configuration automatically. The final JSON 
 
 It verifies the vault debit, matching merchant credit, finalized program event, and one deduplicated ledger row. If the payment server is still starting, check `http://127.0.0.1:4020/health` for `status: "ok"` and `mode: "local-only"`.
 
-Open `http://localhost:3000` in **Local workspace** to check the payment and balance. The separate Demo workspace simulates controls. See the [quickstart](/docs/quickstart/) for setup and shutdown.
+Open `http://localhost:3000` in **Local workspace** to check the payment and balance, or use its **Make test payment** button to make a new starter payment. The separate Demo workspace simulates controls. See the [quickstart](/docs/quickstart/) for setup and shutdown.
 
 ## Attach your own agent
 
@@ -46,15 +46,23 @@ In **Local workspace → Add policy**, paste the public key and set its payment 
 
 Use the [SDK end-to-end steps](/docs/sdk/#register-your-agent-locally) to run that key against the local report, or pass its file through the [local MCP override](/docs/mcp/#connect-your-own-local-agent). Never put private keys in dashboard fields or MCP tool arguments.
 
+## Use an owner wallet
+
+For a deployed Brim program, follow the [Live configuration](/docs/production/#configure-a-deployed-program). Connect the ordinary owner wallet, **Create vault** if absent, **Deposit**, and **Add policy** for the agent's public key. Confirm each transaction in the wallet.
+
+Open **Code setup → Copy setup / Check connection**, then connect the private agent runtime below. A setup check is not proof that the facilitator will accept a payment. Verified **Activity** requires finalized indexing and explicit public-feed configuration. **Freeze/Resume** also requires the owner wallet; it cannot reverse a payment that already executed. No external program is deployed by these steps.
+
 ## Connect your runtime
 
 Use the SDK when you control application code. `createBrimFetch({ vaultConfig, agentKey })` provides a Promise-based fetch function. Effect applications can use `createBrimFetchEffect`. For a custom local integration, set `rpcUrl` to the `rpcUrl` field in `.brim/local.json`. It defaults to `http://127.0.0.1:8899`.
 
 Use MCP when the assistant already supports tools. Follow the [local MCP setup](/docs/mcp/#connect-to-the-local-stack), then call `brim_balance` and `brim_policy` before `brim_fetch`. Local mode permits the test report at `http://127.0.0.1:4020/report`.
 
+Use [checkBrimConnection or the bundled CLI](/docs/sdk/#check-a-connection-without-paying), or the dashboard's **Check connection**, to inspect public setup before a paid call. It does not require the private agent key and cannot guarantee settlement.
+
 Both paths use the same [operator handoff](/docs/sdk/#who-hands-over-what):
 
-- `BRIM_VAULT_CONFIG` is the public `brim:v1:` connection string. For local testing, choose **Local workspace → Copy vault config** in the dashboard.
+- `BRIM_VAULT_CONFIG` is the public `brim:v1:` connection string. For local testing, open the registered policy's **Code setup → Copy setup** in the dashboard.
 - `BRIM_AGENT_KEY` is the scoped keypair's 64-number JSON string. Keep it in the runtime's private configuration, outside prompts, logs, and source control. Share only the public key with the operator for policy registration. The generated local file also contains private test keys; avoid displaying the file.
 
 The agent uses its scoped key; the owner keeps treasury authority. Configuration formats and optional RPC settings are in the [SDK guide](/docs/sdk/).
@@ -63,11 +71,13 @@ The agent uses its scoped key; the owner keeps treasury authority. Configuration
 
 A merchant needs a [compatible facilitator](/docs/x402/#configure-a-compatible-facilitator) that explicitly supports the deployed Brim program. Advertising x402 support alone is insufficient.
 
-A receipt or successful HTTP response is not independent proof of settlement. The verified ledger checks the finalized transaction and expected program event. If the result is `PAYMENT_OUTCOME_UNKNOWN` or a timeout leaves settlement unclear, reconcile the original payment before authorizing another paid request. See [retry behavior](/docs/x402/#keep-retries-bounded).
+A receipt or successful HTTP response is not independent proof of settlement. The verified ledger checks the finalized transaction and expected program event. If the result is `PAYMENT_OUTCOME_UNKNOWN`, or a canceled paid call or timeout leaves settlement unclear, reconcile the original payment before authorizing another paid request. Cancellation stops local work, not an authorization already sent. See [retry behavior](/docs/x402/#keep-retries-bounded).
 
 ## Know the current scope
 
-The current payment path supports Solana USDC. Local policy registration and edits use the generated Surfpool test owner. Funding, withdrawals, freezes, and pause remain read-only there; Demo workspace simulates controls. Configured Live policy writes use the ordinary vault owner wallet; they require a preexisting deployed vault and public dashboard configuration. External devnet settlement, live funding/freezes, Squads, tenant authentication, security review, and deployment remain [production gates](/docs/production/). Local success proves the local integration.
+Solana USDC only. Local policy writes use the generated test owner, and **Make test payment** uses the starter scoped agent. Successful local SDK/MCP report payments queue automatically for finalized indexing. Local funding and freeze controls stay read-only; Demo simulates them.
+
+The configured Live workspace uses an ordinary owner wallet for vault creation, deposits/withdrawals, policies, and Freeze/Resume. It needs a preexisting deployed program; the repository does not provision one. Squads, private tenant activity, external settlement validation, deployment operations, and independent security review remain [release work](/docs/production/).
 
 ## Read documentation as text
 

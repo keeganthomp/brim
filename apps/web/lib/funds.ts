@@ -48,3 +48,11 @@ export const validateDemoTransfer = (mode: FundsMode, amount: string, balance: n
       }),
     ),
   );
+
+/** Parse USDC directly to base units; wallet transfers never round through a float. */
+export function parseLiveTransfer(amount: string) {
+  if (!/^(?:\d{1,14}(?:\.\d{1,6})?|\.\d{1,6})$/.test(amount)) return undefined;
+  const [whole = '', fraction = ''] = amount.split('.');
+  const units = BigInt(whole + fraction.padEnd(6, '0'));
+  return units > 0n && units <= 0xffff_ffff_ffff_ffffn ? units : undefined;
+}

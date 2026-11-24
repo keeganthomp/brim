@@ -1,9 +1,9 @@
 ---
 title: Quickstart
-description: Make a $0.04 x402 payment with test USDC.
+description: Make a verified local payment, then attach your own agent.
 ---
 
-From a Brim checkout, use **Node 24** and **Docker Compose v2**.
+Use **Node 24** and **Docker Compose v2** from a Brim checkout. All local SOL and USDC are fake.
 
 ## Start Brim
 
@@ -12,36 +12,31 @@ npm ci
 npm run dev
 ```
 
-The first run can take a few minutes. It starts the dashboard and creates a funded test vault and agent policy on Surfpool.
+The first run can take a few minutes. It creates a funded Surfpool vault and starter policy, then starts the dashboard at `http://localhost:3000` and the paid API on port `4020`.
 
 ## Pay for the report
 
-Run this in a second terminal.
+Open the dashboard in **Local workspace** and choose **Make test payment**. This uses the starter agent to pay $0.04 for the included report. Wait for the independently verified payment in **Activity**; indexing may finish after the resource response.
+
+The command-line alternative in another terminal is:
 
 ```bash title="Terminal 2"
 npm run demo:payment
 ```
 
-Look for `status: "settled"` and a transaction signature. Open the [dashboard](http://localhost:3000) in **Local workspace** to see the verified $0.04 payment and updated test balance.
-
-## Copy your vault config
-
-1. Open the [dashboard](http://localhost:3000) and choose **Local workspace**.
-2. Select **Copy vault config**.
-3. Paste the copied `brim:v1:` string into `BRIM_VAULT_CONFIG` to use it in your app.
-
-The payment runner loads its test values automatically. For your own app, the [SDK guide](/docs/sdk/#get-your-local-config) shows how to supply the test key and local RPC.
+Its final JSON record reports `status: "settled"`, the transaction signature, and `ledgerRows: 1`. The runner checks the vault debit, merchant credit, finalized program event, and deduplicated ledger. It makes a new payment; do not rerun it merely to check an earlier payment's status.
 
 ## Register your own agent
 
-The payment runner above uses the starter agent. To attach your own bot or app:
+1. Keep its existing scoped Ed25519 keypair, or run `npm run agent:key -- --out .brim/research-agent.json`. The helper writes a new mode-`0600` file and prints only its public key and path.
+2. Choose **Local workspace → Add policy**. Paste only the **public key** and set a per-payment cap and 24-hour budget. A $1 cap and $50 budget cover the report. Advanced controls hold spacing and recipients.
+3. Choose **Add policy** and wait for on-chain confirmation. The generated test owner registers the policy; your agent appears in the list.
+4. Open the policy's **Code setup**. Use **Copy setup** and **Check connection**, then follow the [SDK command](/docs/sdk/#register-your-agent-locally) or [MCP key-file setup](/docs/mcp/#connect-your-own-local-agent) to pay the report with that key.
 
-1. Keep its existing Ed25519 keypair, or run `npm run agent:key -- --out .brim/research-agent.json` from the repository root. The helper prints only a public key and file path; the private key stays in a new mode-`0600` file.
-2. In **Local workspace**, choose **Add policy**. Paste the **public key** and set a per-payment cap and 24-hour budget. A $1 cap and $50 budget cover the included $0.04 report. Advanced settings hold spacing and recipients.
-3. Choose **Add policy** and wait for confirmation. The generated Surfpool test owner registers the policy on-chain; the new agent appears in the list.
-4. Copy the shared **vault config**. Give your agent that public value and its own private key through runtime configuration.
-5. Follow the [SDK run command](/docs/sdk/#register-your-agent-locally) or [MCP key-file setup](/docs/mcp/#connect-your-own-local-agent) to pay for the local report.
+All agents on this vault share its public vault config but retain separate private keys and policies. Local SDK/MCP `/report` payments index automatically after finalized verification. Check connection is a setup check, not a guarantee of future settlement.
 
-Open the policy's details to copy its registered public key or edit limits. Edits preserve on-chain usage, freeze state, window timing, and unchanged spacing. Never paste the private key into the dashboard. Local funding and freeze controls remain read-only; Demo workspace simulates them.
+Local funding and freeze controls stay read-only; Demo workspace simulates them. To create and fund a vault or freeze an agent through an actual owner wallet, follow the [configured Live flow](/docs/production/#follow-the-owner-wallet-flow). That requires a preexisting public program; the dashboard does not deploy one.
 
-Press Ctrl-C to stop the apps. Run `npm run local:down` to stop Docker services and preserve database data.
+## Stop the stack
+
+Ctrl-C stops the apps while Surfpool and Postgres keep running. `npm run local:down` removes the test chain container and preserves Postgres data. The next startup recreates the chain with saved local keypairs; retained ledger rows can describe the earlier local chain.

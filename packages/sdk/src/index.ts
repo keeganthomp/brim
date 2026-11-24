@@ -30,3 +30,27 @@ export { resolveBrimRpcUrl } from './rpc.js';
 
 export { createUpsertAgentPolicyInstruction } from './owner-policy.js';
 export type { OwnerPolicyLimits, UpsertAgentPolicyInput } from './owner-policy.js';
+
+export {
+  createInitVaultInstruction,
+  createVaultDepositInstructions,
+  createVaultWithdrawInstructions,
+  createSetAgentFrozenInstruction,
+} from './owner-treasury.js';
+
+/** Read-only connection and optional merchant-quote preflight. Never signs or spends. */
+export { checkBrimConnection, checkBrimConnectionEffect } from './check-connection.js';
+export type {
+  BrimConnectionInput,
+  BrimConnectionIssue,
+  BrimConnectionPolicy,
+  BrimMerchantCheck,
+  BrimConnectionReport,
+} from './check-connection-types.js';
+export type {
+  OwnerTreasuryInput,
+  InitVaultInput,
+  VaultAmountInput,
+  VaultDepositInput,
+  SetAgentFrozenInput,
+} from './owner-treasury.js';

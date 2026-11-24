@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { copyText } from '../lib/clipboard';
 import type { Activity } from '../lib/demo';
 import { liveVault } from '../lib/live/config';
@@ -11,6 +11,7 @@ import { useFunds } from './use-funds';
 import { useChainWorkspace } from './use-chain-workspace';
 import { useNotification } from './use-notification';
 import { useOwnerWallet } from './use-owner-wallet';
+import { useLocalTestPayment } from './use-local-test-payment';
 
 export type ActivityFilter = 'all' | 'settled' | 'blocked';
 
@@ -19,15 +20,35 @@ export function useDashboard() {
   const { state, setState, ready: demoReady } = useDemoStore(mode === 'demo');
   const notification = useNotification();
   const [filter, setFilter] = useState<ActivityFilter>('all');
-  const chain = useChainWorkspace(mode === 'local' || (mode === 'live' && liveVault) ? mode : null);
   const ownerWallet = useOwnerWallet();
+  const connection = ownerWallet.wallet?.connection;
+  const liveConnection = connection?.initialized
+    ? { vaultConfig: connection.vaultConfig, rpcUrl: liveVault?.rpcUrl }
+    : !connection && liveVault && 'vaultConfig' in liveVault
+      ? liveVault
+      : undefined;
+  const chain = useChainWorkspace(
+    mode === 'local' || mode === 'live' ? mode : null,
+    liveConnection,
+  );
+  const [creatingVault, setCreatingVault] = useState(false);
+  const creatingRef = useRef(false);
   const demo = mode === 'demo';
   const localWrites = mode === 'local' && Boolean(chain.snapshot?.policyWritesEnabled);
   const connectedOwner = Boolean(
     mode === 'live' &&
-    chain.snapshot?.ownerAddress &&
-    ownerWallet.wallet?.connection.ownerAddress === chain.snapshot.ownerAddress,
+    connection &&
+    (!chain.snapshot?.ownerAddress || connection.ownerAddress === chain.snapshot.ownerAddress),
   );
+  const vaultInitialized = Boolean(chain.snapshot || (mode === 'live' && connection?.initialized));
+  const canFundVault = mode === 'live' && connectedOwner && Boolean(chain.snapshot);
+  const canCreateVault = connectedOwner && !vaultInitialized;
+  const setup = chain.snapshot?.vaultConfig
+    ? {
+        vaultConfig: chain.snapshot.vaultConfig,
+        rpcUrl: mode === 'local' ? chain.snapshot.rpcUrl : liveVault?.rpcUrl,
+      }
+    : undefined;
 
   function liveUnavailable() {
     if (demo && !demoReady) {
@@ -37,7 +58,7 @@ export function useDashboard() {
     notification.notify(
       mode === 'local'
         ? 'Start Brim locally with npm run dev to register a test agent.'
-        : 'Connect the vault owner wallet to edit policies.',
+        : 'Connect your owner wallet and open a vault first.',
     );
   }
 
@@ -51,11 +72,20 @@ export function useDashboard() {
     ...actions,
     mode,
     localWrites,
-    saveLivePolicy: connectedOwner ? ownerWallet.save : undefined,
+    saveLivePolicy: canFundVault ? ownerWallet.save : undefined,
+    freezeLiveAgent: canFundVault && !chain.snapshot?.isPaused ? ownerWallet.freeze : undefined,
+    setup,
     onChainChange: chain.refresh,
   });
-  const funds = useFunds({ ...actions, balance: state.balance });
   const workspace = demo ? state : chain.snapshot;
+  const funds = useFunds({
+    ...actions,
+    balance: workspace?.balance ?? 0,
+    workspaceMode: mode,
+    transfer: canFundVault ? ownerWallet.transfer : undefined,
+    onChainChange: chain.refresh,
+  });
+  const localPayment = useLocalTestPayment(localWrites, chain.refresh);
   const agents = workspace?.agents ?? [];
   const activities = (workspace?.activity ?? []).filter(
     (item) => filter === 'all' || item.status === filter,
@@ -70,11 +100,26 @@ export function useDashboard() {
     setFilter('all');
   }
 
+  async function createVault() {
+    if (!canCreateVault || creatingRef.current) return;
+    creatingRef.current = true;
+    setCreatingVault(true);
+    try {
+      const result = await ownerWallet.createVault();
+      if (!result.success) notification.notify(result.message);
+      else notification.notify('Vault created. Add USDC to fund it.');
+      chain.refresh();
+    } finally {
+      creatingRef.current = false;
+      setCreatingVault(false);
+    }
+  }
+
   async function selectActivity(item: Activity) {
-    if (mode !== 'local' || !item.signature) return;
+    if (demo || !item.signature) return;
     const copied = await copyText(item.signature, 'copy-signature');
     const message = copied
-      ? 'Verified local transaction signature copied.'
+      ? 'Transaction signature copied.'
       : 'Clipboard access is unavailable in this browser.';
     notification.notify(message);
   }
@@ -98,7 +143,14 @@ export function useDashboard() {
     liveConfigured: Boolean(liveVault),
     ownerWallet,
     connectedOwner,
+    vaultInitialized,
+    canCreateVault,
+    creatingVault,
+    createVault,
+    canFundVault,
     canWritePolicy: policy.canEdit,
+    localPayment,
+    activityAvailable: demo || Boolean(chain.snapshot?.activityAvailable),
     indexedSpend: chain.snapshot?.indexedSpend ?? 0,
     agents,
     activities,

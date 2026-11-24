@@ -16,6 +16,7 @@ import {
   type OwnerPolicyLimits,
 } from '@brim/sdk';
 import type { Wallet, WalletAccount } from '@wallet-standard/base';
+import { fixtureTreasury } from './owner-treasury-state';
 
 export const OWNER_LIMITS: OwnerPolicyLimits = {
   maxPerTx: 1_000_000n,
@@ -35,6 +36,15 @@ export async function ownerFixture(registry: { wallets: Wallet[] }) {
     seeds: [new TextEncoder().encode('vault'), encoder.encode(owner.address), encoder.encode(mint)],
   });
   const tokenAccount = await findTokenAccount(vault, mint);
+  const ownerTokenAccount = await findTokenAccount(owner.address, mint);
+  const treasury = fixtureTreasury(
+    owner.address,
+    mint,
+    BRIM_DEVELOPMENT_PROGRAM_ADDRESS,
+    ownerTokenAccount,
+    tokenAccount,
+    vault,
+  );
   const account: WalletAccount = {
     address: owner.address,
     publicKey: new Uint8Array(encoder.encode(owner.address)),
@@ -124,17 +134,24 @@ export async function ownerFixture(registry: { wallets: Wallet[] }) {
     const body = JSON.parse(String(init?.body));
     let result: unknown;
     if (body.method === 'getGenesisHash') result = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG';
-    else if (body.method === 'getAccountInfo')
+    else if (body.method === 'getBalance')
+      result = { context: { slot: 1 }, value: treasury.state.solBalance };
+    else if (body.method === 'getAccountInfo') {
+      const additional = treasury.account(body.params[0]);
       result = {
         context: { slot: 1 },
         value:
-          body.params[0] === vault
-            ? encoded(vaultData)
-            : state.policy
-              ? encoded(state.policy)
-              : null,
+          additional === undefined
+            ? body.params[0] === vault
+              ? treasury.state.initialized
+                ? encoded(vaultData)
+                : null
+              : state.policy
+                ? encoded(state.policy)
+                : null
+            : additional,
       };
-    else if (body.method === 'getLatestBlockhash')
+    } else if (body.method === 'getLatestBlockhash')
       result = {
         context: { slot: 1 },
         value: { blockhash: '11111111111111111111111111111111', lastValidBlockHeight: 1000 },
@@ -144,7 +161,8 @@ export async function ownerFixture(registry: { wallets: Wallet[] }) {
       const tx = getTransactionDecoder().decode(
         Uint8Array.from(atob(body.params[0]), (c) => c.charCodeAt(0)),
       );
-      state.policy = policyData();
+      treasury.apply(tx, state.policy);
+      if (!state.policy) state.policy = policyData();
       result = getSignatureFromTransaction(tx);
     } else if (body.method === 'getSignatureStatuses') {
       if (state.confirmFailure) throw new Error('PRIVATE_RPC_DETAIL');
@@ -176,6 +194,14 @@ export async function ownerFixture(registry: { wallets: Wallet[] }) {
     signFeature,
     rpc,
     policyData,
+    treasury: treasury.state,
+    vault,
+    deployment: {
+      programAddress: BRIM_DEVELOPMENT_PROGRAM_ADDRESS,
+      network: 'devnet' as const,
+      facilitatorFeePayers: [agent.address],
+      rpcUrl: 'http://127.0.0.1:8899',
+    },
     config: {
       vaultConfig: createBrimVaultConfig({
         programAddress: BRIM_DEVELOPMENT_PROGRAM_ADDRESS,

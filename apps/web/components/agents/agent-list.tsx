@@ -8,6 +8,7 @@ interface AgentListProps {
   mode: WorkspaceMode;
   ready: boolean;
   canEdit: boolean;
+  vaultInitialized: boolean;
   agents: Agent[];
   onEdit: (agent?: Agent) => void;
   onPolicyIntent: () => void;
@@ -18,6 +19,7 @@ export function AgentList({
   mode,
   ready,
   canEdit,
+  vaultInitialized,
   agents,
   onEdit,
   onPolicyIntent,
@@ -67,13 +69,21 @@ export function AgentList({
         })}
         {agents.length === 0 && (
           <div className="empty-state">
-            <h3>{mode === 'local' && !ready ? 'Waiting for local policies' : 'No agents yet'}</h3>
+            <h3>
+              {mode === 'live' && !vaultInitialized
+                ? 'Create your vault first'
+                : mode === 'local' && !ready
+                  ? 'Waiting for local policies'
+                  : 'No agents yet'}
+            </h3>
             <p>
-              {mode === 'local' && !ready
-                ? 'Policies appear when the local stack connects.'
-                : mode === 'live' && !ready
-                  ? 'Connect your vault to view its policies.'
-                  : 'Add a policy to set your first agent’s spending limits.'}
+              {mode === 'live' && !vaultInitialized
+                ? 'Then fund it and add a spending policy for your agent.'
+                : mode === 'local' && !ready
+                  ? 'Policies appear when the local stack connects.'
+                  : mode === 'live' && !ready
+                    ? 'Connect your vault to view its policies.'
+                    : 'Add a policy to set your first agent’s spending limits.'}
             </p>
           </div>
         )}

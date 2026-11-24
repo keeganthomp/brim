@@ -1,24 +1,27 @@
 /** Exercises the real SDK, compiled program, facilitator and PostgreSQL ledger locally. */
 import { pathToFileURL } from 'node:url';
 import { address, createSolanaRpc } from '@solana/kit';
-import { decodePaymentResponseHeader } from '@x402/core/http';
-import { createBrimFetchEffect, findTokenAccount, NETWORKS } from '@brim/sdk';
+import { findTokenAccount, NETWORKS } from '@brim/sdk';
 import {
   createSolanaVerifier,
   migrateDatabaseEffect,
   PostgresEventStore,
   type Verification,
 } from '@brim/indexer';
-import { Data, Effect } from 'effect';
+import { Effect } from 'effect';
 import { Pool } from 'pg';
 import { configuration } from '../../../scripts/local/config.ts';
 import { localDatabaseUrl } from '../database.ts';
-import { loadLocalContext, PAYMENT_AMOUNT, RESOURCE_URL, type LocalContext } from './context.ts';
+import { PAYMENT_AMOUNT, type LocalContext } from './context.ts';
+import { loadLocalContext } from './context-cli.ts';
+import {
+  LocalPaymentError,
+  paymentFailure as failure,
+  requestLocalReport,
+} from './request-report.ts';
 
-class LocalPaymentError extends Data.TaggedError('LocalPaymentError')<{ message: string }> {}
 const io = <A>(work: (signal: AbortSignal) => PromiseLike<A>, message: string) =>
   Effect.tryPromise({ try: work, catch: () => new LocalPaymentError({ message }) });
-const failure = (message: string) => Effect.fail(new LocalPaymentError({ message }));
 const PRICE = PAYMENT_AMOUNT;
 
 export function finalizedProof(rpcUrl: string, programId: string, signature: string) {
@@ -113,29 +116,11 @@ export const localPaymentDemo = Effect.gen(function* () {
   const context = yield* loadLocalContext;
   const balances = localBalancesEffect(context);
   const before = yield* balances;
-  const brimFetch = createBrimFetchEffect({
-    vaultConfig: context.vaultConfig,
-    agentKey: context.agentKey,
-    rpcUrl: context.rpcUrl,
-  });
-  const response = yield* brimFetch(RESOURCE_URL);
-  if (!response.ok)
-    return yield* failure('The local paid resource did not succeed. Check the payment server.');
-  const receipt = yield* Effect.try({
-    try: () => decodePaymentResponseHeader(response.headers.get('PAYMENT-RESPONSE') ?? ''),
-    catch: () =>
-      new LocalPaymentError({
-        message: 'The paid resource did not return a valid settlement receipt.',
-      }),
-  });
-  if (!receipt.success || !receipt.transaction || receipt.network !== context.network)
-    return yield* failure(
-      'Payment was not settled. Do not create another authorization until its outcome is known.',
-    );
+  const signature = yield* requestLocalReport(context);
   const after = yield* balances;
   if (before.vault - after.vault !== PRICE || after.merchant - before.merchant !== PRICE)
     return yield* failure('Actual USDC balance changes did not match the local $0.04 payment.');
-  const proof = yield* finalizedProof(context.rpcUrl, context.programAddress, receipt.transaction);
+  const proof = yield* finalizedProof(context.rpcUrl, context.programAddress, signature);
   if (
     proof.status !== 'settled' ||
     proof.payments.length !== 1 ||
@@ -148,8 +133,8 @@ export const localPaymentDemo = Effect.gen(function* () {
     )
   )
     return yield* failure('Finalized runtime events did not prove the expected local payment.');
-  const ledgerRows = yield* persistLocalProof(settings.databaseUrl, receipt.transaction, proof);
-  return { status: 'settled', amount: '$0.04', signature: receipt.transaction, ledgerRows };
+  const ledgerRows = yield* persistLocalProof(settings.databaseUrl, signature, proof);
+  return { status: 'settled', amount: '$0.04', signature, ledgerRows };
 });
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {

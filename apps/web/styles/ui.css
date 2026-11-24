@@ -188,7 +188,7 @@
   min-height: 270px;
   padding: 30px;
   gap: 14px;
-  color: #a1a1a8;
+  color: var(--secondary);
   text-align: center;
   animation: fade-in var(--motion-base) ease-out;
 }
@@ -438,5 +438,16 @@
   .dialog-overlay,
   .sheet-loading > span {
     animation: none;
+  }
+}
+
+/* One progress treatment shared by wallet, connection, and local payment actions. */
+.busy-indicator {
+  flex-shrink: 0;
+  animation: control-spin 1s linear infinite;
+}
+@keyframes control-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

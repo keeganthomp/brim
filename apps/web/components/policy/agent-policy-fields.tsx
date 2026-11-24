@@ -13,8 +13,7 @@ export function AgentPolicyFields({
   controller: AgentPolicyController;
   firstField: RefObject<HTMLInputElement | null>;
 }) {
-  const { draft, setDraft, creating, mode, canEdit, busy, copyAgentKey, copyConfig, error } =
-    controller;
+  const { draft, setDraft, creating, mode, canEdit, busy, copyAgentKey, error } = controller;
   const errorMessage = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (error) errorMessage.current?.scrollIntoView({ block: 'nearest' });
@@ -60,7 +59,7 @@ export function AgentPolicyFields({
         </div>
       </section>
       <PolicyAdvanced draft={draft} setDraft={setDraft} mode={mode} canEdit={canEdit} busy={busy} />
-      <PolicySetup onCopy={copyConfig} />
+      <PolicySetup controller={controller} />
       {error && (
         <p ref={errorMessage} role="alert" className="form-error" id="policy-error">
           <XCircle size={15} aria-hidden="true" />

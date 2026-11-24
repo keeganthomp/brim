@@ -410,3 +410,38 @@
     transition: none;
   }
 }
+
+.policy-connection {
+  display: grid;
+  gap: 11px;
+  margin-top: 24px;
+}
+.policy-connection > label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #55555d;
+  font-size: 12px;
+}
+.policy-connection > label span {
+  color: var(--secondary);
+  font-size: 11px;
+}
+.policy-connection > p {
+  max-width: 38ch;
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.65;
+}
+.policy-connection > .button {
+  justify-self: start;
+  margin-top: 0;
+}
+.policy-connection > .connection-ready {
+  color: var(--green);
+}
+.policy-connection > .connection-blocked,
+.policy-connection > .connection-error {
+  color: var(--red);
+}

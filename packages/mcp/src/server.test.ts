@@ -4,11 +4,13 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createBrimMcpServer } from './server.js';
 import { McpFailure } from './errors.js';
+import * as diagnostics from './errors.js';
 import type { BrimMcpService, EmptyArgs, FetchArgs } from './types.js';
 
 const close: Array<() => Promise<void>> = [];
 afterEach(async () => {
   await Promise.allSettled(close.splice(0).map((dispose) => dispose()));
+  vi.restoreAllMocks();
 });
 
 function fixture(overrides: Partial<BrimMcpService> = {}) {
@@ -66,6 +68,8 @@ describe('Brim MCP protocol', () => {
       true,
     );
     expect(tools.find((tool) => tool.name === 'brim_fetch')?.annotations?.readOnlyHint).toBe(false);
+    expect(tools.find((tool) => tool.name === 'brim_fetch')?.description).toContain('canceled');
+    expect(client.getInstructions()).toContain('Canceling brim_fetch cannot undo a payment');
   });
 
   it('reads balance and policy without invoking the paid fetch tool', async () => {
@@ -160,7 +164,8 @@ describe('Brim MCP protocol', () => {
     expect(JSON.parse(text(result))).toMatchObject({ code: 'INVALID_RESULT' });
   });
 
-  it('interrupts the Effect service when an MCP client cancels a request', async () => {
+  it('interrupts a canceled paid request and records uncertain settlement guidance', async () => {
+    const diagnostic = vi.spyOn(diagnostics, 'toolFailureDiagnostic');
     let markStarted!: () => void;
     let markInterrupted!: () => void;
     const started = new Promise<void>((resolve) => {
@@ -188,5 +193,14 @@ describe('Brim MCP protocol', () => {
     abort.abort();
     await expect(pending).rejects.toThrow();
     await interrupted;
+    // MCP may discard a reply after the client cancels; verify the server boundary
+    // still classifies uncertainty without catching or swallowing the interruption.
+    await vi.waitFor(() => {
+      expect(diagnostic).toHaveBeenCalledWith(expect.anything(), 'brim_fetch', true);
+      expect(diagnostic.mock.results.at(-1)?.value).toMatchObject({
+        code: 'PAYMENT_OUTCOME_UNKNOWN',
+        message: expect.stringContaining('Reconcile settlement'),
+      });
+    });
   });
 });

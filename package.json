@@ -30,6 +30,7 @@
     "test:db": "node scripts/local.ts --test-db",
     "test:local": "node scripts/local.ts --test-local",
     "demo:payment": "node infra/local/payments/client.ts",
+    "agent:check": "node scripts/check-connection.ts",
     "mcp": "node packages/mcp/dist/cli.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

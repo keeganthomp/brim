@@ -16,7 +16,7 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://merchant.example/v1/data');
 ```
 
-Use the two values from the [SDK handoff guide](/docs/sdk/#who-hands-over-what): an operator-provided public config and the integrator's scoped private keypair. The operator registers the corresponding public key with a policy before it can spend. Locally, use **Add policy** in the dashboard; [follow the SDK setup](/docs/sdk/#register-your-agent-locally). [MCP](/docs/mcp/) uses the same handoff and payment engine.
+Use the two values from the [SDK handoff guide](/docs/sdk/#who-hands-over-what): an operator-provided public config and the integrator's scoped private keypair. The operator registers the corresponding public key with a policy before it can spend. Locally, use **Add policy** in the dashboard; [follow the Code setup](/docs/sdk/#register-your-agent-locally). [MCP](/docs/mcp/) uses the same handoff and payment engine.
 
 ## Follow a payment
 
@@ -63,6 +63,6 @@ The SDK adds a default $1 local cap per payment; the on-chain policy may impose 
 
 ## Verify the complete path locally
 
-The [quickstart](/docs/quickstart/) runs an offline Surfpool chain, a real x402 verifier and settler, the compiled Brim program, and Postgres. The payment test checks a $0.04 vault debit, matching merchant credit, settlement signature, finalized program event, and one deduplicated ledger row.
+The [quickstart](/docs/quickstart/) runs an offline Surfpool chain, a real x402 verifier and settler, the compiled Brim program, and Postgres. Choose **Make test payment** in Local workspace or run `npm run demo:payment`. The runner checks a $0.04 vault debit, matching merchant credit, settlement signature, finalized program event, and one deduplicated ledger row. Successful local SDK/MCP report settlements also queue automatically for verified Activity; indexing can lag the HTTP response.
 
 This establishes the local integration. Public devnet settlement and support from a production facilitator remain [release requirements](/docs/production/).

@@ -7,12 +7,16 @@ import { copySdkTemplate, copyText } from '../lib/clipboard';
 import type { Agent } from '../lib/demo';
 import type { WorkspaceMode } from '../lib/workspace';
 import type { OwnerWalletController } from './use-owner-wallet';
+import type { LiveWorkspaceConnection } from '../lib/live/client';
+import { usePolicyConnection } from './use-policy-connection';
 import type { DemoActions } from './types';
 
 interface PolicyActions extends DemoActions {
   mode: WorkspaceMode;
   localWrites: boolean;
   saveLivePolicy?: OwnerWalletController['save'] | undefined;
+  freezeLiveAgent?: OwnerWalletController['freeze'] | undefined;
+  setup?: LiveWorkspaceConnection | undefined;
   onChainChange: () => void;
 }
 
@@ -24,12 +28,16 @@ export function useAgentPolicy({
   liveUnavailable,
   localWrites,
   saveLivePolicy,
+  freezeLiveAgent,
+  setup,
   onChainChange,
 }: PolicyActions) {
   const [draft, setDraftState] = useState<Agent | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [isFreezing, setIsFreezing] = useState(false);
+  const connection = usePolicyConnection(setup);
   const revision = useRef(0);
   const pendingRevision = useRef<number | null>(null);
   const canEdit = demo || localWrites || Boolean(saveLivePolicy);
@@ -38,6 +46,8 @@ export function useAgentPolicy({
     revision.current += 1;
     pendingRevision.current = null;
     setBusy(false);
+    setIsFreezing(false);
+    connection.reset();
     setDraftState(next);
   };
 
@@ -50,8 +60,31 @@ export function useAgentPolicy({
     setError('');
   }
 
-  function freezeAgent(agent: Agent, frozen: boolean) {
-    if (!demo) return liveUnavailable();
+  async function freezeAgent(agent: Agent, frozen: boolean) {
+    if (pendingRevision.current !== null) return;
+    if (!demo) {
+      if (!freezeLiveAgent || !agent.agentKey) return liveUnavailable();
+      const currentRevision = revision.current;
+      pendingRevision.current = currentRevision;
+      setBusy(true);
+      setIsFreezing(true);
+      setError('');
+      try {
+        const result = await freezeLiveAgent(agent.agentKey, frozen);
+        onChainChange();
+        if (revision.current !== currentRevision) return;
+        if (!result.success) return setError(result.message);
+        setDraft(null);
+        notify(frozen ? 'Agent frozen.' : 'Agent resumed.');
+      } finally {
+        if (pendingRevision.current === currentRevision) {
+          pendingRevision.current = null;
+          setIsFreezing(false);
+          setBusy(false);
+        }
+      }
+      return;
+    }
     setState((previous) => ({
       ...previous,
       agents: previous.agents.map((item) => (item.id === agent.id ? { ...item, frozen } : item)),
@@ -106,8 +139,12 @@ export function useAgentPolicy({
   }
 
   async function copyConfig() {
-    const copied = await copySdkTemplate();
-    notify(copied ? 'SDK template copied.' : 'Clipboard access is unavailable in this browser.');
+    const copied = await copySdkTemplate(
+      setup?.vaultConfig,
+      setup?.rpcUrl,
+      mode === 'local' ? 'http://127.0.0.1:4020/report' : undefined,
+    );
+    notify(copied ? 'Setup copied.' : 'Clipboard access is unavailable in this browser.');
   }
 
   async function copyAgentKey() {
@@ -123,9 +160,13 @@ export function useAgentPolicy({
     creating,
     error,
     busy,
+    isFreezing,
     mode,
     canEdit,
-    canFreeze: demo,
+    canFreeze: demo || Boolean(freezeLiveAgent),
+    connectionStatus: connection.status,
+    checkConnection: (resourceUrl?: string) =>
+      draft?.agentKey && !creating ? connection.check(draft.agentKey, resourceUrl) : undefined,
     setDraft,
     openAgent,
     freezeAgent,

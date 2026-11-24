@@ -19,13 +19,13 @@ Ctrl-C stops the dashboard, paid API, and docs while the test chain and database
 keep running. `npm run local:down` removes the test chain container and keeps the
 Postgres data. The next startup recreates the chain using the saved local keypairs.
 
-In another terminal:
+In **Local workspace**, choose **Make test payment** to make a $0.04 starter payment and wait for verified **Activity**. Or run the command-line verifier in another terminal:
 
 ```sh
 npm run demo:payment
 ```
 
-This uses the actual SDK, x402 verifier/facilitator, compiled Brim program, and database. It checks the exact USDC debit/credit, verifies the finalized program event, and proves duplicate ledger delivery does not double-count. No real funds move.
+This uses the actual SDK, x402 verifier/facilitator, compiled Brim program, and database. It checks the exact USDC debit/credit, verifies the finalized program event, and proves duplicate ledger delivery does not double-count. No real funds move. Successful local SDK/MCP `/report` settlements also queue automatically for finalized indexing; Activity can lag the HTTP response.
 
 ## Agent integration
 
@@ -40,9 +40,15 @@ const brimFetch = createBrimFetch({
 const response = await brimFetch('https://api.example.com/paid-resource');
 ```
 
-The treasury operator sends you a public `BRIM_VAULT_CONFIG` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`. Open **Local workspace** in the dashboard and select **Copy vault config** to get the public value.
+The treasury operator sends you a public `BRIM_VAULT_CONFIG` string that starts with `brim:v1:`. You generate the agent's Solana keypair, share its **public key** for registration, and store the full keypair JSON as `BRIM_AGENT_KEY` in your agent's runtime. For local testing, `npm run dev` generates both values in `.brim/local.json`. Open your policy's **Code setup** to **Copy setup** or **Check connection**.
 
 To attach your own agent, generate a scoped keypair, open **Local workspace → Add policy**, paste only its public key, and confirm the limits. Copy the shared vault config and keep the private key in your agent runtime. Follow the [end-to-end SDK guide](apps/site/content/docs/sdk.mdx#register-your-agent-locally) or [local MCP guide](apps/site/content/docs/mcp.mdx#connect-your-own-local-agent).
+
+## Use an owner wallet
+
+[Configure the dashboard](apps/site/content/docs/production.mdx#configure-a-deployed-program) for an already deployed Brim program. Select **Live workspace → Connect owner wallet → Create vault** if absent, then **Deposit → Add policy**. Review each transaction in the wallet. **Code setup → Copy setup / Check connection** hands off the public configuration; the agent keeps its private key in its own runtime.
+
+Make a compatible merchant request, wait for independently verified **Activity** when its public feed is explicitly enabled, and use wallet-signed **Freeze/Resume** when needed. For a terminal check, use `npm run agent:check -- --agent-public-key PUBLIC_KEY` with `BRIM_VAULT_CONFIG` and optional `SOLANA_RPC_URL`. It never signs and exits `0` for passing checks, `2` for blockers, or `1` for failure/cancellation. A setup check cannot guarantee facilitator acceptance. The dashboard does not deploy an external program; Squads and private tenant activity remain separate work.
 
 ## Marketing and docs
 
@@ -60,6 +66,7 @@ For agents, start with `/llms.txt` at the site root. Use `/llms-full.txt` to loa
 | Command                                                | What it does                                                                 |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `npm run agent:key -- --out .brim/research-agent.json` | Create a private scoped key file; print only its public key and path         |
+| `npm run agent:check -- --agent-public-key PUBLIC_KEY` | Check public setup without signing; exit 0 ready, 2 blockers, 1 failure      |
 | `npm run doctor`                                       | Check local prerequisites with actionable errors                             |
 | `npm run dev`                                          | Start the complete local stack with hot-reloading Next.js                    |
 | `npm run local:up`                                     | Prepare chain/database/test credentials without starting web/API processes   |
@@ -92,7 +99,7 @@ Effect **4.1.5** is the TypeScript runtime and validation foundation. Pure rende
 
 ## Before production funds
 
-The program, real local settlement and database path are exercised locally. Local policy signing uses only the generated fake-funds owner. The configured Live workspace can request policy registration and update signatures from an ordinary Wallet Standard owner of an already deployed vault. Live funding/freezes, Squads execution, tenant authentication, external devnet settlement, independent security review/fuzzing, and production deployment remain open. See [Live configuration](apps/site/content/docs/production.mdx#configure-owner-wallet-policy-writes). Local-only routes are disabled in production. No mainnet program or cloud deployment is claimed.
+The program, real local settlement and database path are exercised locally. Local policy signing uses only the generated fake-funds owner. The configured Live workspace uses an ordinary Wallet Standard owner for vault creation, deposits/withdrawals, policy changes, and Freeze/Resume against a preexisting deployed program. Squads execution, tenant authentication, external devnet settlement, independent security review/fuzzing, and production deployment remain open. See [Live configuration](apps/site/content/docs/production.mdx#configure-a-deployed-program). Local-only routes are disabled in production. No mainnet program or cloud deployment is claimed.
 
 Budgets use fixed windows and minimum payment spacing. A freeze takes effect when its transaction executes; no fixed millisecond finality is promised. USDC v1 pins the official mint and legacy token program. Latest x402 smart-wallet verification must be explicitly enabled and allowlist the deployed Brim program.
 

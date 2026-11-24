@@ -5,6 +5,8 @@ import { loadFundsActions } from '../lib/deferred-actions';
 import type { FundsMode } from '../lib/funds';
 import { type Activity } from '../lib/demo';
 import { dollars } from '../lib/currency';
+import type { WorkspaceMode } from '../lib/workspace';
+import type { OwnerWalletController } from './use-owner-wallet';
 import type { DemoActions } from './types';
 
 export type { FundsMode } from '../lib/funds';
@@ -15,12 +17,23 @@ export function useFunds({
   notify,
   liveUnavailable,
   balance,
-}: DemoActions & { balance: number }) {
+  workspaceMode,
+  transfer,
+  onChainChange,
+}: DemoActions & {
+  balance: number;
+  workspaceMode: WorkspaceMode;
+  transfer?: OwnerWalletController['transfer'] | undefined;
+  onChainChange: () => void;
+}) {
   const [mode, setMode] = useState<FundsMode | null>(null);
   const [amount, setAmount] = useState('500');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const revision = useRef(0);
   const pendingRevision = useRef<number | null>(null);
+  const inputPattern = demo ? /^\d*\.?\d{0,2}$/ : /^\d*\.?\d{0,6}$/;
+  const inputLimit = demo ? 10 : 21;
 
   function invalidateSubmission() {
     revision.current += 1;
@@ -33,15 +46,16 @@ export function useFunds({
   }
 
   function open(nextMode: FundsMode) {
-    if (!demo) return liveUnavailable();
+    if (busy) return;
+    if (!demo && !transfer) return liveUnavailable();
     invalidateSubmission();
     setMode(nextMode);
-    setAmount('500');
+    setAmount(demo ? '500' : '');
     setError('');
   }
 
   function editAmount(value: string) {
-    if (/^\d*\.?\d{0,2}$/.test(value) && value.length <= 10) {
+    if (!busy && inputPattern.test(value) && value.length <= inputLimit) {
       invalidateSubmission();
       setAmount(value);
       setError('');
@@ -49,24 +63,37 @@ export function useFunds({
   }
 
   function addKey(key: string) {
+    if (busy) return;
     invalidateSubmission();
     if (key === 'back') return setAmount((value) => value.slice(0, -1));
     setAmount((value) => {
-      if (key === '.' && value.includes('.')) return value;
-      if (value.length >= 9 || (value.includes('.') && value.split('.')[1]!.length >= 2))
-        return value;
-      return value === '0' && key !== '.' ? key : value + key;
+      const next = !value && key === '.' ? '0.' : value === '0' && key !== '.' ? key : value + key;
+      return next.length <= inputLimit && inputPattern.test(next) ? next : value;
     });
     setError('');
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!demo || !mode || pendingRevision.current !== null) return;
+    if ((!demo && !transfer) || !mode || busy || pendingRevision.current !== null) return;
     const currentRevision = revision.current;
     pendingRevision.current = currentRevision;
+    setBusy(true);
     try {
-      const { validateDemoTransfer } = await loadFundsActions();
+      const { validateDemoTransfer, parseLiveTransfer } = await loadFundsActions();
+      if (revision.current !== currentRevision) return;
+      if (!demo && transfer) {
+        const units = parseLiveTransfer(amount);
+        if (units === undefined)
+          return setError('Enter a positive USDC amount with up to six decimals.');
+        const result = await transfer({ mode, amount: units });
+        onChainChange();
+        if (revision.current !== currentRevision) return;
+        if (!result.success) return setError(result.message);
+        close();
+        notify(mode === 'deposit' ? 'Funds added.' : 'Withdrawal confirmed.');
+        return;
+      }
       const result = await validateDemoTransfer(mode, amount, balance);
       if (revision.current !== currentRevision) return;
       if (!result.success) return setError(result.message);
@@ -93,6 +120,7 @@ export function useFunds({
         setError('Funding controls could not load. Please try again.');
     } finally {
       if (pendingRevision.current === currentRevision) pendingRevision.current = null;
+      setBusy(false);
     }
   }
 
@@ -100,6 +128,8 @@ export function useFunds({
     mode,
     amount,
     error,
+    workspaceMode,
+    busy,
     open,
     editAmount,
     addKey,

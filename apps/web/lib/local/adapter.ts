@@ -9,7 +9,10 @@ export interface ChainWorkspaceSnapshot {
   indexedSpend: number;
   isPaused: boolean;
   policyWritesEnabled: boolean;
+  activityAvailable: boolean;
   vaultConfig?: string;
+  vaultAddress?: string;
+  rpcUrl?: string;
   ownerAddress?: string;
 }
 
@@ -47,7 +50,25 @@ export function adaptLocalWorkspace(data: LocalWorkspaceResponse): ChainWorkspac
       icon: 'code',
     };
   });
-  const activity = data.payments.map((payment): Activity => ({
+  const activity = data.payments.map(adaptPayment);
+  const vaultConfig = Schema.decodeUnknownResult(PublicVaultConfigSchema)(data.vaultConfig);
+  return {
+    ...(vaultConfig._tag === 'Success' ? { vaultConfig: vaultConfig.success } : {}),
+    ...(data.ownerAddress ? { ownerAddress: data.ownerAddress } : {}),
+    ...(data.vaultAddress ? { vaultAddress: data.vaultAddress } : {}),
+    ...(data.rpcUrl ? { rpcUrl: data.rpcUrl } : {}),
+    balance: usdc(data.balanceBaseUnits),
+    agents,
+    activity,
+    indexedSpend: activity.reduce((total, payment) => total + payment.amount, 0),
+    isPaused: Boolean(data.isPaused),
+    policyWritesEnabled: Boolean(data.policyWritesEnabled),
+    activityAvailable: data.activityAvailable ?? true,
+  };
+}
+
+export function adaptPayment(payment: LocalWorkspaceResponse['payments'][number]): Activity {
+  return {
     id: payment.id,
     merchant: payment.merchant || 'Local paid API',
     agent: payment.agentName || 'Local Agent',
@@ -55,16 +76,5 @@ export function adaptLocalWorkspace(data: LocalWorkspaceResponse): ChainWorkspac
     status: 'settled',
     signature: payment.signature,
     time: relativeTime(payment.settledAt),
-  }));
-  const vaultConfig = Schema.decodeUnknownResult(PublicVaultConfigSchema)(data.vaultConfig);
-  return {
-    ...(vaultConfig._tag === 'Success' ? { vaultConfig: vaultConfig.success } : {}),
-    ...(data.ownerAddress ? { ownerAddress: data.ownerAddress } : {}),
-    balance: usdc(data.balanceBaseUnits),
-    agents,
-    activity,
-    indexedSpend: activity.reduce((total, payment) => total + payment.amount, 0),
-    isPaused: Boolean(data.isPaused),
-    policyWritesEnabled: Boolean(data.policyWritesEnabled),
   };
 }

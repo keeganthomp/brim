@@ -5,7 +5,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Data, Effect, Schema } from 'effect';
 import { configuration, root } from '../../../scripts/local/config.ts';
-import { loadLocalContext, PAYMENT_AMOUNT, RESOURCE_URL } from './context.ts';
+import { PAYMENT_AMOUNT, RESOURCE_URL } from './context.ts';
+import { loadLocalContext } from './context-cli.ts';
 import { finalizedProof, localBalancesEffect, persistLocalProof } from './client.ts';
 
 class LocalMcpError extends Data.TaggedError('LocalMcpError')<{ message: string }> {}

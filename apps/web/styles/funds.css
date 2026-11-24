@@ -243,3 +243,12 @@
     transition: none;
   }
 }
+
+.funds-modal input:disabled,
+.funds-modal .keypad button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.funds-modal .button[aria-busy='true'] {
+  cursor: wait;
+}

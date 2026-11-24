@@ -1,4 +1,4 @@
-import { FlaskConical, Plus } from 'lucide-react';
+import { ArrowDownToLine, FlaskConical, LoaderCircle, Plus } from 'lucide-react';
 import type { OwnerWalletController } from '../hooks/use-owner-wallet';
 import type { LocalWorkspaceStatus, WorkspaceMode } from '../lib/workspace';
 import { LiveWorkspaceBar } from './live-workspace-bar';
@@ -18,6 +18,14 @@ interface WorkspaceHeadingProps {
   connectedOwner: boolean;
   ownerWallet: OwnerWalletController;
   canWritePolicy: boolean;
+  vaultInitialized: boolean;
+  canCreateVault: boolean;
+  creatingVault: boolean;
+  canFundVault: boolean;
+  balance: number | null;
+  createVault: () => void | Promise<void>;
+  onDeposit: () => void;
+  onFundsIntent: () => void;
   onAddPolicy: () => void;
   onPolicyIntent: () => void;
   onExploreDemo: () => void;
@@ -32,12 +40,22 @@ export function WorkspaceHeading({
   connectedOwner,
   ownerWallet,
   canWritePolicy,
+  vaultInitialized,
+  canCreateVault,
+  creatingVault,
+  canFundVault,
+  balance,
+  createVault,
+  onDeposit,
+  onFundsIntent,
   onAddPolicy,
   onPolicyIntent,
   onExploreDemo,
   onCopyVaultConfig,
 }: WorkspaceHeadingProps) {
-  const connectWallet = mode === 'live' && chainStatus === 'ready' && !connectedOwner;
+  const connectWallet = mode === 'live' && liveConfigured && !connectedOwner;
+  const firstVault = mode === 'live' && (canCreateVault || creatingVault);
+  const needsFunding = mode === 'live' && vaultInitialized && canFundVault && balance === 0;
   return (
     <>
       <div className="page-heading">
@@ -49,6 +67,28 @@ export function WorkspaceHeading({
             onClick={() => void ownerWallet.connect()}
           >
             {ownerWallet.connecting ? 'Connecting…' : 'Connect owner wallet'}
+          </button>
+        ) : firstVault ? (
+          <button
+            className="button primary add-policy-button"
+            disabled={creatingVault || !canCreateVault}
+            aria-busy={creatingVault}
+            onClick={() => void createVault()}
+          >
+            {creatingVault && (
+              <LoaderCircle size={15} className="busy-indicator" aria-hidden="true" />
+            )}
+            {creatingVault ? 'Creating vault…' : 'Create vault'}
+          </button>
+        ) : needsFunding ? (
+          <button
+            className="button primary add-policy-button"
+            onClick={onDeposit}
+            onPointerEnter={onFundsIntent}
+            onFocus={onFundsIntent}
+            onTouchStart={onFundsIntent}
+          >
+            <ArrowDownToLine size={15} aria-hidden="true" /> Deposit
           </button>
         ) : (
           <button
@@ -99,6 +139,7 @@ export function WorkspaceHeading({
           status={chainStatus}
           paused={chainPaused}
           connected={connectedOwner}
+          uninitialized={firstVault}
           wallet={ownerWallet}
           onCopyVaultConfig={onCopyVaultConfig}
           onExploreDemo={onExploreDemo}

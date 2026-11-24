@@ -71,3 +71,18 @@ export function failureDiagnostic(cause: Cause.Cause<unknown>) {
   }
   return publicDiagnostic(undefined);
 }
+
+/** Cancellation stops local work, but cannot establish that a paid request did not settle. */
+export function toolFailureDiagnostic(
+  cause: Cause.Cause<unknown>,
+  toolName: string,
+  canceled = false,
+) {
+  if (
+    toolName === 'brim_fetch' &&
+    (canceled || cause.reasons.some((reason) => reason._tag === 'Interrupt'))
+  ) {
+    return publicDiagnostic('PAYMENT_OUTCOME_UNKNOWN');
+  }
+  return failureDiagnostic(cause);
+}

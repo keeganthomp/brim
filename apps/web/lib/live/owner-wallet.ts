@@ -3,7 +3,15 @@ import { getWallets } from '@wallet-standard/app';
 import { Effect } from 'effect';
 import { connectFeature, ownerAccount, supportedOwnerWallet } from './owner-wallet-features';
 import { ownerContext } from './owner-policy-state';
+import { ownerRouting } from './owner-wallet-context';
 import { submitPolicy } from './owner-policy-submit';
+export {
+  initializeOwnerVault,
+  depositOwnerFunds,
+  withdrawOwnerFunds,
+  setOwnerAgentFrozen,
+} from './owner-treasury';
+export { readOwnerWalletReadiness } from './owner-treasury-state';
 import {
   ownerAttempt,
   ownerFailure,
@@ -16,6 +24,7 @@ import {
 export { OwnerWalletError } from './owner-wallet-types';
 export type {
   OwnerWalletConfig,
+  OwnerDeploymentConfig,
   OwnerWalletConnection,
   WalletChoice,
   OwnerPolicyInput,
@@ -32,30 +41,43 @@ function walletId(wallet: object) {
   return id;
 }
 
-/** Existing matching owner accounts come first; caller chooses explicitly if several remain. */
+/** Existing owner accounts come first; each connected owner is an explicit choice. */
 export function discoverOwnerWallets(config: OwnerWalletConfig) {
   return Effect.gen(function* () {
-    const context = yield* ownerContext(config);
+    const context =
+      'vaultConfig' in config ? yield* ownerContext(config) : yield* ownerRouting(config);
+    const expectedOwner =
+      'ownerAddress' in context && typeof context.ownerAddress === 'string'
+        ? context.ownerAddress
+        : undefined;
     return yield* ownerAttempt(
       () =>
         getWallets()
           .get()
-          .filter(
-            (wallet) =>
-              supportedOwnerWallet(wallet, context.chain) &&
-              (wallet.accounts.some((account) =>
-                ownerAccount(account, context.ownerAddress, context.chain),
-              ) ||
-                typeof connectFeature(wallet)?.connect === 'function'),
-          )
-          .map((wallet) => ({
-            id: walletId(wallet),
-            name: wallet.name.slice(0, 80),
-            connected: wallet.accounts.some((account) =>
-              ownerAccount(account, context.ownerAddress, context.chain),
-            ),
-            wallet,
-          }))
+          .flatMap<WalletChoice>((wallet) => {
+            if (!supportedOwnerWallet(wallet, context.chain)) return [];
+            const accounts = wallet.accounts.filter((account) =>
+              ownerAccount(account, expectedOwner ?? account.address, context.chain),
+            );
+            if (!accounts.length)
+              return typeof connectFeature(wallet)?.connect === 'function'
+                ? [
+                    {
+                      id: walletId(wallet),
+                      name: wallet.name.slice(0, 80),
+                      connected: false,
+                      wallet,
+                    },
+                  ]
+                : [];
+            return accounts.map((account) => ({
+              id: `${walletId(wallet)}:${account.address}`,
+              name: wallet.name.slice(0, 80),
+              connected: true,
+              wallet,
+              ownerAddress: account.address,
+            }));
+          })
           .sort((a, b) => Number(b.connected) - Number(a.connected)),
       'NO_WALLET',
       'Wallet discovery is unavailable. Use a browser with a compatible Solana wallet.',
@@ -65,10 +87,15 @@ export function discoverOwnerWallets(config: OwnerWalletConfig) {
 
 export function connectOwnerWallet(choice: WalletChoice, config: OwnerWalletConfig) {
   return Effect.gen(function* () {
-    const context = yield* ownerContext(config);
+    const routing =
+      'vaultConfig' in config ? yield* ownerContext(config) : yield* ownerRouting(config);
+    const expectedOwner =
+      'ownerAddress' in routing && typeof routing.ownerAddress === 'string'
+        ? routing.ownerAddress
+        : choice.ownerAddress;
     const { wallet } = choice;
     const supported = yield* ownerAttempt(
-      () => getWallets().get().includes(wallet) && supportedOwnerWallet(wallet, context.chain),
+      () => getWallets().get().includes(wallet) && supportedOwnerWallet(wallet, routing.chain),
       'WALLET_UNSUPPORTED',
       'Choose a compatible Solana wallet.',
     );
@@ -77,10 +104,16 @@ export function connectOwnerWallet(choice: WalletChoice, config: OwnerWalletConf
         'WALLET_UNSUPPORTED',
         'This wallet does not support the configured network and v0 transactions.',
       );
-    let account = wallet.accounts.find((value) =>
-      ownerAccount(value, context.ownerAddress, context.chain),
+    const find = () =>
+      wallet.accounts.filter((account) =>
+        ownerAccount(account, expectedOwner ?? account.address, routing.chain),
+      );
+    let accounts = yield* ownerAttempt(
+      find,
+      'WALLET_CHANGED',
+      'Wallet account state is unavailable. Reconnect.',
     );
-    if (!account) {
+    if (!accounts.length) {
       const feature = connectFeature(wallet);
       if (!feature)
         return yield* ownerFailure(
@@ -92,20 +125,32 @@ export function connectOwnerWallet(choice: WalletChoice, config: OwnerWalletConf
         'WALLET_REJECTED',
         'Wallet connection was declined or unavailable.',
       );
-      account = wallet.accounts.find((value) =>
-        ownerAccount(value, context.ownerAddress, context.chain),
+      accounts = yield* ownerAttempt(
+        find,
+        'WALLET_CHANGED',
+        'Wallet account state is unavailable. Reconnect.',
       );
     }
-    if (!account)
+    if (!accounts.length)
       return yield* ownerFailure(
         'OWNER_MISMATCH',
         'Select the wallet account that owns this vault.',
       );
+    if (accounts.length !== 1)
+      return yield* ownerFailure(
+        'OWNER_SELECTION_REQUIRED',
+        'Choose one owner account, then reconnect.',
+      );
+    const account = accounts[0]!;
+    const context = yield* ownerContext(config, account.address);
     return {
       choiceId: choice.id,
       wallet,
       account,
       ownerAddress: context.ownerAddress,
+      vaultAddress: context.vaultAddress,
+      vaultConfig: context.vaultConfig,
+      initialized: context.initialized,
     } satisfies OwnerWalletConnection;
   });
 }

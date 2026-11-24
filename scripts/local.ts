@@ -150,7 +150,7 @@ const program = Effect.gen(function* () {
   console.log(`Solana RPC: ${config.rpcUrl}\nLocal paid API: http://127.0.0.1:4020`);
   console.log(`SDK docs: http://localhost:${config.webPort}/docs/sdk/`);
   console.log(
-    'Try npm run demo:payment in another terminal. Ctrl-C stops web/API/docs; npm run local:down stops Surfpool/Postgres.\n',
+    'Choose Make test payment in the dashboard or run npm run demo:payment. Ctrl-C stops web/API/docs; npm run local:down stops Surfpool/Postgres.\n',
   );
   yield* Effect.all(
     [
