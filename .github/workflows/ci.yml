@@ -6,6 +6,18 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Scan Git history for secrets
+        run: |
+          docker run --rm --network=none -v "$GITHUB_WORKSPACE:/repo:ro" \
+            ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            git /repo --redact --log-opts=--all --gitleaks-ignore-path=/repo/.gitleaksignore
   typescript:
     runs-on: ubuntu-latest
     steps:
@@ -47,7 +59,7 @@ jobs:
         run: docker compose --profile test down
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: [typescript, contract-native, local-integration]
+    needs: [secrets, typescript, contract-native, local-integration]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

@@ -1,0 +1,3 @@
+# Public Solana fixture authority, also checked against mint account data in tests.
+# This exact historical finding is a public address, not a private key or API token.
+189a5a35883af3d88195a56683af4375eb69ab70:apps/web/server/local-policy-input.test.ts:generic-api-key:7

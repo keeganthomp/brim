@@ -11,7 +11,7 @@ This deployment is for browser demo testing. It does not deploy a Solana program
 
 ## Continuous deployment
 
-`.github/workflows/ci.yml` runs formatting, TypeScript/unit checks, both production builds, native contract tests, and chain/database/payment integration tests. A push to `main`, or a manual workflow dispatch on `main`, deploys only after all three check jobs pass. Pull requests and other branches do not deploy. Runs on the same ref are serialized.
+`.github/workflows/ci.yml` scans Git history for secrets and runs formatting, TypeScript/unit checks, both production builds, native contract tests, and chain/database/payment integration tests. A push to `main`, or a manual workflow dispatch on `main`, deploys only after all four check jobs pass. Pull requests and other branches do not deploy. Runs on the same ref are serialized. The secret scan uses a pinned Gitleaks image with network access disabled and redacted output. `.gitleaksignore` exempts only one verified historical public-key fixture finding.
 
 The deploy job builds the `runtime` and `site` Dockerfile targets, pushes both images to the `brim` Artifact Registry repository, and deploys by digest. Tags include the commit, workflow run ID, and attempt, and the registry enforces immutable tags. The workflow then runs `scripts/smoke-deployment.mjs` against both public origins. Its summary records the commit, URLs, and image digests. A failed smoke test fails the workflow; it does not automatically roll back.
 
