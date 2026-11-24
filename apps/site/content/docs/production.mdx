@@ -3,7 +3,7 @@ title: Production readiness
 description: Configure a deployed program, use owner-wallet controls, and understand the remaining release work.
 ---
 
-Brim has a working offline payment path and wallet-signed dashboard controls. **This repository does not deploy a public-chain program or provision a production service.** Public devnet settlement, independent security review, and operational release checks remain required before real funds.
+Brim has a working offline payment path and wallet-signed dashboard controls. The hosted test deployment serves the site, docs, and a browser demo dashboard. **It does not deploy a public-chain program or enable real payments.** Public devnet settlement, independent security review, and operational release checks remain required before real funds.
 
 ## Configure a deployed program
 
@@ -63,4 +63,4 @@ Local funding, withdrawals, and freeze controls remain read-only. Demo workspace
 
 Deploy and verify the actual program and its upgrade authority, complete public devnet payments with the intended facilitator and real owner-wallet flows, test adversarial concurrency/replay, fuzz the contract, and obtain independent security review. Publish whether program upgrades are immutable or protected by documented multisig/timelock controls.
 
-Production operations still need managed secrets, migrations/backups, pending-event reconciliation, monitoring, and any tenant authentication or private APIs the service promises. GCP preparation exists in the repository; no GCP resources have been provisioned. Squads CPI, Auto / Ask / Block approvals, passkeys, and a threat-driven freeze service remain separate follow-up work.
+Production operations still need managed secrets, migrations/backups, pending-event reconciliation, monitoring, and any tenant authentication or private APIs the service promises. The GCP test deployment has keyless CI/CD and hosts the public site and demo dashboard; it does not provision live payment infrastructure. Squads CPI, Auto / Ask / Block approvals, passkeys, and a threat-driven freeze service remain separate follow-up work.

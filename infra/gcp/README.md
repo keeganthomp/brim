@@ -1,35 +1,56 @@
-# GCP deployment preparation
+# GCP test deployment
 
-The app targets Node 24 on Cloud Run. `Dockerfile` produces an unprivileged Next.js standalone image listening on Cloud Run's `PORT` (8080 by default). Deploy only after setting up a billing-enabled project, Artifact Registry, service account, RPC credentials, and the deployed Solana program. Nothing is deployed by this repository.
+Project `brim-app-20261124` (number `904154865340`) hosts two public Cloud Run services in `us-central1`:
 
-## Build and review
+| Service     | Purpose                                        | Default origin                                       |
+| ----------- | ---------------------------------------------- | ---------------------------------------------------- |
+| `brim-site` | Marketing, static docs, search, agent Markdown | `https://brim-site-904154865340.us-central1.run.app` |
+| `brim-web`  | Next.js dashboard in Demo workspace            | `https://brim-web-904154865340.us-central1.run.app`  |
 
-From the repository root, after a successful `npm ci && npm run check`:
+This deployment is for browser demo testing. It does not deploy a Solana program, execute public devnet payments, or provision the activity database. Demo controls simulate changes in the browser. Local-only write routes return 404 in production, the public activity feed is disabled, and unconfigured webhook intake returns 503.
+
+## Continuous deployment
+
+`.github/workflows/ci.yml` runs formatting, TypeScript/unit checks, both production builds, native contract tests, and chain/database/payment integration tests. A push to `main`, or a manual workflow dispatch on `main`, deploys only after all three check jobs pass. Pull requests and other branches do not deploy. Runs on the same ref are serialized.
+
+The deploy job builds the `runtime` and `site` Dockerfile targets, pushes both images to the `brim` Artifact Registry repository, and deploys by digest. Tags include the commit, workflow run ID, and attempt, and the registry enforces immutable tags. The workflow then runs `scripts/smoke-deployment.mjs` against both public origins. Its summary records the commit, URLs, and image digests. A failed smoke test fails the workflow; it does not automatically roll back.
+
+All public routing configuration is in `infra/gcp/deploy.env`. The site dashboard link and dashboard SDK docs link are baked into their images during the build. The runtime target deliberately builds in demo mode. Enabling live wallet flows requires a separate, reviewed build configuration and deployed program.
+
+GitHub uses Workload Identity Federation, not a stored service-account key. The provider allows only repository ID `1467581326`, owner ID `28870847`, and `refs/heads/main`. The `brim-deploy` account can deploy Cloud Run services, write to the `brim` registry, and act as the two runtime service accounts. The runtime accounts have no application-level project roles. Public invocation was configured once during bootstrap; the deployment identity cannot change IAM policies.
+
+## Runtime and billing
+
+Both services use request-based CPU billing and scale from zero to a maximum of two service instances. The dashboard has 1 vCPU/512 MiB and concurrency 40; the static site has 1 vCPU/256 MiB and concurrency 80. Registry storage, compute, builds, logging, and traffic can incur charges. The project uses the Primary billing account.
+
+A $50 monthly project budget alerts at 50%, 90%, and 100%. A budget is an alert, not a spending cap. There is no Cloud SQL instance or paid load balancer for this demo deployment.
+
+## Verify or roll back
+
+Run the same HTTP checks locally with Node 24:
 
 ```sh
-gcloud builds submit --config infra/gcp/cloudbuild.yaml --project YOUR_PROJECT
+set -a
+. infra/gcp/deploy.env
+set +a
+node scripts/smoke-deployment.mjs
 ```
 
-Cloud Build pushes an image tagged with its build ID. Review the image and deploy that immutable tag to Cloud Run. Keep the service private for this prototype (`--no-allow-unauthenticated`); configure an authenticated front door and explicit webhook ingress before serving operators or webhook providers. Do not expose the financial administration surface with anonymous write endpoints.
+Inspect previous ready revisions and route traffic to the selected revision:
 
 ```sh
-gcloud run deploy brim-web \
-  --image us-central1-docker.pkg.dev/YOUR_PROJECT/brim/web:BUILD_ID \
-  --region us-central1 --project YOUR_PROJECT \
-  --port 8080 --no-allow-unauthenticated \
-  --service-account brim-web@YOUR_PROJECT.iam.gserviceaccount.com
+gcloud run revisions list --service brim-web --region us-central1 --project brim-app-20261124
+gcloud run services update-traffic brim-web --to-revisions PREVIOUS_READY_REVISION=100 --region us-central1 --project brim-app-20261124
 ```
 
-## Database and secrets
+Repeat for `brim-site` when a release changes both services. Update the source or revert the deployment commit before the next push to `main`, which will deploy the current source again.
 
-- Use Cloud SQL for PostgreSQL with private connectivity and the Cloud SQL connector or Unix socket mounted via Cloud Run's Cloud SQL attachment. The SQL schema lives in `packages/indexer/migrations`. Apply migrations as a separate deployment job, never on a request path.
-- Store RPC credentials, webhook bearer authorization, and database credentials in Secret Manager; grant access only to the runtime service account. Never place session keys or treasury keys in app configuration. The service does not need a signing key to index payments.
-- Helius delivery needs reachable ingress. Use a separate constrained ingestion service or authenticated routing and validate the configured Helius Authorization header at the application layer. Cloud Run IAM authentication and a Helius bearer header are different mechanisms.
-- Until wallet authentication, owner-authorized transactions, a compatible facilitator, and verified chain ingestion are integrated, the UI is a browser-local demo. Do not market a deployment as a live treasury console.
-- Next.js `NEXT_PUBLIC_*` values are build-time public configuration. Do not place secrets in them. Set the public app mode before building; runtime environment changes cannot rewrite the browser bundle.
+`cloudbuild.yaml` remains an optional manual image-build configuration. GitHub Actions is the automatic deployment path; no Cloud Build trigger is needed.
 
-No paid cloud resources are created by these files. GCP credentials are not configured in the current workspace.
+## Add brim.sh later
 
-## Public site and docs
+Register the domain, configure an HTTPS front door such as Firebase Hosting for the existing services, and verify its DNS and certificates. Update `BRIM_SITE_URL` and `BRIM_APP_URL` in `deploy.env` and deploy again so the public links use the new domains. The service names, project, registry, and deployment identity can stay the same. No domain has been purchased or configured by this deployment.
 
-`npm run build:site` creates a standalone static export at `apps/site/out/`. Serve that directory on the public site origin with directory index support for `/docs/` and its guides. The Fumadocs search index ships with the export. The public bundle needs no Solana keys, RPC secrets, or database connection.
+## Real devnet payments
+
+Deploy and verify the Brim program, configure a compatible x402 facilitator and public RPC, and exercise wallet-signed devnet flows before enabling them for users. Verified Activity additionally requires Cloud SQL PostgreSQL, migrations run as a separate job, server-only Secret Manager credentials, authenticated webhook intake, explicit tracked vaults, and reconciliation. Keep treasury and agent signing keys out of the web service. See `apps/site/content/docs/production.mdx` for the application's current boundaries.

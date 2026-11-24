@@ -93,13 +93,13 @@ and TLS verification remains enabled.
 - `packages/mcp`: stdio tools for balance, policy and safe paid requests; no treasury key or policy-editing tool.
 - `packages/indexer`: Effect services/workflows, authenticated intake, finalized RPC verification, idempotent Postgres writes, migrations, and reconciliation.
 - `infra/local` / `scripts`: shared local setup, Surfpool fixtures and payment example; no duplicated production payment implementation.
-- `infra/gcp`: Cloud Build and Cloud Run / Cloud SQL preparation. No GCP resources have been provisioned.
+- `infra/gcp`: Cloud Run test deployment, keyless GitHub CI/CD, and future live-indexing setup.
 
 Effect **4.1.5** is the TypeScript runtime and validation foundation. Pure rendering, codecs and immutable constants stay ordinary code. Solana Kit **8.6.0**, x402 **2.32.0**, Anchor **1.2.2**, Next.js **16.4.6**, React **19.3.1**, and TypeScript **7.0.2** were checked against stable registries on 2026-11-22 and pinned with lockfiles.
 
 ## Before production funds
 
-The program, real local settlement and database path are exercised locally. Local policy signing uses only the generated fake-funds owner. The configured Live workspace uses an ordinary Wallet Standard owner for vault creation, deposits/withdrawals, policy changes, and Freeze/Resume against a preexisting deployed program. Squads execution, tenant authentication, external devnet settlement, independent security review/fuzzing, and production deployment remain open. See [Live configuration](apps/site/content/docs/production.mdx#configure-a-deployed-program). Local-only routes are disabled in production. No mainnet program or cloud deployment is claimed.
+The program, real local settlement and database path are exercised locally. Local policy signing uses only the generated fake-funds owner. The configured Live workspace uses an ordinary Wallet Standard owner for vault creation, deposits/withdrawals, policy changes, and Freeze/Resume against a preexisting deployed program. Squads execution, tenant authentication, external devnet settlement, independent security review/fuzzing, and production funds readiness remain open. See [Live configuration](apps/site/content/docs/production.mdx#configure-a-deployed-program). The GCP test deployment hosts the site/docs and a demo dashboard. Local-only routes are disabled in production. No mainnet program is deployed.
 
 Budgets use fixed windows and minimum payment spacing. A freeze takes effect when its transaction executes; no fixed millisecond finality is promised. USDC v1 pins the official mint and legacy token program. Latest x402 smart-wallet verification must be explicitly enabled and allowlist the deployed Brim program.
 

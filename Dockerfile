@@ -10,8 +10,22 @@ RUN npm ci
 
 FROM dependencies AS build
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_BRIM_SDK_DOCS_URL
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_BRIM_MODE=demo
+ENV NEXT_PUBLIC_BRIM_SDK_DOCS_URL=$NEXT_PUBLIC_BRIM_SDK_DOCS_URL
 RUN npm run build:packages && npm run build --workspace=@brim/web
+
+FROM dependencies AS site-build
+COPY . .
+ARG NEXT_PUBLIC_BRIM_APP_URL
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_BRIM_APP_URL=$NEXT_PUBLIC_BRIM_APP_URL
+RUN npm run build:site
+
+FROM nginxinc/nginx-unprivileged:stable-alpine AS site
+COPY infra/gcp/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=site-build /app/apps/site/out /usr/share/nginx/html
+EXPOSE 8080
 
 FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=8080 HOSTNAME=0.0.0.0

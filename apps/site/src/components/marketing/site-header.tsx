@@ -13,6 +13,9 @@ export function SiteHeader() {
             Developers
           </a>
           <a href="/docs/">Docs</a>
+          {process.env.NEXT_PUBLIC_BRIM_APP_URL ? (
+            <a href={process.env.NEXT_PUBLIC_BRIM_APP_URL}>Try demo</a>
+          ) : null}
         </nav>
       </div>
     </header>

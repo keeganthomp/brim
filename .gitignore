@@ -16,3 +16,4 @@ playwright-report/
 .brim/
 apps/site/.source/
 apps/site/out/
+gha-creds-*.json

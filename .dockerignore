@@ -13,3 +13,5 @@ target
 .brim
 apps/site/.source
 apps/site/out
+gha-creds-*.json
+.github

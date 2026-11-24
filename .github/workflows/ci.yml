@@ -1,5 +1,8 @@
 name: checks
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -42,3 +45,65 @@ jobs:
       - run: npm run test:local
       - if: always()
         run: docker compose --profile test down
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [typescript, contract-native, local-integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Load deployment configuration
+        run: cat infra/gcp/deploy.env >> "$GITHUB_ENV"
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+      - name: Build and push immutable images
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+          tag="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker build --target runtime \
+            --build-arg "NEXT_PUBLIC_BRIM_SDK_DOCS_URL=${BRIM_SITE_URL}/docs/sdk/#use-two-inputs" \
+            --tag "${GCP_REGISTRY}/web:${tag}" .
+          docker build --target site \
+            --build-arg "NEXT_PUBLIC_BRIM_APP_URL=${BRIM_APP_URL}" \
+            --tag "${GCP_REGISTRY}/site:${tag}" .
+          docker push "${GCP_REGISTRY}/web:${tag}"
+          docker push "${GCP_REGISTRY}/site:${tag}"
+          echo "BRIM_WEB_IMAGE=$(docker inspect --format='{{index .RepoDigests 0}}' "${GCP_REGISTRY}/web:${tag}")" >> "$GITHUB_ENV"
+          echo "BRIM_SITE_IMAGE=$(docker inspect --format='{{index .RepoDigests 0}}' "${GCP_REGISTRY}/site:${tag}")" >> "$GITHUB_ENV"
+      - name: Deploy dashboard
+        run: |
+          gcloud run deploy brim-web --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --image="$BRIM_WEB_IMAGE" --service-account="brim-web@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+            --port=8080 --cpu=1 --memory=512Mi --min=0 --max=2 --concurrency=40 \
+            --timeout=60 --cpu-throttling --ingress=all \
+            --set-env-vars=BRIM_PUBLIC_ACTIVITY_ENABLED=false \
+            --labels="app=brim,environment=test,commit=${GITHUB_SHA}" --quiet
+      - name: Deploy site and docs
+        run: |
+          gcloud run deploy brim-site --project="$GCP_PROJECT_ID" --region="$GCP_REGION" \
+            --image="$BRIM_SITE_IMAGE" --service-account="brim-site@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+            --port=8080 --cpu=1 --memory=256Mi --min=0 --max=2 --concurrency=80 \
+            --timeout=60 --cpu-throttling --ingress=all \
+            --labels="app=brim,environment=test,commit=${GITHUB_SHA}" --quiet
+      - name: Smoke test deployed services
+        run: node scripts/smoke-deployment.mjs
+      - name: Record deployment
+        run: |
+          {
+            echo "Deployed commit: ${GITHUB_SHA}"
+            echo "Site: ${BRIM_SITE_URL}"
+            echo "Dashboard (demo): ${BRIM_APP_URL}"
+            echo "Dashboard image: ${BRIM_WEB_IMAGE}"
+            echo "Site image: ${BRIM_SITE_IMAGE}"
+          } >> "$GITHUB_STEP_SUMMARY"
